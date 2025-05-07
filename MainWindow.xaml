@@ -1,0 +1,221 @@
+﻿<Window x:Class="InvoiceBalanceRefresher.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Invoice Balance Refresher" Height="800" Width="900">
+    <Grid Background="{StaticResource BackgroundBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="180"/>
+        </Grid.RowDefinitions>
+
+        <!-- Fallout-style scanlines overlay (subtle) - BACKGROUND ONLY -->
+        <Grid Grid.RowSpan="4" Panel.ZIndex="-1">
+            <Grid.Background>
+                <DrawingBrush TileMode="Tile" Viewport="0,0,2,2" ViewportUnits="Absolute" Opacity="0.05">
+                    <DrawingBrush.Drawing>
+                        <DrawingGroup>
+                            <GeometryDrawing Brush="Transparent">
+                                <GeometryDrawing.Geometry>
+                                    <RectangleGeometry Rect="0,0,2,2" />
+                                </GeometryDrawing.Geometry>
+                            </GeometryDrawing>
+                            <GeometryDrawing Brush="#00FF00">
+                                <GeometryDrawing.Geometry>
+                                    <RectangleGeometry Rect="0,0,2,1" />
+                                </GeometryDrawing.Geometry>
+                            </GeometryDrawing>
+                        </DrawingGroup>
+                    </DrawingBrush.Drawing>
+                </DrawingBrush>
+            </Grid.Background>
+        </Grid>
+
+        <!-- Menu Bar -->
+        <Menu Grid.Row="0" BorderThickness="0,0,0,1" BorderBrush="{StaticResource BorderBrush}">
+            <MenuItem Header="[FILE]">
+                <MenuItem Header="Generate Sample CSV" Click="GenerateSampleCSV_Click"/>
+                <Separator/>
+                <MenuItem Header="Exit" Click="Exit_Click"/>
+            </MenuItem>
+            <MenuItem Header="[HELP]">
+                <MenuItem Header="Documentation" Click="Documentation_Click"/>
+                <MenuItem Header="About" Click="About_Click"/>
+            </MenuItem>
+        </Menu>
+
+        <!-- Main Content -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Background="Transparent">
+            <Grid Margin="10">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Header -->
+                <TextBlock Grid.Row="0" Text="[INVOICE BALANCE REFRESHER]" FontSize="24" FontWeight="Bold" 
+                           Foreground="{StaticResource AccentBrush}" Margin="10,5,0,15">
+                    <TextBlock.Effect>
+                        <DropShadowEffect Color="#F2A007" ShadowDepth="0" BlurRadius="15" Opacity="0.7"/>
+                    </TextBlock.Effect>
+                </TextBlock>
+
+                <!-- Divider -->
+                <Rectangle Grid.Row="0" Height="2" Margin="10,40,10,0" Fill="{StaticResource BorderBrush}" VerticalAlignment="Bottom"/>
+
+                <!-- Single Invoice Section -->
+                <Border Grid.Row="1" BorderBrush="{StaticResource BorderBrush}" BorderThickness="2" 
+                        Background="{StaticResource GroupBackgroundBrush}" CornerRadius="4" Padding="1" Margin="10,15,10,15">
+                    <GroupBox Header="SINGLE INVOICE">
+                        <Grid Margin="10">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="120"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="$ Biller GUID:" VerticalAlignment="Center"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" x:Name="BillerGUID" Margin="0,5,0,5"/>
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="$ Web Service Key:" Margin="0,5,0,0" VerticalAlignment="Center"/>
+                            <TextBox Grid.Row="1" Grid.Column="1" x:Name="WebServiceKey" Margin="0,5,0,5"/>
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="$ Invoice Number:" Margin="0,5,0,0" VerticalAlignment="Center"/>
+                            <TextBox Grid.Row="2" Grid.Column="1" x:Name="InvoiceNumber" Margin="0,5,0,5"/>
+
+                            <Button Grid.Row="3" Grid.Column="1" Content="[PROCESS INVOICE]" Width="200" 
+                                    HorizontalAlignment="Left" Margin="0,10,0,10" Click="ProcessSingleInvoice_Click"/>
+
+                            <Border Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" BorderThickness="1" 
+                                    BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource ConsoleBackgroundBrush}" 
+                                    Margin="0,5,0,0" MinHeight="60" CornerRadius="2">
+                                <TextBlock x:Name="SingleResult" Margin="5" TextWrapping="Wrap" 
+                                           FontFamily="Consolas"/>
+                            </Border>
+                        </Grid>
+                    </GroupBox>
+                </Border>
+
+                <!-- Batch Processing Section -->
+                <Border Grid.Row="2" BorderBrush="{StaticResource BorderBrush}" BorderThickness="2" 
+                        Background="{StaticResource GroupBackgroundBrush}" CornerRadius="4" Padding="1" Margin="10,0,10,10">
+                    <GroupBox Header="BATCH PROCESSING">
+                        <Grid Margin="10">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <!-- Added new row for batch results -->
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Text="$ Select CSV File:" VerticalAlignment="Center"/>
+
+                            <Grid Grid.Row="1" Margin="0,5,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Button Grid.Column="0" Content="[BROWSE]" Width="150" Click="BrowseCSV_Click"/>
+                                <TextBlock Grid.Column="1" x:Name="CSVFilePath" Margin="10,5,0,0" 
+                                           VerticalAlignment="Center"/>
+                            </Grid>
+
+                            <Button Grid.Row="2" Content="[PROCESS CSV]" Width="200" 
+                                    HorizontalAlignment="Left" Margin="0,10,0,10" Click="ProcessCSV_Click"/>
+
+                            <ProgressBar Grid.Row="3" x:Name="BatchProgress" Height="20" Margin="0,5,0,5"/>
+
+                            <TextBlock Grid.Row="4" x:Name="BatchStatus" Margin="0,5,0,0" TextWrapping="Wrap"/>
+
+                            <!-- Batch Results Display -->
+                            <Border Grid.Row="5" BorderThickness="1" 
+                                    BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource ConsoleBackgroundBrush}" 
+                                    Margin="0,10,0,0" MinHeight="150" CornerRadius="2">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+
+                                    <!-- Header for results -->
+                                    <TextBlock Grid.Row="0" Text="$ PROCESSING RESULTS:" 
+                                               Foreground="{StaticResource AccentBrush2}"
+                                               FontWeight="Bold" Margin="5,5,0,0"/>
+
+                                    <!-- Scrollable results area -->
+                                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,5,0,0">
+                                        <TextBox x:Name="BatchResults" 
+                                                 Background="Transparent"
+                                                 BorderThickness="0"
+                                                 Foreground="{StaticResource ForegroundBrush}"
+                                                 FontFamily="Consolas"
+                                                 IsReadOnly="True"
+                                                 TextWrapping="Wrap"
+                                                 VerticalAlignment="Stretch"
+                                                 HorizontalAlignment="Stretch"
+                                                 Padding="5"
+                                                 AcceptsReturn="True"/>
+                                    </ScrollViewer>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </GroupBox>
+                </Border>
+            </Grid>
+        </ScrollViewer>
+
+        <!-- Console Header with Vault-Tec inspired design -->
+        <Grid Grid.Row="2" Margin="10,5,10,5">
+            <Grid.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                    <GradientStop Color="#0A0A0A" Offset="0"/>
+                    <GradientStop Color="#1A2E19" Offset="0.5"/>
+                    <GradientStop Color="#0A0A0A" Offset="1"/>
+                </LinearGradientBrush>
+            </Grid.Background>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="[CONSOLE LOG]" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" Margin="5,3,0,3">
+                <TextBlock.Effect>
+                    <DropShadowEffect Color="#F2A007" ShadowDepth="0" BlurRadius="5" Opacity="0.5"/>
+                </TextBlock.Effect>
+            </TextBlock>
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button Content="[CLEAR]" Width="80" Height="25" Margin="0,0,5,0" Click="ClearLog_Click"/>
+                <Button Content="[SAVE LOGS]" Width="100" Height="25" Click="SaveLogs_Click"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Console Area -->
+        <Border Grid.Row="3" BorderBrush="{StaticResource BorderBrush}" BorderThickness="2" 
+                Background="{StaticResource ConsoleBackgroundBrush}" Margin="10,0,10,10" CornerRadius="4">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                <TextBox x:Name="ConsoleLog" 
+                         Background="Transparent"
+                         BorderThickness="0"
+                         Foreground="{StaticResource ForegroundBrush}"
+                         FontFamily="Consolas"
+                         IsReadOnly="True"
+                         TextWrapping="Wrap"
+                         VerticalAlignment="Stretch"
+                         HorizontalAlignment="Stretch"
+                         Padding="10"
+                         AcceptsReturn="True"/>
+            </ScrollViewer>
+        </Border>
+    </Grid>
+</Window>

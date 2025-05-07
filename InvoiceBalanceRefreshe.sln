@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35931.197 d17.13
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InvoiceBalanceRefreshe", "InvoiceBalanceRefreshe.csproj", "{AD019F41-6CE8-4A34-9C21-9ABECF2C8402}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AD019F41-6CE8-4A34-9C21-9ABECF2C8402}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AD019F41-6CE8-4A34-9C21-9ABECF2C8402}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AD019F41-6CE8-4A34-9C21-9ABECF2C8402}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AD019F41-6CE8-4A34-9C21-9ABECF2C8402}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {42500A23-6BA9-4EAE-8536-1610DBA925BE}
+	EndGlobalSection
+EndGlobal

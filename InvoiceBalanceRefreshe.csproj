@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <ApplicationIcon>balrefresh.ico</ApplicationIcon>
+    <PackageIcon>balrefresh.jpeg</PackageIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="balrefresh.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="balrefresh.jpeg">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+</Project>
