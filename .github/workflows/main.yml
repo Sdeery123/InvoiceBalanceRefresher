@@ -16,8 +16,8 @@ jobs:
     runs-on: windows-latest
     
     env:
-      SOLUTION_FILE: InvoiceBalanceRefresher.sln
-      PROJECT_FILE: InvoiceBalanceRefresher.csproj
+      SOLUTION_FILE: InvoiceBalanceRefreshe.sln
+      PROJECT_FILE: InvoiceBalanceRefreshe.csproj
       PUBLISH_DIR: publish
 
     steps:
