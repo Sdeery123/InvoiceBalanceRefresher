@@ -52,10 +52,11 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
                 <!-- Header -->
-                <TextBlock Grid.Row="0" Text="[INVOICE BALANCE REFRESHER]" FontSize="24" FontWeight="Bold" 
+                <TextBlock Grid.Row="0" Text="[INVOICE BALANCE CHECKER]" FontSize="24" FontWeight="Bold" 
                            Foreground="{StaticResource AccentBrush}" Margin="10,5,0,15">
                     <TextBlock.Effect>
                         <DropShadowEffect Color="#F2A007" ShadowDepth="0" BlurRadius="15" Opacity="0.7"/>
@@ -77,6 +78,7 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="120"/>
@@ -89,17 +91,22 @@
                             <TextBlock Grid.Row="1" Grid.Column="0" Text="$ Web Service Key:" Margin="0,5,0,0" VerticalAlignment="Center"/>
                             <TextBox Grid.Row="1" Grid.Column="1" x:Name="WebServiceKey" Margin="0,5,0,5"/>
 
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="$ Invoice Number:" Margin="0,5,0,0" VerticalAlignment="Center"/>
-                            <TextBox Grid.Row="2" Grid.Column="1" x:Name="InvoiceNumber" Margin="0,5,0,5"/>
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="$ Account Number:" Margin="0,5,0,0" VerticalAlignment="Center"/>
+                            <TextBox Grid.Row="2" Grid.Column="1" x:Name="AccountNumber" Margin="0,5,0,5"/>
 
-                            <Button Grid.Row="3" Grid.Column="1" Content="[PROCESS INVOICE]" Width="200" 
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="$ Invoice Number:" Margin="0,5,0,0" VerticalAlignment="Center"/>
+                            <TextBox Grid.Row="3" Grid.Column="1" x:Name="InvoiceNumber" Margin="0,5,0,5"/>
+
+                            <Button Grid.Row="4" Grid.Column="1" Content="[PROCESS INVOICE]" Width="200" 
                                     HorizontalAlignment="Left" Margin="0,10,0,10" Click="ProcessSingleInvoice_Click"/>
 
-                            <Border Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" BorderThickness="1" 
+                            <Border Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" BorderThickness="1" 
                                     BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource ConsoleBackgroundBrush}" 
-                                    Margin="0,5,0,0" MinHeight="60" CornerRadius="2">
-                                <TextBlock x:Name="SingleResult" Margin="5" TextWrapping="Wrap" 
-                                           FontFamily="Consolas"/>
+                                    Margin="0,5,0,0" MinHeight="120" CornerRadius="2">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <TextBlock x:Name="SingleResult" Margin="5" TextWrapping="Wrap" 
+                                               FontFamily="Consolas"/>
+                                </ScrollViewer>
                             </Border>
                         </Grid>
                     </GroupBox>
@@ -107,7 +114,7 @@
 
                 <!-- Batch Processing Section -->
                 <Border Grid.Row="2" BorderBrush="{StaticResource BorderBrush}" BorderThickness="2" 
-                        Background="{StaticResource GroupBackgroundBrush}" CornerRadius="4" Padding="1" Margin="10,0,10,10">
+                        Background="{StaticResource GroupBackgroundBrush}" CornerRadius="4" Padding="1" Margin="10,0,10,15">
                     <GroupBox Header="BATCH PROCESSING">
                         <Grid Margin="10">
                             <Grid.RowDefinitions>
@@ -117,12 +124,27 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
-                                <!-- Added new row for batch results -->
+                                <RowDefinition Height="Auto"/>
+                                <!-- Search bar row -->
+                                <RowDefinition Height="220"/>
+                                <!-- Results area -->
                             </Grid.RowDefinitions>
 
-                            <TextBlock Grid.Row="0" Text="$ Select CSV File:" VerticalAlignment="Center"/>
+                            <Grid Grid.Row="0" Margin="0,0,0,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="$ CSV Format:" VerticalAlignment="Center"/>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Left" Margin="10,0,0,0">
+                                    <RadioButton x:Name="InvoiceOnlyFormat" Content="Invoice Only" IsChecked="True" Margin="0,0,15,0"/>
+                                    <RadioButton x:Name="AccountInvoiceFormat" Content="Account Number,Invoice Number Format"/>
+                                </StackPanel>
+                            </Grid>
 
-                            <Grid Grid.Row="1" Margin="0,5,0,0">
+                            <TextBlock Grid.Row="1" Text="$ Select CSV File:" VerticalAlignment="Center"/>
+
+                            <Grid Grid.Row="2" Margin="0,5,0,0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="*"/>
@@ -132,30 +154,47 @@
                                            VerticalAlignment="Center"/>
                             </Grid>
 
-                            <Button Grid.Row="2" Content="[PROCESS CSV]" Width="200" 
+                            <Button Grid.Row="3" Content="[PROCESS CSV]" Width="200" 
                                     HorizontalAlignment="Left" Margin="0,10,0,10" Click="ProcessCSV_Click"/>
 
-                            <ProgressBar Grid.Row="3" x:Name="BatchProgress" Height="20" Margin="0,5,0,5"/>
+                            <ProgressBar Grid.Row="4" x:Name="BatchProgress" Height="20" Margin="0,5,0,5"/>
 
-                            <TextBlock Grid.Row="4" x:Name="BatchStatus" Margin="0,5,0,0" TextWrapping="Wrap"/>
+                            <TextBlock Grid.Row="5" x:Name="BatchStatus" Margin="0,5,0,5" TextWrapping="Wrap"/>
 
-                            <!-- Batch Results Display -->
-                            <Border Grid.Row="5" BorderThickness="1" 
+                            <!-- Batch Results Search Bar -->
+                            <Grid Grid.Row="6" Margin="0,5,0,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="$ FILTER:" Foreground="{StaticResource AccentBrush2}" 
+                                          FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                <TextBox Grid.Column="1" x:Name="BatchSearchBox" Height="22" VerticalAlignment="Center" 
+                                        Background="#0F160E" BorderBrush="{StaticResource BorderBrush}" 
+                                        Foreground="{StaticResource ForegroundBrush}" Margin="0,0,5,0"
+                                        TextChanged="BatchSearchBox_TextChanged"/>
+                                <Button Grid.Column="2" Content="[X]" Width="25" Height="22" 
+                                       Click="ClearBatchSearch_Click" ToolTip="Clear Filter"/>
+                                <TextBlock Grid.Column="3" x:Name="BatchSearchResultsCount" Foreground="{StaticResource AccentBrush}" 
+                                          VerticalAlignment="Center" Margin="10,0,0,0" MinWidth="60"/>
+                            </Grid>
+
+                            <!-- Batch Results Display with Fixed Height and Independent Scrolling -->
+                            <Border Grid.Row="7" BorderThickness="1" 
                                     BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource ConsoleBackgroundBrush}" 
-                                    Margin="0,10,0,0" MinHeight="150" CornerRadius="2">
-                                <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="*"/>
-                                    </Grid.RowDefinitions>
-
+                                    Margin="0,5,0,0" CornerRadius="2">
+                                <DockPanel>
                                     <!-- Header for results -->
-                                    <TextBlock Grid.Row="0" Text="$ PROCESSING RESULTS:" 
+                                    <TextBlock DockPanel.Dock="Top" Text="$ PROCESSING RESULTS:" 
                                                Foreground="{StaticResource AccentBrush2}"
-                                               FontWeight="Bold" Margin="5,5,0,0"/>
+                                               FontWeight="Bold" Margin="5,5,0,5"/>
 
-                                    <!-- Scrollable results area -->
-                                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,5,0,0">
+                                    <!-- Scrollable results area - independent scrollbar -->
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto" 
+                                                  HorizontalScrollBarVisibility="Auto"
+                                                  Margin="0,0,0,0">
                                         <TextBox x:Name="BatchResults" 
                                                  Background="Transparent"
                                                  BorderThickness="0"
@@ -163,12 +202,44 @@
                                                  FontFamily="Consolas"
                                                  IsReadOnly="True"
                                                  TextWrapping="Wrap"
-                                                 VerticalAlignment="Stretch"
-                                                 HorizontalAlignment="Stretch"
                                                  Padding="5"
                                                  AcceptsReturn="True"/>
                                     </ScrollViewer>
-                                </Grid>
+                                </DockPanel>
+                            </Border>
+                        </Grid>
+                    </GroupBox>
+                </Border>
+
+                <!-- Customer Record Section -->
+                <Border Grid.Row="3" BorderBrush="{StaticResource BorderBrush}" BorderThickness="2" 
+                        Background="{StaticResource GroupBackgroundBrush}" CornerRadius="4" Padding="1" Margin="10,0,10,10">
+                    <GroupBox Header="CUSTOMER RECORD LOOKUP">
+                        <Grid Margin="10">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="120"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="$ Account Number:" VerticalAlignment="Center"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" x:Name="CustomerAccountNumber" Margin="0,5,0,5"/>
+
+                            <Button Grid.Row="1" Grid.Column="1" Content="[LOOKUP CUSTOMER]" Width="200" 
+                                    HorizontalAlignment="Left" Margin="0,10,0,10" Click="ProcessCustomerRecord_Click"/>
+
+                            <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" BorderThickness="1" 
+                                    BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource ConsoleBackgroundBrush}" 
+                                    Margin="0,5,0,0" MinHeight="120" CornerRadius="2">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <TextBlock x:Name="CustomerResult" Margin="5" TextWrapping="Wrap" 
+                                               FontFamily="Consolas"/>
+                                </ScrollViewer>
                             </Border>
                         </Grid>
                     </GroupBox>
@@ -176,7 +247,7 @@
             </Grid>
         </ScrollViewer>
 
-        <!-- Console Header with Vault-Tec inspired design -->
+        <!-- Console Header with Vault-Tec inspired design and Search Box -->
         <Grid Grid.Row="2" Margin="10,5,10,5">
             <Grid.Background>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
@@ -186,36 +257,64 @@
                 </LinearGradientBrush>
             </Grid.Background>
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <TextBlock Text="[CONSOLE LOG]" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" Margin="5,3,0,3">
+            <TextBlock Grid.Column="0" Text="[CONSOLE LOG]" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" Margin="5,3,10,3">
                 <TextBlock.Effect>
                     <DropShadowEffect Color="#F2A007" ShadowDepth="0" BlurRadius="5" Opacity="0.5"/>
                 </TextBlock.Effect>
             </TextBlock>
-            <StackPanel Grid.Column="1" Orientation="Horizontal">
+
+            <!-- Search area -->
+            <Grid Grid.Column="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="SEARCH:" Foreground="{StaticResource AccentBrush2}" 
+                          FontWeight="Bold" VerticalAlignment="Center" Margin="5,0,5,0"/>
+                <TextBox Grid.Column="1" x:Name="SearchBox" Height="22" VerticalAlignment="Center" 
+                        Background="#0F160E" BorderBrush="{StaticResource BorderBrush}" 
+                        Foreground="{StaticResource ForegroundBrush}" Margin="0,0,5,0"
+                        TextChanged="SearchBox_TextChanged"/>
+                <Button Grid.Column="2" Content="[X]" Width="25" Height="22" 
+                       Click="ClearSearch_Click" ToolTip="Clear Search"/>
+            </Grid>
+
+            <TextBlock Grid.Column="2" x:Name="SearchResultsCount" Foreground="{StaticResource AccentBrush}" 
+                      VerticalAlignment="Center" Margin="5,0,10,0"/>
+
+            <StackPanel Grid.Column="3" Orientation="Horizontal">
                 <Button Content="[CLEAR]" Width="80" Height="25" Margin="0,0,5,0" Click="ClearLog_Click"/>
                 <Button Content="[SAVE LOGS]" Width="100" Height="25" Click="SaveLogs_Click"/>
             </StackPanel>
         </Grid>
 
-        <!-- Console Area -->
+        <!-- Console Area with Search Highlighting -->
         <Border Grid.Row="3" BorderBrush="{StaticResource BorderBrush}" BorderThickness="2" 
                 Background="{StaticResource ConsoleBackgroundBrush}" Margin="10,0,10,10" CornerRadius="4">
-            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-                <TextBox x:Name="ConsoleLog" 
+            <DockPanel>
+                <!-- Main console log -->
+                <RichTextBox x:Name="ConsoleLog" 
                          Background="Transparent"
                          BorderThickness="0"
                          Foreground="{StaticResource ForegroundBrush}"
                          FontFamily="Consolas"
                          IsReadOnly="True"
-                         TextWrapping="Wrap"
-                         VerticalAlignment="Stretch"
-                         HorizontalAlignment="Stretch"
-                         Padding="10"
-                         AcceptsReturn="True"/>
-            </ScrollViewer>
+                         VerticalScrollBarVisibility="Auto"
+                         HorizontalScrollBarVisibility="Auto"
+                         Padding="10">
+                    <RichTextBox.Resources>
+                        <Style TargetType="{x:Type Paragraph}">
+                            <Setter Property="Margin" Value="0"/>
+                        </Style>
+                    </RichTextBox.Resources>
+                </RichTextBox>
+            </DockPanel>
         </Border>
     </Grid>
 </Window>
