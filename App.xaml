@@ -4,17 +4,106 @@
              xmlns:local="clr-namespace:InvoiceBalanceRefreshe"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-        <!-- Fallout/Borderlands Theme Colors -->
-        <SolidColorBrush x:Key="BackgroundBrush" Color="#0A0A0A"/>
-        <SolidColorBrush x:Key="ForegroundBrush" Color="#14F209"/>
-        <SolidColorBrush x:Key="BorderBrush" Color="#3D7E34"/>
-        <SolidColorBrush x:Key="HighlightBrush" Color="#1A2E19"/>
-        <SolidColorBrush x:Key="AccentBrush" Color="#F2A007"/>
-        <SolidColorBrush x:Key="AccentBrush2" Color="#F24607"/>
-        <SolidColorBrush x:Key="DarkAccentBrush" Color="#8C5903"/>
-        <SolidColorBrush x:Key="GroupBackgroundBrush" Color="#121712"/>
-        <SolidColorBrush x:Key="ConsoleBackgroundBrush" Color="#050705"/>
-        <SolidColorBrush x:Key="SeparatorBrush" Color="#244020"/>
+        <!-- Color Palette -->
+        <SolidColorBrush x:Key="DeepTealBrush" Color="#085368"/>
+        <SolidColorBrush x:Key="SkyBlueBrush" Color="#18B4E9"/>
+        <SolidColorBrush x:Key="MintGreenBrush" Color="#98DFAF"/>
+        <SolidColorBrush x:Key="LightGoldBrush" Color="#F2D16B"/>
+        <SolidColorBrush x:Key="CharcoalBrush" Color="#393739"/>
+
+        <!-- Light Mode Colors (Default) -->
+        <SolidColorBrush x:Key="LightBackgroundBrush" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="LightForegroundBrush" Color="#393739"/>
+        <SolidColorBrush x:Key="LightBorderBrush" Color="#D0D0D0"/>
+        <SolidColorBrush x:Key="LightHighlightBrush" Color="#E8F4F7"/>
+        <SolidColorBrush x:Key="LightGroupBackgroundBrush" Color="#F5F5F5"/>
+        <SolidColorBrush x:Key="LightConsoleBackgroundBrush" Color="#F0F0F0"/>
+        <SolidColorBrush x:Key="LightSeparatorBrush" Color="#E0E0E0"/>
+
+        <!-- Dark Mode Colors -->
+        <SolidColorBrush x:Key="DarkBackgroundBrush" Color="#1E1E1E"/>
+        <SolidColorBrush x:Key="DarkForegroundBrush" Color="#E0E0E0"/>
+        <SolidColorBrush x:Key="DarkBorderBrush" Color="#444444"/>
+        <SolidColorBrush x:Key="DarkHighlightBrush" Color="#2A4A56"/>
+        <SolidColorBrush x:Key="DarkGroupBackgroundBrush" Color="#2D2D2D"/>
+        <SolidColorBrush x:Key="DarkConsoleBackgroundBrush" Color="#252525"/>
+        <SolidColorBrush x:Key="DarkSeparatorBrush" Color="#444444"/>
+
+        <!-- Active Theme Colors (Default to Light) -->
+        <SolidColorBrush x:Key="BackgroundBrush" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="ForegroundBrush" Color="#393739"/>
+        <SolidColorBrush x:Key="BorderBrush" Color="#D0D0D0"/>
+        <SolidColorBrush x:Key="HighlightBrush" Color="#E8F4F7"/>
+        <SolidColorBrush x:Key="GroupBackgroundBrush" Color="#F5F5F5"/>
+        <SolidColorBrush x:Key="ConsoleBackgroundBrush" Color="#F0F0F0"/>
+        <SolidColorBrush x:Key="SeparatorBrush" Color="#E0E0E0"/>
+        <SolidColorBrush x:Key="AccentBrush" Color="#085368"/>
+        <SolidColorBrush x:Key="AccentBrush2" Color="#18B4E9"/>
+        <SolidColorBrush x:Key="DarkAccentBrush" Color="#064557"/>
+
+        <!-- Console Header Gradients -->
+        <LinearGradientBrush x:Key="LightConsoleHeaderBrush" StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Color="#F5F5F5" Offset="0"/>
+            <GradientStop Color="#E8F4F7" Offset="0.5"/>
+            <GradientStop Color="#F5F5F5" Offset="1"/>
+        </LinearGradientBrush>
+
+        <LinearGradientBrush x:Key="DarkConsoleHeaderBrush" StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Color="#1A1A1A" Offset="0"/>
+            <GradientStop Color="#2A4A56" Offset="0.5"/>
+            <GradientStop Color="#1A1A1A" Offset="1"/>
+        </LinearGradientBrush>
+
+        <LinearGradientBrush x:Key="ConsoleHeaderBrush" StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Color="#F5F5F5" Offset="0"/>
+            <GradientStop Color="#E8F4F7" Offset="0.5"/>
+            <GradientStop Color="#F5F5F5" Offset="1"/>
+        </LinearGradientBrush>
+
+        <!-- Text Styles Based on Hierarchy -->
+        <Style x:Key="TitleHeadline" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Gilroy Medium, Arial"/>
+            <Setter Property="FontSize" Value="40"/>
+            <Setter Property="LineHeight" Value="42"/>
+            <Setter Property="Foreground" Value="{StaticResource DeepTealBrush}"/>
+        </Style>
+
+        <Style x:Key="MainHeadline" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Gilroy Bold, Arial"/>
+            <Setter Property="FontSize" Value="24"/>
+            <Setter Property="LineHeight" Value="26"/>
+            <Setter Property="Foreground" Value="{StaticResource DeepTealBrush}"/>
+        </Style>
+
+        <Style x:Key="SubHeadline" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Gilroy Semibold, Arial"/>
+            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="LineHeight" Value="20"/>
+            <Setter Property="Foreground" Value="{StaticResource SkyBlueBrush}"/>
+        </Style>
+
+        <Style x:Key="SubHeadline2" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Arial"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="LineHeight" Value="16"/>
+            <Setter Property="Foreground" Value="{StaticResource CharcoalBrush}"/>
+        </Style>
+
+        <Style x:Key="Paragraph" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Arial"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="LineHeight" Value="16"/>
+            <Setter Property="Foreground" Value="{StaticResource CharcoalBrush}"/>
+        </Style>
+
+        <Style x:Key="Caption" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Arial"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="LineHeight" Value="14"/>
+            <Setter Property="Foreground" Value="{StaticResource CharcoalBrush}"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+        </Style>
 
         <!-- Control Styles -->
         <Style TargetType="Window">
@@ -23,61 +112,81 @@
         </Style>
 
         <Style TargetType="GroupBox">
-            <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource DeepTealBrush}"/>
             <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Background" Value="{StaticResource GroupBackgroundBrush}"/>
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="FontFamily" Value="Gilroy Bold, Arial"/>
+            <Setter Property="FontSize" Value="14"/>
         </Style>
 
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="{StaticResource ForegroundBrush}"/>
-            <Setter Property="FontFamily" Value="Consolas"/>
+            <Setter Property="FontFamily" Value="Arial"/>
         </Style>
 
         <Style TargetType="TextBox">
-            <Setter Property="Background" Value="#0F160E"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
             <Setter Property="Foreground" Value="{StaticResource ForegroundBrush}"/>
             <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="FontFamily" Value="Consolas"/>
-            <Setter Property="CaretBrush" Value="{StaticResource ForegroundBrush}"/>
-            <Setter Property="SelectionBrush" Value="{StaticResource DarkAccentBrush}"/>
+            <Setter Property="FontFamily" Value="Arial"/>
+            <Setter Property="Padding" Value="5,3"/>
+            <Setter Property="CaretBrush" Value="{StaticResource DeepTealBrush}"/>
+            <Setter Property="SelectionBrush" Value="{StaticResource LightHighlightBrush}"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="{StaticResource SkyBlueBrush}"/>
+                </Trigger>
+                <Trigger Property="IsFocused" Value="True">
+                    <Setter Property="BorderBrush" Value="{StaticResource DeepTealBrush}"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
 
         <Style TargetType="Button">
-            <Setter Property="Background" Value="{StaticResource HighlightBrush}"/>
-            <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
-            <Setter Property="FontFamily" Value="Consolas"/>
+            <Setter Property="Background" Value="{StaticResource DeepTealBrush}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="{StaticResource DeepTealBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontFamily" Value="Arial"/>
             <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="Cursor" Value="Hand"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="{StaticResource DarkAccentBrush}"/>
-                    <Setter Property="Foreground" Value="#FFFFFF"/>
-                    <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                    <Setter Property="Background" Value="{StaticResource SkyBlueBrush}"/>
+                    <Setter Property="BorderBrush" Value="{StaticResource SkyBlueBrush}"/>
                 </Trigger>
                 <Trigger Property="IsPressed" Value="True">
-                    <Setter Property="Background" Value="{StaticResource AccentBrush2}"/>
+                    <Setter Property="Background" Value="{StaticResource DeepTealBrush}"/>
+                    <Setter Property="Opacity" Value="0.8"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
 
         <Style TargetType="Menu">
             <Setter Property="Background" Value="{StaticResource BackgroundBrush}"/>
-            <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource DeepTealBrush}"/>
             <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
             <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="FontFamily" Value="Arial"/>
         </Style>
 
         <Style TargetType="MenuItem">
             <Setter Property="Background" Value="{StaticResource BackgroundBrush}"/>
-            <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource DeepTealBrush}"/>
             <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="FontFamily" Value="Arial"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background" Value="{StaticResource HighlightBrush}"/>
                     <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+                </Trigger>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter Property="Background" Value="{StaticResource LightHighlightBrush}"/>
+                    <Setter Property="FontWeight" Value="Bold"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -87,19 +196,65 @@
         </Style>
 
         <Style TargetType="ProgressBar">
-            <Setter Property="Background" Value="{StaticResource BackgroundBrush}"/>
-            <Setter Property="Foreground" Value="{StaticResource AccentBrush2}"/>
+            <Setter Property="Background" Value="{StaticResource ConsoleBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource SkyBlueBrush}"/>
             <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Height" Value="15"/>
         </Style>
 
         <Style TargetType="ScrollViewer">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Padding" Value="0"/>
         </Style>
 
         <Style TargetType="ScrollBar">
             <Setter Property="Background" Value="{StaticResource BackgroundBrush}"/>
+            <Style.Triggers>
+                <Trigger Property="Orientation" Value="Vertical">
+                    <Setter Property="Width" Value="12"/>
+                </Trigger>
+                <Trigger Property="Orientation" Value="Horizontal">
+                    <Setter Property="Height" Value="12"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="CheckBox">
+            <Setter Property="Foreground" Value="{StaticResource ForegroundBrush}"/>
+            <Setter Property="FontFamily" Value="Arial"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style TargetType="RadioButton">
+            <Setter Property="Foreground" Value="{StaticResource ForegroundBrush}"/>
+            <Setter Property="FontFamily" Value="Arial"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style TargetType="ComboBox">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="{StaticResource ForegroundBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="FontFamily" Value="Arial"/>
+        </Style>
+
+        <Style TargetType="Border">
+            <Setter Property="CornerRadius" Value="4"/>
+        </Style>
+
+        <!-- RichTextBox Style for Console -->
+        <Style TargetType="RichTextBox">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource ForegroundBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontFamily" Value="Arial"/>
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
+            <Setter Property="HorizontalScrollBarVisibility" Value="Auto"/>
         </Style>
     </Application.Resources>
 </Application>
