@@ -21,7 +21,10 @@ namespace InvoiceBalanceRefresher
         public DateTime LastRunTime { get; set; }
         public bool LastRunSuccessful { get; set; }
         public string LastRunResult { get; set; }
-        
+        // Add to ScheduledTask.cs
+        public string CustomOption { get; set; } = string.Empty;
+
+
         public ScheduledTask()
         {
             // Default to running daily at current time

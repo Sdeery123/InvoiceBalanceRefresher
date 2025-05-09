@@ -6,6 +6,7 @@ using System.Xml.Serialization;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 using System.Diagnostics;
+using Microsoft.Win32.TaskScheduler;
 
 namespace InvoiceBalanceRefresher
 {
@@ -217,9 +218,59 @@ namespace InvoiceBalanceRefresher
         {
             try
             {
-                // In a real implementation, this would use Microsoft.Win32.TaskScheduler
-                // Since we can't add the NuGet package in this context, we'll just log the action
-                _logAction?.Invoke($"Would create Windows scheduled task for: {task.Name}");
+                // Skip if task is not enabled
+                if (!task.IsEnabled)
+                    return;
+
+                // Get the path to the current executable
+                string exePath = Process.GetCurrentProcess().MainModule.FileName;
+
+                // Create a new TaskDefinition
+                using (TaskService ts = new TaskService())
+                {
+                    // Create a new task definition
+                    TaskDefinition td = ts.NewTask();
+                    td.RegistrationInfo.Description = task.Description;
+
+                    // Set up triggers based on frequency
+                    switch (task.Frequency)
+                    {
+                        case ScheduleFrequency.Once:
+                            td.Triggers.Add(new TimeTrigger(task.NextRunTime));
+                            break;
+                        case ScheduleFrequency.Daily:
+                            DailyTrigger dailyTrigger = new DailyTrigger();
+                            dailyTrigger.StartBoundary = DateTime.Today.Add(task.RunTime);
+                            td.Triggers.Add(dailyTrigger);
+                            break;
+                        case ScheduleFrequency.Weekly:
+                            WeeklyTrigger weeklyTrigger = new WeeklyTrigger();
+                            weeklyTrigger.StartBoundary = DateTime.Today.Add(task.RunTime);
+                            weeklyTrigger.DaysOfWeek = DaysOfTheWeek.Monday; // You might want to make this configurable
+                            td.Triggers.Add(weeklyTrigger);
+                            break;
+                        case ScheduleFrequency.Monthly:
+                            MonthlyTrigger monthlyTrigger = new MonthlyTrigger();
+                            monthlyTrigger.StartBoundary = DateTime.Today.Add(task.RunTime);
+                            monthlyTrigger.DaysOfMonth = new int[] { 1 }; // You might want to make this configurable
+                            td.Triggers.Add(monthlyTrigger);
+                            break;
+                    }
+
+                    // Create an action that launches the application with the proper task ID
+                    td.Actions.Add(new ExecAction(exePath, $"--schedule {task.Id}", null));
+
+                    // Additional settings
+                    td.Settings.DisallowStartIfOnBatteries = false;
+                    td.Settings.StopIfGoingOnBatteries = false;
+                    td.Settings.ExecutionTimeLimit = TimeSpan.Zero; // No time limit
+
+                    // Register the task in the root folder
+                    string taskName = $"InvoiceBalanceRefresher_{task.Id}";
+                    ts.RootFolder.RegisterTaskDefinition(taskName, td);
+
+                    _logAction?.Invoke($"Created Windows scheduled task '{taskName}' for: {task.Name}");
+                }
             }
             catch (Exception ex)
             {
@@ -229,16 +280,31 @@ namespace InvoiceBalanceRefresher
 
         private void UpdateWindowsTask(ScheduledTask task)
         {
-            // Just recreate the task
-            SetupWindowsTask(task);
+            // First remove the existing task
+            RemoveWindowsTask(task);
+
+            // Then create a new one if the task is enabled
+            if (task.IsEnabled)
+            {
+                SetupWindowsTask(task);
+            }
         }
 
         private void RemoveWindowsTask(ScheduledTask task)
         {
             try
             {
-                // In a real implementation, this would use Microsoft.Win32.TaskScheduler
-                _logAction?.Invoke($"Would remove Windows scheduled task for: {task.Name}");
+                string taskName = $"InvoiceBalanceRefresher_{task.Id}";
+
+                using (TaskService ts = new TaskService())
+                {
+                    // Check if the task exists first
+                    if (ts.RootFolder.Tasks.Exists(taskName))
+                    {
+                        ts.RootFolder.DeleteTask(taskName);
+                        _logAction?.Invoke($"Removed Windows scheduled task '{taskName}' for: {task.Name}");
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -248,15 +314,9 @@ namespace InvoiceBalanceRefresher
 
         private void DisableWindowsTask(ScheduledTask task)
         {
-            try
-            {
-                // In a real implementation, this would use Microsoft.Win32.TaskScheduler
-                _logAction?.Invoke($"Would disable Windows scheduled task for: {task.Name}");
-            }
-            catch (Exception ex)
-            {
-                _logAction?.Invoke($"Error disabling Windows Task for {task.Name}: {ex.Message}");
-            }
+            // Simply remove the task as Windows Task Scheduler doesn't have a simple "disable" option
+            RemoveWindowsTask(task);
+            _logAction?.Invoke($"Disabled Windows scheduled task for: {task.Name}");
         }
     }
 }

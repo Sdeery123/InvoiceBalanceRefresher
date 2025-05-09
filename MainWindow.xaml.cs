@@ -249,26 +249,92 @@ namespace InvoiceBalanceRefresher
                     task.CsvFilePath,
                     task.HasAccountNumbers);
 
+                // Update task properties
+                task.LastRunTime = DateTime.Now;
+                task.LastRunSuccessful = success;
+                task.LastRunResult = success ? "Success" : "Failed";
+
+                // Update the task in the manager to persist changes
+                _scheduleManager.UpdateSchedule(task);
+
                 Log(LogLevel.Info, $"Scheduled task {task.Name} completed with result: {(success ? "Success" : "Failed")}");
 
-                // If this is a one-time task or was launched by Windows Task Scheduler, exit after completion
-                if (task.Frequency == ScheduleFrequency.Once || Environment.GetCommandLineArgs().Contains("--schedule"))
+                // Only exit if launched by Windows Task Scheduler, not when running from UI
+                if (Environment.GetCommandLineArgs().Contains("--schedule"))
                 {
-                    Log(LogLevel.Info, "Exiting application after scheduled task completion");
+                    Log(LogLevel.Info, "Exiting application after scheduled task completion (launched by scheduler)");
                     Application.Current.Shutdown();
+                }
+                else if (task.Frequency == ScheduleFrequency.Once)
+                {
+                    // For one-time tasks launched from UI, just show a message but don't exit
+                    Log(LogLevel.Info, "One-time task completed successfully");
+                    MessageBox.Show($"One-time task '{task.Name}' completed successfully.",
+                        "Task Complete", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                    // Refresh the schedule manager UI if it's open
+                    RefreshScheduleManagerUI();
+                }
+                else
+                {
+                    // For recurring tasks, show a simple message and refresh the UI
+                    MessageBox.Show($"Task '{task.Name}' completed successfully.",
+                        "Task Complete", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                    // Refresh the schedule manager UI if it's open
+                    RefreshScheduleManagerUI();
                 }
             }
             catch (Exception ex)
             {
+                // Update task properties even on failure
+                task.LastRunTime = DateTime.Now;
+                task.LastRunSuccessful = false;
+                task.LastRunResult = $"Error: {ex.Message.Substring(0, Math.Min(ex.Message.Length, 50))}";
+
+                // Update the task in the manager to persist changes
+                _scheduleManager.UpdateSchedule(task);
+
                 Log(LogLevel.Error, $"Error executing scheduled task {task.Name}: {ex.Message}");
 
-                // If launched by scheduler, exit with error code
+                // Only exit on error if launched by scheduler
                 if (Environment.GetCommandLineArgs().Contains("--schedule"))
                 {
                     Environment.Exit(1);
                 }
+                else
+                {
+                    // Show error message when running from UI
+                    MessageBox.Show($"Error executing task '{task.Name}': {ex.Message}",
+                        "Task Error", MessageBoxButton.OK, MessageBoxImage.Error);
+
+                    // Refresh the schedule manager UI if it's open
+                    RefreshScheduleManagerUI();
+                }
             }
         }
+
+        // Add this helper method to refresh the Schedule Manager UI if it's open
+        private void RefreshScheduleManagerUI()
+        {
+            // Find the Schedule Manager window if it's open
+            var scheduleWindow = Application.Current.Windows.OfType<Window>()
+                .FirstOrDefault(w => w.Title == "Schedule Manager");
+
+            if (scheduleWindow != null)
+            {
+                // Find the DataGrid in the window
+                var tasksGrid = FindVisualChildren<DataGrid>(scheduleWindow).FirstOrDefault();
+                if (tasksGrid != null)
+                {
+                    // Refresh the grid by resetting its ItemsSource
+                    tasksGrid.ItemsSource = null;
+                    tasksGrid.ItemsSource = _scheduleManager.ScheduledTasks;
+                }
+            }
+        }
+
+
 
         private void AddSchedulerMenuItem()
         {
@@ -612,6 +678,19 @@ namespace InvoiceBalanceRefresher
             if (OpenScheduleEditDialog(task, true))
             {
                 _scheduleManager.AddSchedule(task);
+
+                // Find the DataGrid in the current window and refresh its ItemsSource
+                var currentWindow = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.Title == "Schedule Manager");
+                if (currentWindow != null)
+                {
+                    var tasksGrid = FindVisualChildren<DataGrid>(currentWindow).FirstOrDefault();
+                    if (tasksGrid != null)
+                    {
+                        // Refresh the grid by resetting its ItemsSource
+                        tasksGrid.ItemsSource = null;
+                        tasksGrid.ItemsSource = _scheduleManager.ScheduledTasks;
+                    }
+                }
             }
         }
 
@@ -633,15 +712,30 @@ namespace InvoiceBalanceRefresher
                 IsEnabled = task.IsEnabled,
                 LastRunTime = task.LastRunTime,
                 LastRunSuccessful = task.LastRunSuccessful,
-                LastRunResult = task.LastRunResult
+                LastRunResult = task.LastRunResult,
+                CustomOption = task.CustomOption
             };
 
             // Open the edit dialog
             if (OpenScheduleEditDialog(taskCopy, false))
             {
                 _scheduleManager.UpdateSchedule(taskCopy);
+
+                // Find the DataGrid in the current window and refresh its ItemsSource
+                var currentWindow = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.Title == "Schedule Manager");
+                if (currentWindow != null)
+                {
+                    var tasksGrid = FindVisualChildren<DataGrid>(currentWindow).FirstOrDefault();
+                    if (tasksGrid != null)
+                    {
+                        // Refresh the grid by resetting its ItemsSource
+                        tasksGrid.ItemsSource = null;
+                        tasksGrid.ItemsSource = _scheduleManager.ScheduledTasks;
+                    }
+                }
             }
         }
+
 
         private void DeleteSchedule(ScheduledTask task)
         {
@@ -663,8 +757,8 @@ namespace InvoiceBalanceRefresher
             var editWindow = new Window
             {
                 Title = isNew ? "Add New Schedule" : "Edit Schedule",
-                Width = 600,
-                Height = 500,
+                Width = 700,
+                Height = 600,
                 Background = (System.Windows.Media.SolidColorBrush)FindResource("BackgroundBrush"),
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 Owner = this,
