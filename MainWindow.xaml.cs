@@ -758,7 +758,7 @@ namespace InvoiceBalanceRefresher
             {
                 Title = isNew ? "Add New Schedule" : "Edit Schedule",
                 Width = 700,
-                Height = 600,
+                Height = 650, // Increased height to accommodate new controls
                 Background = (System.Windows.Media.SolidColorBrush)FindResource("BackgroundBrush"),
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 Owner = this,
@@ -802,7 +802,8 @@ namespace InvoiceBalanceRefresher
             settingsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             settingsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
-            for (int i = 0; i < 5; i++)
+            // Add enough rows for all settings including new Windows Task Scheduler option
+            for (int i = 0; i < 6; i++) // Changed from 5 to 6 to accommodate new row
             {
                 settingsGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             }
@@ -967,6 +968,29 @@ namespace InvoiceBalanceRefresher
             Grid.SetRow(enabledCheck, 4);
             Grid.SetColumn(enabledCheck, 1);
 
+            // Add Windows Task Scheduler checkbox
+            var winTaskLabel = new TextBlock
+            {
+                Text = "Windows Task Scheduler:",
+                Foreground = (SolidColorBrush)FindResource("ForegroundBrush"),
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 0, 10, 0)
+            };
+            Grid.SetRow(winTaskLabel, 5);
+            Grid.SetColumn(winTaskLabel, 0);
+
+            var winTaskCheck = new CheckBox
+            {
+                Content = "Add to Windows Task Scheduler",
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 5, 0, 5),
+                IsChecked = task.AddToWindowsTaskScheduler, // Default to true if null
+                Foreground = (SolidColorBrush)FindResource("ForegroundBrush"),
+                ToolTip = "When checked, this task will be added to Windows Task Scheduler to run even when the application is closed"
+            };
+            Grid.SetRow(winTaskCheck, 5);
+            Grid.SetColumn(winTaskCheck, 1);
+
             // Add all controls to settings grid
             settingsGrid.Children.Add(nameLabel);
             settingsGrid.Children.Add(nameBox);
@@ -977,6 +1001,8 @@ namespace InvoiceBalanceRefresher
             settingsGrid.Children.Add(timeLabel);
             settingsGrid.Children.Add(timePanel);
             settingsGrid.Children.Add(enabledCheck);
+            settingsGrid.Children.Add(winTaskLabel);
+            settingsGrid.Children.Add(winTaskCheck);
 
             Grid.SetRow(settingsGrid, 1);
             mainGrid.Children.Add(settingsGrid);
@@ -1212,6 +1238,7 @@ namespace InvoiceBalanceRefresher
                 task.HasAccountNumbers = hasAccountsCheck.IsChecked ?? false;
                 task.Frequency = (ScheduleFrequency)freqCombo.SelectedItem;
                 task.IsEnabled = enabledCheck.IsChecked ?? true;
+                task.AddToWindowsTaskScheduler = winTaskCheck.IsChecked ?? true;
 
                 // Calculate run time from the time picker controls
                 int selectedHour = (int)hoursCombo.SelectedItem;
@@ -1257,6 +1284,7 @@ namespace InvoiceBalanceRefresher
 
             return dialogResult;
         }
+
 
 
         private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)

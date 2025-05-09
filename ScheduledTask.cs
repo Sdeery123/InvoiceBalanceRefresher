@@ -23,6 +23,9 @@ namespace InvoiceBalanceRefresher
         public string LastRunResult { get; set; }
         // Add to ScheduledTask.cs
         public string CustomOption { get; set; } = string.Empty;
+        // Add to ScheduledTask.cs
+        public bool AddToWindowsTaskScheduler { get; set; } = true;
+
 
 
         public ScheduledTask()

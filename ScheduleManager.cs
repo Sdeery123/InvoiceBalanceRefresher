@@ -120,8 +120,17 @@ namespace InvoiceBalanceRefresher
         {
             ScheduledTasks.Add(task);
             SaveSchedules();
-            SetupWindowsTask(task);
-            _logAction?.Invoke($"Added new schedule: {task.Name}, next run at {task.NextRunTime}");
+
+            // Only set up Windows Task if enabled
+            if (task.AddToWindowsTaskScheduler)
+            {
+                SetupWindowsTask(task);
+                _logAction?.Invoke($"Added new schedule: {task.Name} to Windows Task Scheduler, next run at {task.NextRunTime}");
+            }
+            else
+            {
+                _logAction?.Invoke($"Added new schedule: {task.Name}, next run at {task.NextRunTime} (Windows Task Scheduler integration disabled)");
+            }
         }
 
         public void UpdateSchedule(ScheduledTask task)
@@ -129,11 +138,31 @@ namespace InvoiceBalanceRefresher
             var existingTask = ScheduledTasks.FirstOrDefault(t => t.Id == task.Id);
             if (existingTask != null)
             {
+                // Check if Windows Task Scheduler setting changed
+                bool previousSetting = existingTask.AddToWindowsTaskScheduler;
+
+                // Update task in list
                 int index = ScheduledTasks.IndexOf(existingTask);
                 ScheduledTasks[index] = task;
                 SaveSchedules();
-                UpdateWindowsTask(task);
-                _logAction?.Invoke($"Updated schedule: {task.Name}, next run at {task.NextRunTime}");
+
+                // Handle Windows Task Scheduler changes
+                if (task.AddToWindowsTaskScheduler)
+                {
+                    // If setting was turned on or was already on, update the task
+                    UpdateWindowsTask(task);
+                    _logAction?.Invoke($"Updated schedule: {task.Name}, next run at {task.NextRunTime}");
+                }
+                else if (previousSetting && !task.AddToWindowsTaskScheduler)
+                {
+                    // If setting was turned off, remove from Windows Task Scheduler
+                    RemoveWindowsTask(task);
+                    _logAction?.Invoke($"Updated schedule: {task.Name}, removed from Windows Task Scheduler");
+                }
+                else
+                {
+                    _logAction?.Invoke($"Updated schedule: {task.Name}, next run at {task.NextRunTime}");
+                }
             }
         }
 
@@ -218,8 +247,8 @@ namespace InvoiceBalanceRefresher
         {
             try
             {
-                // Skip if task is not enabled
-                if (!task.IsEnabled)
+                // Skip if task is not enabled or Windows Task Scheduler integration is disabled
+                if (!task.IsEnabled || !task.AddToWindowsTaskScheduler)
                     return;
 
                 // Get the path to the current executable
@@ -277,6 +306,7 @@ namespace InvoiceBalanceRefresher
                 _logAction?.Invoke($"Error setting up Windows Task for {task.Name}: {ex.Message}");
             }
         }
+
 
         private void UpdateWindowsTask(ScheduledTask task)
         {
