@@ -170,13 +170,13 @@
                 <Separator/>
                 <MenuItem Header="Exit" Click="Exit_Click"/>
             </MenuItem>
-            <MenuItem Header="Help">
-                <MenuItem Header="Documentation" Click="Documentation_Click"/>
-                <MenuItem Header="About" Click="About_Click"/>
-            </MenuItem>
             <MenuItem Header="Theme">
                 <MenuItem x:Name="LightModeMenuItem" Header="Light Mode" IsChecked="True" Click="LightMode_Click"/>
                 <MenuItem x:Name="DarkModeMenuItem" Header="Dark Mode" Click="DarkMode_Click"/>
+            </MenuItem>
+            <MenuItem Header="Help">
+                <MenuItem Header="Documentation" Click="Documentation_Click"/>
+                <MenuItem Header="About" Click="About_Click"/>
             </MenuItem>
         </Menu>
 

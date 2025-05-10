@@ -26,14 +26,15 @@ namespace InvoiceBalanceRefresher
     public partial class MainWindow : Window
     {
         private readonly List<LogEntry> _logEntries = new List<LogEntry>();
-        private string _sessionLogPath;
-        private DispatcherTimer _autoScrollTimer;
+        private string _sessionLogPath = string.Empty;
+        private DispatcherTimer? _autoScrollTimer;
         private FlowDocument _originalDocument = new FlowDocument();
         private int _searchResultCount = 0;
         private string _originalBatchResults = string.Empty;
         private int _batchSearchResultCount = 0;
-        private const string APP_VERSION = "1.0.0";
-        private ScheduleManager _scheduleManager; // Add this line
+        // Update the version constant and add schedule info to the About dialog
+        private const string APP_VERSION = "1.2.0"; // Updated version
+        private readonly ScheduleManager _scheduleManager;
 
 
         public MainWindow()
@@ -45,8 +46,25 @@ namespace InvoiceBalanceRefresher
             _originalDocument = new FlowDocument();
 
             // Initialize scheduler
-            InitializeScheduler();
+            _scheduleManager = ScheduleManager.GetInstance(
+                (message) => Log(LogLevel.Info, message),
+                async (billerGUID, webServiceKey, csvFilePath, hasAccountNumbers) =>
+                {
+                    try
+                    {
+                        return await ProcessBatchInternal(billerGUID, webServiceKey, csvFilePath, hasAccountNumbers);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log(LogLevel.Error, $"Scheduled batch processing failed: {ex.Message}");
+                        return false;
+                    }
+                });
+
+            // Add the Scheduler menu item
+            AddSchedulerMenuItem();
         }
+
 
 
         private void InitializeLogging()
@@ -73,24 +91,6 @@ namespace InvoiceBalanceRefresher
 
         private void InitializeScheduler()
         {
-            _scheduleManager = ScheduleManager.GetInstance(
-                // Log action
-                (message) => Log(LogLevel.Info, message),
-                // Process batch action
-                async (billerGUID, webServiceKey, csvFilePath, hasAccountNumbers) =>
-                {
-                    try
-                    {
-                        // Reuse the batch processing logic but without UI updates
-                        return await ProcessBatchInternal(billerGUID, webServiceKey, csvFilePath, hasAccountNumbers);
-                    }
-                    catch (Exception ex)
-                    {
-                        Log(LogLevel.Error, $"Scheduled batch processing failed: {ex.Message}");
-                        return false;
-                    }
-                });
-
             // Check for command-line arguments for scheduled tasks
             var args = Environment.GetCommandLineArgs();
             for (int i = 0; i < args.Length; i++)
@@ -224,7 +224,7 @@ namespace InvoiceBalanceRefresher
                     }
                 }
 
-                string resultFilePath = IOPath.Combine(IOPath.GetDirectoryName(filePath), "InvoiceResults.csv");
+                string resultFilePath = IOPath.Combine(IOPath.GetDirectoryName(filePath) ?? AppDomain.CurrentDomain.BaseDirectory, "InvoiceResults.csv");
                 File.WriteAllText(resultFilePath, results.ToString());
 
                 Log(LogLevel.Info, $"Scheduled batch processing completed. Results saved to {resultFilePath}");
@@ -336,6 +336,7 @@ namespace InvoiceBalanceRefresher
 
 
 
+        // Updated code to fix CS8602: Dereference of a possibly null reference.
         private void AddSchedulerMenuItem()
         {
             // Get the first Menu control in the window
@@ -351,7 +352,7 @@ namespace InvoiceBalanceRefresher
             {
                 // Find the File menu
                 var fileMenu = menu.Items.OfType<MenuItem>().FirstOrDefault(m =>
-                    m.Header != null && m.Header.ToString().Contains("File"));
+                    m.Header != null && m.Header.ToString()?.Contains("File") == true); // Added null-conditional operator and null check
 
                 if (fileMenu != null)
                 {
@@ -361,7 +362,7 @@ namespace InvoiceBalanceRefresher
                     {
                         if (fileMenu.Items[i] is MenuItem menuItem &&
                             menuItem.Header != null &&
-                            menuItem.Header.ToString().Contains("Exit"))
+                            menuItem.Header.ToString()?.Contains("Exit") == true) // Added null-conditional operator and null check
                         {
                             exitIndex = i;
                             break;
@@ -1238,7 +1239,7 @@ namespace InvoiceBalanceRefresher
                 task.HasAccountNumbers = hasAccountsCheck.IsChecked ?? false;
                 task.Frequency = (ScheduleFrequency)freqCombo.SelectedItem;
                 task.IsEnabled = enabledCheck.IsChecked ?? true;
-                task.AddToWindowsTaskScheduler = winTaskCheck.IsChecked ?? true;
+                task.AddToWindowsTaskScheduler = winTaskCheck.IsChecked.GetValueOrDefault(true);
 
                 // Calculate run time from the time picker controls
                 int selectedHour = (int)hoursCombo.SelectedItem;
@@ -1313,7 +1314,7 @@ namespace InvoiceBalanceRefresher
             DarkModeMenuItem.IsChecked = true;
         }
 
-        // Update the existing SetLightMode method to use our new helper
+        // Update the calling code to handle the nullable return type
         private void SetLightMode()
         {
             // Change resources to light mode
@@ -1330,7 +1331,7 @@ namespace InvoiceBalanceRefresher
             UpdateControlsForLightMode();
 
             // Update the console header grid background - find it by position instead of name
-            Grid consoleHeaderGrid = FindConsoleHeaderGrid();
+            Grid? consoleHeaderGrid = FindConsoleHeaderGrid();
             if (consoleHeaderGrid != null)
             {
                 consoleHeaderGrid.Background = Application.Current.Resources["LightConsoleHeaderBrush"] as Brush;
@@ -1351,7 +1352,8 @@ namespace InvoiceBalanceRefresher
                 if (child != null && child is T)
                     yield return (T)child;
 
-                foreach (T childOfChild in FindVisualChildren<T>(child))
+                foreach (T childOfChild in FindVisualChildren<T>(child!))
+
                     yield return childOfChild;
             }
         }
@@ -1372,7 +1374,7 @@ namespace InvoiceBalanceRefresher
             UpdateControlsForDarkMode();
 
             // Update the console header grid background - find it by position instead of name
-            Grid consoleHeaderGrid = FindConsoleHeaderGrid();
+            Grid? consoleHeaderGrid = FindConsoleHeaderGrid();
             if (consoleHeaderGrid != null)
             {
                 consoleHeaderGrid.Background = Application.Current.Resources["DarkConsoleHeaderBrush"] as Brush;
@@ -1652,12 +1654,11 @@ namespace InvoiceBalanceRefresher
         }
 
 
-        // Helper method to find the console header grid by its position in the visual tree
-        private Grid FindConsoleHeaderGrid()
+        // Update the method to handle the nullability issue by using a nullable type and null check.
+        private Grid? FindConsoleHeaderGrid()
         {
             // The console header grid is in Grid.Row="2" of the main grid
-            Grid mainGrid = Content as Grid;
-            if (mainGrid != null)
+            if (Content is Grid mainGrid)
             {
                 foreach (UIElement element in mainGrid.Children)
                 {
@@ -1667,7 +1668,7 @@ namespace InvoiceBalanceRefresher
                     }
                 }
             }
-            return null;
+            return null; // Return null if no matching grid is found
         }
 
         // Also update the search highlight code in PerformSearch method to use theme-appropriate colors
@@ -2006,201 +2007,262 @@ namespace InvoiceBalanceRefresher
         }
 
         private async void ProcessCSV_Click(object sender, RoutedEventArgs e)
-{
-            string filePath = CSVFilePath.Text;
-            string billerGUID = BillerGUID.Text;
-            string webServiceKey = WebServiceKey.Text;
+        {
+            string filePath = CSVFilePath.Text.Trim();
+            string billerGUID = BillerGUID.Text.Trim();
+            string webServiceKey = WebServiceKey.Text.Trim();
             bool hasAccountNumbers = AccountInvoiceFormat.IsChecked ?? false;
+
+            // Validate input fields first
+            if (string.IsNullOrWhiteSpace(filePath))
+            {
+                MessageBox.Show("Please select a CSV file to process.",
+                            "Missing File Path",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Warning);
+                Log(LogLevel.Warning, "Batch processing cancelled: No CSV file selected");
+                return;
+            }
 
             // Validate BillerGUID and WebServiceKey from the single invoice fields
             if (!ValidateGUID(billerGUID) || !ValidateGUID(webServiceKey))
-    {
-        MessageBox.Show("Please enter valid Biller GUID and Web Service Key in the Single Invoice section before processing batch.",
-                        "Validation Error",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
-        Log(LogLevel.Warning, "Batch processing cancelled: Invalid Biller GUID or Web Service Key");
-        return;
-    }
-
-    if (File.Exists(filePath))
-    {
-        // Clear previous results and search state
-        BatchResults.Clear();
-        _originalBatchResults = string.Empty;
-        BatchSearchBox.Clear();
-        BatchSearchResultsCount.Text = string.Empty;
-
-        Log(LogLevel.Info, $"Starting batch processing of file: {filePath}");
-        Log(LogLevel.Info, $"Using Biller GUID: {billerGUID}");
-        Log(LogLevel.Info, $"Using Web Service Key: {webServiceKey}");
-        Log(LogLevel.Info, $"CSV has account numbers: {hasAccountNumbers}");
-
-        try
-        {
-            // Read all lines from the CSV file
-            var lines = File.ReadAllLines(filePath);
-            var results = new StringBuilder();
-            BatchProgress.Maximum = lines.Length;
-            BatchProgress.Value = 0;
-
-            Log(LogLevel.Info, $"Found {lines.Length} records to process");
-
-            // Add header to results display and CSV
-            BatchResults.AppendText($"PROCESSING INVOICES\n");
-            BatchResults.AppendText($"----------------------------------------\n");
-            
-            if (hasAccountNumbers)
             {
-                results.AppendLine("AccountNumber,InvoiceNumber,Status,BalanceDue,DueDate,TotalAmount");
-            }
-            else
-            {
-                results.AppendLine("InvoiceNumber,Status,BalanceDue,DueDate,TotalAmount");
+                MessageBox.Show("Please enter valid Biller GUID and Web Service Key in the Single Invoice section before processing batch.",
+                                "Validation Error",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Warning);
+                Log(LogLevel.Warning, "Batch processing cancelled: Invalid Biller GUID or Web Service Key");
+                return;
             }
 
-            for (int i = 0; i < lines.Length; i++)
+            if (!File.Exists(filePath))
             {
-                string line = lines[i].Trim();
-                string accountNumber = string.Empty;
-                string invoiceNumber = string.Empty;
+                MessageBox.Show("The selected file does not exist or cannot be accessed.",
+                              "File Not Found",
+                              MessageBoxButton.OK,
+                              MessageBoxImage.Error);
+                Log(LogLevel.Warning, $"Batch processing cancelled: File not found: {filePath}");
+                return;
+            }
 
-                // Process CSV line
+            try
+            {
+                // Clear previous results and search state
+                BatchResults.Clear();
+                _originalBatchResults = string.Empty;
+                BatchSearchBox.Clear();
+                BatchSearchResultsCount.Text = string.Empty;
+
+                Log(LogLevel.Info, $"Starting batch processing of file: {filePath}");
+                Log(LogLevel.Info, $"Using Biller GUID: {billerGUID}");
+                Log(LogLevel.Info, $"Using Web Service Key: {webServiceKey}");
+                Log(LogLevel.Info, $"CSV has account numbers: {hasAccountNumbers}");
+
+                // Read all lines from the CSV file
+                var lines = File.ReadAllLines(filePath);
+
+                if (lines.Length == 0)
+                {
+                    MessageBox.Show("The selected CSV file is empty.",
+                                  "Empty File",
+                                  MessageBoxButton.OK,
+                                  MessageBoxImage.Warning);
+                    Log(LogLevel.Warning, "Batch processing cancelled: Empty CSV file");
+                    return;
+                }
+
+                var results = new StringBuilder();
+                BatchProgress.Maximum = lines.Length;
+                BatchProgress.Value = 0;
+
+                Log(LogLevel.Info, $"Found {lines.Length} records to process");
+
+                // Add header to results display and CSV
+                BatchResults.AppendText($"PROCESSING INVOICES\n");
+                BatchResults.AppendText($"----------------------------------------\n");
+
                 if (hasAccountNumbers)
                 {
-                    // Format expected: AccountNumber,InvoiceNumber
-                    var parts = line.Split(',');
-                    if (parts.Length >= 2)
-                    {
-                        accountNumber = parts[0].Trim();
-                        invoiceNumber = parts[1].Trim();
-                    }
+                    results.AppendLine("AccountNumber,InvoiceNumber,Status,BalanceDue,DueDate,TotalAmount");
                 }
                 else
                 {
-                    // Format expected: InvoiceNumber only
-                    invoiceNumber = line;
-                    // Use the account number from the single invoice section if available
-                    accountNumber = AccountNumber.Text;
+                    results.AppendLine("InvoiceNumber,Status,BalanceDue,DueDate,TotalAmount");
                 }
 
-                BatchProgress.Value = i + 1;
-                BatchStatus.Text = $"Processing {i + 1} of {lines.Length}...";
+                int successCount = 0;
+                int errorCount = 0;
 
-                if (!string.IsNullOrEmpty(invoiceNumber))
+                for (int i = 0; i < lines.Length; i++)
                 {
-                    try
+                    string line = lines[i].Trim();
+                    string accountNumber = string.Empty;
+                    string invoiceNumber = string.Empty;
+
+                    // Process CSV line
+                    if (hasAccountNumbers)
                     {
-                        Log(LogLevel.Debug, $"Processing invoice: {invoiceNumber}" + 
-                            (string.IsNullOrEmpty(accountNumber) ? "" : $" for account: {accountNumber}"));
-                        
-                        // First refresh the balance if account number is provided
-                        if (!string.IsNullOrEmpty(accountNumber))
+                        // Format expected: AccountNumber,InvoiceNumber
+                        var parts = line.Split(',');
+                        if (parts.Length >= 2)
                         {
-                            Log(LogLevel.Debug, $"Refreshing balance for account {accountNumber}...");
-                            await CallCustomerRecordService(billerGUID, webServiceKey, accountNumber);
-                            Log(LogLevel.Info, $"Balance refreshed for account {accountNumber}");
+                            accountNumber = parts[0].Trim();
+                            invoiceNumber = parts[1].Trim();
                         }
-                        
-                        // Then get invoice data
-                        string resultText = await CallWebService(billerGUID, webServiceKey, invoiceNumber);
-
-                        // Extract basic data for CSV
-                        string csvLine;
-                        if (hasAccountNumbers)
-                        {
-                            csvLine = $"{accountNumber}," + FormatInvoiceDataForCSV(invoiceNumber, resultText);
-                        }
-                        else
-                        {
-                            csvLine = FormatInvoiceDataForCSV(invoiceNumber, resultText);
-                        }
-                        results.AppendLine(csvLine);
-
-                        // Update UI with full details
-                        BatchResults.AppendText($"INVOICE: {invoiceNumber}" + 
-                                              (string.IsNullOrEmpty(accountNumber) ? "" : $" (Account: {accountNumber})") + "\n");
-                        BatchResults.AppendText($"{resultText}\n");
-                        BatchResults.AppendText($"----------------------------------------\n");
-                        BatchResults.ScrollToEnd();
-
-                        Log(LogLevel.Info, $"Invoice {invoiceNumber} processed successfully");
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        string errorMsg = $"Error: {ex.Message}";
-                        Log(LogLevel.Error, $"Error processing invoice {invoiceNumber}: {ex.Message}");
+                        // Format expected: InvoiceNumber only
+                        invoiceNumber = line;
+                        // Use the account number from the single invoice section if available
+                        accountNumber = AccountNumber.Text.Trim();
+                    }
+
+                    BatchProgress.Value = i + 1;
+                    BatchStatus.Text = $"Processing {i + 1} of {lines.Length}...";
+
+                    // Force UI update to show progress
+                    await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Background);
+
+                    if (!string.IsNullOrEmpty(invoiceNumber))
+                    {
+                        try
+                        {
+                            Log(LogLevel.Debug, $"Processing invoice: {invoiceNumber}" +
+                                (string.IsNullOrEmpty(accountNumber) ? "" : $" for account: {accountNumber}"));
+
+                            // First refresh the balance if account number is provided
+                            if (!string.IsNullOrEmpty(accountNumber))
+                            {
+                                Log(LogLevel.Debug, $"Refreshing balance for account {accountNumber}...");
+                                await CallCustomerRecordService(billerGUID, webServiceKey, accountNumber);
+                                Log(LogLevel.Info, $"Balance refreshed for account {accountNumber}");
+                            }
+
+                            // Then get invoice data
+                            string resultText = await CallWebService(billerGUID, webServiceKey, invoiceNumber);
+
+                            // Extract basic data for CSV
+                            string csvLine;
+                            if (hasAccountNumbers)
+                            {
+                                csvLine = $"{accountNumber}," + FormatInvoiceDataForCSV(invoiceNumber, resultText);
+                            }
+                            else
+                            {
+                                csvLine = FormatInvoiceDataForCSV(invoiceNumber, resultText);
+                            }
+                            results.AppendLine(csvLine);
+
+                            // Update UI with full details
+                            BatchResults.AppendText($"INVOICE: {invoiceNumber}" +
+                                                  (string.IsNullOrEmpty(accountNumber) ? "" : $" (Account: {accountNumber})") + "\n");
+                            BatchResults.AppendText($"{resultText}\n");
+                            BatchResults.AppendText($"----------------------------------------\n");
+                            BatchResults.ScrollToEnd();
+
+                            Log(LogLevel.Info, $"Invoice {invoiceNumber} processed successfully");
+                            successCount++;
+                        }
+                        catch (Exception ex)
+                        {
+                            string errorMsg = $"Error: {ex.Message}";
+                            Log(LogLevel.Error, $"Error processing invoice {invoiceNumber}: {ex.Message}");
+
+                            // Add to CSV results
+                            if (hasAccountNumbers)
+                            {
+                                results.AppendLine($"{accountNumber},{invoiceNumber},Error,\"{EscapeCsvField(ex.Message)}\",,");
+                            }
+                            else
+                            {
+                                results.AppendLine($"{invoiceNumber},Error,\"{EscapeCsvField(ex.Message)}\",,");
+                            }
+
+                            // Update UI with error
+                            BatchResults.AppendText($"INVOICE: {invoiceNumber}" +
+                                                  (string.IsNullOrEmpty(accountNumber) ? "" : $" (Account: {accountNumber})") + "\n");
+                            BatchResults.AppendText($"{errorMsg}\n");
+                            BatchResults.AppendText($"----------------------------------------\n");
+                            BatchResults.ScrollToEnd();
+                            errorCount++;
+                        }
+                    }
+                    else
+                    {
+                        Log(LogLevel.Warning, $"Empty invoice number in line {i + 1}");
 
                         // Add to CSV results
                         if (hasAccountNumbers)
                         {
-                            results.AppendLine($"{accountNumber},{invoiceNumber},Error,\"{ex.Message}\",,");
+                            results.AppendLine($"{accountNumber},Line {i + 1},Error,\"Empty invoice number\",,");
                         }
                         else
                         {
-                            results.AppendLine($"{invoiceNumber},Error,\"{ex.Message}\",,");
+                            results.AppendLine($"Line {i + 1},Error,\"Empty invoice number\",,");
                         }
 
                         // Update UI with error
-                        BatchResults.AppendText($"INVOICE: {invoiceNumber}" + 
-                                              (string.IsNullOrEmpty(accountNumber) ? "" : $" (Account: {accountNumber})") + "\n");
-                        BatchResults.AppendText($"{errorMsg}\n");
+                        BatchResults.AppendText($"Line {i + 1}: Error - Empty invoice number\n");
                         BatchResults.AppendText($"----------------------------------------\n");
                         BatchResults.ScrollToEnd();
+                        errorCount++;
                     }
                 }
-                else
-                {
-                    Log(LogLevel.Warning, $"Empty invoice number in line {i + 1}");
 
-                    // Add to CSV results
-                    if (hasAccountNumbers)
-                    {
-                        results.AppendLine($"{accountNumber},Line {i + 1},Error,\"Empty invoice number\",,");
-                    }
-                    else
-                    {
-                        results.AppendLine($"Line {i + 1},Error,\"Empty invoice number\",,");
-                    }
+                string resultFilePath = IOPath.Combine(IOPath.GetDirectoryName(filePath) ?? AppDomain.CurrentDomain.BaseDirectory, "InvoiceResults.csv");
+                File.WriteAllText(resultFilePath, results.ToString());
 
-                    // Update UI with error
-                    BatchResults.AppendText($"Line {i + 1}: Error - Empty invoice number\n");
-                    BatchResults.AppendText($"----------------------------------------\n");
-                    BatchResults.ScrollToEnd();
-                }
+                // Add summary to results display
+                BatchResults.AppendText($"\n----------------------------------------\n");
+                BatchResults.AppendText($"Processing complete! Results saved to:\n{resultFilePath}\n");
+                BatchResults.AppendText($"Summary: {successCount} successful, {errorCount} failed, {lines.Length} total\n");
+                BatchResults.ScrollToEnd();
+
+                // Store the batch results for search functionality
+                _originalBatchResults = BatchResults.Text;
+
+                BatchStatus.Text = "Processing complete!";
+                Log(LogLevel.Info, $"Batch processing completed. Results saved to {resultFilePath}");
+                Log(LogLevel.Info, $"Batch summary: {successCount} successful, {errorCount} failed, {lines.Length} total");
+                MessageBox.Show($"Batch processing completed.\nResults saved to: {resultFilePath}\n\nSummary: {successCount} successful, {errorCount} failed",
+                              "Batch Complete",
+                              MessageBoxButton.OK,
+                              MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                Log(LogLevel.Error, $"Batch processing failed: {ex.Message}");
+                BatchStatus.Text = "Error during processing!";
+
+                // Add error to results display
+                BatchResults.AppendText($"\n----------------------------------------\n");
+                BatchResults.AppendText($"ERROR: {ex.Message}");
+                BatchResults.ScrollToEnd();
+
+                MessageBox.Show($"Error during batch processing: {ex.Message}",
+                               "Processing Error",
+                               MessageBoxButton.OK,
+                               MessageBoxImage.Error);
+            }
+        }
+
+        // Helper method to properly escape CSV fields
+        private string EscapeCsvField(string field)
+        {
+            if (string.IsNullOrEmpty(field))
+                return string.Empty;
+
+            // If the field contains quotes, commas, or newlines, escape quotes by doubling them
+            // and surround the whole field with quotes
+            if (field.Contains("\"") || field.Contains(",") || field.Contains("\n") || field.Contains("\r"))
+            {
+                return "\"" + field.Replace("\"", "\"\"") + "\"";
             }
 
-            string resultFilePath = IOPath.Combine(IOPath.GetDirectoryName(filePath), "InvoiceResults.csv");
-            File.WriteAllText(resultFilePath, results.ToString());
-
-            // Add summary to results display
-            BatchResults.AppendText($"\n----------------------------------------\n");
-            BatchResults.AppendText($"Processing complete! Results saved to:\n{resultFilePath}");
-            BatchResults.ScrollToEnd();
-
-            BatchStatus.Text = "Processing complete!";
-            Log(LogLevel.Info, $"Batch processing completed. Results saved to {resultFilePath}");
-            MessageBox.Show($"Batch processing completed. Results saved to {resultFilePath}");
+            return field;
         }
-        catch (Exception ex)
-        {
-            Log(LogLevel.Error, $"Batch processing failed: {ex.Message}");
-            BatchStatus.Text = "Error during processing!";
 
-            // Add error to results display
-            BatchResults.AppendText($"\n----------------------------------------\n");
-            BatchResults.AppendText($"ERROR: {ex.Message}");
-            BatchResults.ScrollToEnd();
-
-            MessageBox.Show($"Error during batch processing: {ex.Message}");
-        }
-    }
-    else
-    {
-        Log(LogLevel.Warning, "Invalid CSV file selected");
-        MessageBox.Show("Please select a valid CSV file.");
-    }
-}
 
 
         private string FormatInvoiceDataForCSV(string invoiceNumber, string resultText)
@@ -3203,9 +3265,8 @@ namespace InvoiceBalanceRefresher
                     PageContent pageContent = new PageContent();
                     FixedPage fixedPage = new FixedPage();
 
-                    // Clone the content panel for printing
-                    StackPanel printPanel = CloneElement(contentPanel) as StackPanel;
-                    if (printPanel != null)
+                    // Use pattern matching to safely cast and check for null
+                    if (CloneElement(contentPanel) is StackPanel printPanel)
                     {
                         // Set page size to A4
                         fixedPage.Width = 816; // 8.5 inches at 96 DPI
@@ -3232,7 +3293,7 @@ namespace InvoiceBalanceRefresher
             }
         }
 
-        private UIElement CloneElement(UIElement element)
+        private UIElement? CloneElement(UIElement element)
         {
             if (element == null) return null;
 
@@ -3240,10 +3301,13 @@ namespace InvoiceBalanceRefresher
             string xaml = XamlWriter.Save(element);
 
             // Deserialize from XAML
-            StringReader stringReader = new StringReader(xaml);
-            XmlReader xmlReader = XmlReader.Create(stringReader);
-            return (UIElement)XamlReader.Load(xmlReader);
+            using (StringReader stringReader = new StringReader(xaml))
+            using (XmlReader xmlReader = XmlReader.Create(stringReader))
+            {
+                return XamlReader.Load(xmlReader) as UIElement;
+            }
         }
+
 
         private void HighlightSearchTerms(string searchText, StackPanel contentPanel)
         {
@@ -3457,12 +3521,12 @@ namespace InvoiceBalanceRefresher
 
             AddSteps(section2, "To process a single invoice:", new[]
             {
-        "Enter the Biller GUID in the provided field",
-        "Enter the Web Service Key in the provided field",
-        "Enter the Account Number for the customer",
-        "Enter the Invoice Number you wish to refresh",
-        "Click [PROCESS INVOICE] to begin processing"
-    });
+                "Enter the Biller GUID in the provided field",
+                "Enter the Web Service Key in the provided field",
+                "Enter the Account Number for the customer",
+                "Enter the Invoice Number you wish to refresh",
+                "Click [PROCESS INVOICE] to begin processing"
+            });
 
             AddParagraph(section2,
                 "The result will appear in the output box below the button showing the refreshed invoice data " +
@@ -3480,12 +3544,12 @@ namespace InvoiceBalanceRefresher
 
             AddSteps(section3, "To process multiple invoices:", new[]
             {
-        "Enter the Biller GUID and Web Service Key in the Single Invoice section",
-        "Create a CSV file with one invoice number per line (or account/invoice pairs)",
-        "Check the 'CSV has Account Numbers' box if your file contains account numbers",
-        "Click [BROWSE] to select your CSV file",
-        "Click [PROCESS CSV] to begin processing the batch"
-    });
+                "Enter the Biller GUID and Web Service Key in the Single Invoice section",
+                "Create a CSV file with one invoice number per line (or account/invoice pairs)",
+                "Check the 'CSV has Account Numbers' box if your file contains account numbers",
+                "Click [BROWSE] to select your CSV file",
+                "Click [PROCESS CSV] to begin processing the batch"
+            });
 
             AddParagraph(section3, "CSV File Format Options:");
 
@@ -3504,6 +3568,31 @@ namespace InvoiceBalanceRefresher
             AddParagraph(section3,
                 "Results will be saved to a file named 'InvoiceResults.csv' in the same directory as your input file. " +
                 "This file will contain the processing status and updated balance information for each invoice.");
+
+            // SECTION 3.1: SCHEDULING (NEW)
+            AddSubheading(section3, "Automated Scheduling");
+
+            AddParagraph(section3,
+                "The application includes a built-in scheduling system that allows you to automate batch invoice processing at specific times. " +
+                "You can schedule tasks to run once, daily, weekly, or monthly, and optionally have them run even when the application is closed by integrating with Windows Task Scheduler.");
+
+            AddSteps(section3, "To schedule a batch process:", new[]
+            {
+                "Open the [File] menu and select [Scheduler]",
+                "In the Schedule Manager window, click [ADD NEW] to create a new scheduled task",
+                "Fill in the task details, including name, frequency (Once, Daily, Weekly, Monthly), and run time",
+                "Specify the CSV file path, Biller GUID, Web Service Key, and whether the CSV includes account numbers",
+                "Check 'Add to Windows Task Scheduler' if you want the task to run even when the app is closed",
+                "Click [SAVE] to add the schedule"
+            });
+
+            AddParagraph(section3,
+                "Scheduled tasks will appear in the Schedule Manager window, where you can edit, delete, or run them manually using the [RUN NOW] button. " +
+                "The application will automatically execute enabled tasks at their scheduled times. If 'Add to Windows Task Scheduler' is checked, the task will be registered with Windows and can run independently of the app.");
+
+            AddNote(section3,
+                "You can manage all scheduled tasks from the Schedule Manager, including enabling/disabling, editing, or removing them. " +
+                "Task results, last run time, and status are displayed in the manager for easy tracking.");
 
             // SECTION 4: LOGGING
             var section4 = sections["4"];
@@ -3533,11 +3622,11 @@ namespace InvoiceBalanceRefresher
 
             AddSteps(section5, "To generate a sample CSV file:", new[]
             {
-        "Click on [FILE] > Generate Sample CSV in the menu",
-        "Choose where to save the file",
-        "The file will be created with sample invoice numbers",
-        "Edit the file with your actual invoice numbers before processing"
-    });
+                "Click on [FILE] > Generate Sample CSV in the menu",
+                "Choose where to save the file",
+                "The file will be created with sample invoice numbers",
+                "Edit the file with your actual invoice numbers before processing"
+            });
 
             AddNote(section5,
                 "Remember that the Biller GUID and Web Service Key from the Single Invoice section " +
@@ -3636,6 +3725,13 @@ namespace InvoiceBalanceRefresher
                 "Is there a limit to how many invoices I can process in batch mode?",
                 "There is no hard limit in the application, but processing very large batches " +
                 "may take significant time. Consider breaking very large batches into smaller files.");
+
+            AddFAQItem(section7,
+                "How does scheduling work?",
+                "You can automate batch invoice processing by creating scheduled tasks in the Schedule Manager. " +
+                "Tasks can be set to run at specific times and frequencies, and can be integrated with Windows Task Scheduler " +
+                "to run even when the application is not open. The Schedule Manager allows you to add, edit, delete, enable/disable, " +
+                "and manually run scheduled tasks. Task results and statuses are displayed for easy monitoring.");
         }
 
         // Helper methods for content formatting
@@ -3919,7 +4015,7 @@ namespace InvoiceBalanceRefresher
             {
                 Title = "About Invoice Balance Refresher",
                 Width = 700,
-                Height = 600,
+                Height = 650, // Increased height for schedule info
                 Background = (System.Windows.Media.SolidColorBrush)FindResource("BackgroundBrush"),
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 Owner = this,
@@ -3943,18 +4039,18 @@ namespace InvoiceBalanceRefresher
                 Drawing = new DrawingGroup
                 {
                     Children =
-            {
-                new GeometryDrawing
-                {
-                    Brush = System.Windows.Media.Brushes.Transparent,
-                    Geometry = new RectangleGeometry(new Rect(0, 0, 2, 2))
-                },
-                new GeometryDrawing
-                {
-                    Brush = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)ColorConverter.ConvertFromString("#00FF00")),
-                    Geometry = new RectangleGeometry(new Rect(0, 0, 2, 1))
-                }
-            }
+                    {
+                        new GeometryDrawing
+                        {
+                            Brush = System.Windows.Media.Brushes.Transparent,
+                            Geometry = new RectangleGeometry(new Rect(0, 0, 2, 2))
+                        },
+                        new GeometryDrawing
+                        {
+                            Brush = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)ColorConverter.ConvertFromString("#00FF00")),
+                            Geometry = new RectangleGeometry(new Rect(0, 0, 2, 1))
+                        }
+                    }
                 }
             };
             mainGrid.Children.Add(scanlinesGrid);
@@ -4062,7 +4158,7 @@ namespace InvoiceBalanceRefresher
             // Add version info with build date
             var versionBlock = new TextBlock
             {
-                Text = $"Version {APP_VERSION} (Build: {DateTime.Now.ToString("MMM dd, yyyy")})",
+                Text = $"Version {APP_VERSION} (Build: {DateTime.Now:MMM dd, yyyy})",
                 FontSize = 14,
                 Foreground = (System.Windows.Media.SolidColorBrush)FindResource("AccentBrush2"),
                 TextAlignment = TextAlignment.Center,
@@ -4079,11 +4175,11 @@ namespace InvoiceBalanceRefresher
                     StartPoint = new Point(0, 0),
                     EndPoint = new Point(1, 0),
                     GradientStops = new GradientStopCollection
-            {
-                new GradientStop((Color)ColorConverter.ConvertFromString("#105062"), 0.0),
-                new GradientStop((Color)ColorConverter.ConvertFromString("#18B4E9"), 0.5),
-                new GradientStop((Color)ColorConverter.ConvertFromString("#105062"), 1.0)
-            }
+                    {
+                        new GradientStop((Color)ColorConverter.ConvertFromString("#105062"), 0.0),
+                        new GradientStop((Color)ColorConverter.ConvertFromString("#18B4E9"), 0.5),
+                        new GradientStop((Color)ColorConverter.ConvertFromString("#105062"), 1.0)
+                    }
                 },
                 Margin = new Thickness(50, 0, 50, 15),
                 HorizontalAlignment = HorizontalAlignment.Stretch
@@ -4171,11 +4267,11 @@ namespace InvoiceBalanceRefresher
                     StartPoint = new Point(0, 0),
                     EndPoint = new Point(1, 0),
                     GradientStops = new GradientStopCollection
-            {
-                new GradientStop((Color)ColorConverter.ConvertFromString("#105062"), 0.0),
-                new GradientStop((Color)ColorConverter.ConvertFromString("#18B4E9"), 0.5),
-                new GradientStop((Color)ColorConverter.ConvertFromString("#105062"), 1.0)
-            }
+                    {
+                        new GradientStop((Color)ColorConverter.ConvertFromString("#105062"), 0.0),
+                        new GradientStop((Color)ColorConverter.ConvertFromString("#18B4E9"), 0.5),
+                        new GradientStop((Color)ColorConverter.ConvertFromString("#105062"), 1.0)
+                    }
                 },
                 Margin = new Thickness(50, 5, 50, 15),
                 HorizontalAlignment = HorizontalAlignment.Stretch
@@ -4212,14 +4308,16 @@ namespace InvoiceBalanceRefresher
             // Add feature list with enhanced bullet points
             string[] features = new string[]
             {
-        "Single invoice processing with real-time balance updates",
-        "Batch processing of multiple invoices via CSV with account number support",
-        "Comprehensive logging system with session history and search",
-        "Terminal-inspired UI with light/dark mode support",
-        "Secure invoice balance checking via SOAP API integration",
-        "CSV sample generation for easier batch processing setup",
-        "Advanced error handling with automatic retry mechanisms",
-        "Customer record lookup and balance refresh capabilities"
+                "Single invoice processing with real-time balance updates",
+                "Batch processing of multiple invoices via CSV with account number support",
+                "Comprehensive logging system with session history and search",
+                "Terminal-inspired UI with light/dark mode support",
+                "Secure invoice balance checking via SOAP API integration",
+                "CSV sample generation for easier batch processing setup",
+                "Advanced error handling with automatic retry mechanisms",
+                "Customer record lookup and balance refresh capabilities",
+                "Automated batch scheduling with built-in Schedule Manager",
+                "Windows Task Scheduler integration for background execution"
             };
 
             // Create a two-column grid for features
@@ -4274,6 +4372,69 @@ namespace InvoiceBalanceRefresher
                     rightPanel.Children.Add(featureBlock);
             }
 
+            // SCHEDULE INFO SECTION
+            var scheduleBorder = new Border
+            {
+                BorderBrush = (System.Windows.Media.SolidColorBrush)FindResource("BorderBrush"),
+                BorderThickness = new Thickness(1),
+                Background = new SolidColorBrush(Color.FromArgb(30, 24, 180, 233)),
+                CornerRadius = new CornerRadius(4),
+                Padding = new Thickness(15),
+                Margin = new Thickness(10, 0, 10, 15)
+            };
+            contentPanel.Children.Add(scheduleBorder);
+
+            var schedulePanel = new StackPanel();
+            scheduleBorder.Child = schedulePanel;
+
+            var scheduleHeader = new TextBlock
+            {
+                Text = "[ SCHEDULE MANAGER & AUTOMATION ]",
+                Foreground = (System.Windows.Media.SolidColorBrush)FindResource("AccentBrush"),
+                FontWeight = FontWeights.Bold,
+                FontFamily = new FontFamily("Consolas"),
+                Margin = new Thickness(0, 0, 0, 10)
+            };
+            schedulePanel.Children.Add(scheduleHeader);
+
+            var scheduleDesc = new TextBlock
+            {
+                Text = "Automate batch invoice processing with the built-in Schedule Manager. Create, edit, and manage scheduled tasks to run batch jobs at specific times (once, daily, weekly, or monthly). Optionally, enable Windows Task Scheduler integration to run tasks even when the application is closed.",
+                Foreground = (System.Windows.Media.SolidColorBrush)FindResource("ForegroundBrush"),
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 0, 0, 8)
+            };
+            schedulePanel.Children.Add(scheduleDesc);
+
+            var scheduleFeatures = new string[]
+            {
+                "Add, edit, delete, enable/disable scheduled batch jobs",
+                "Flexible scheduling: Once, Daily, Weekly, Monthly",
+                "Manual [RUN NOW] option for any scheduled task",
+                "Track last run time, result, and status for each task",
+                "Windows Task Scheduler integration for background execution",
+                "All schedule activity is logged for audit and troubleshooting"
+            };
+
+            foreach (var feat in scheduleFeatures)
+            {
+                var featPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(10, 0, 0, 2) };
+                featPanel.Children.Add(new TextBlock
+                {
+                    Text = "•",
+                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9")),
+                    Margin = new Thickness(0, 0, 5, 0),
+                    FontWeight = FontWeights.Bold
+                });
+                featPanel.Children.Add(new TextBlock
+                {
+                    Text = feat,
+                    Foreground = (System.Windows.Media.SolidColorBrush)FindResource("ForegroundBrush"),
+                    TextWrapping = TextWrapping.Wrap
+                });
+                schedulePanel.Children.Add(featPanel);
+            }
+
             // Technical info with enhanced styling
             var techInfoBorder = new Border
             {
@@ -4314,12 +4475,12 @@ namespace InvoiceBalanceRefresher
 
             string[][] techSpecs = new string[][]
             {
-        new string[] { "Framework:", ".NET 8" },
-        new string[] { "Language:", "C# 12.0" },
-        new string[] { "UI Framework:", "WPF" },
-        new string[] { "API:", "SOAP XML" },
-        new string[] { "Created:", "May 2025" },
-        new string[] { "Build:", $"{APP_VERSION}.0" }
+                new string[] { "Framework:", ".NET 8" },
+                new string[] { "Language:", "C# 12.0" },
+                new string[] { "UI Framework:", "WPF" },
+                new string[] { "API:", "SOAP XML" },
+                new string[] { "Created:", "May 2025" },
+                new string[] { "Build:", $"{APP_VERSION}.0" }
             };
 
             for (int i = 0; i < techSpecs.Length; i++)

@@ -12,19 +12,23 @@ namespace InvoiceBalanceRefresher
 {
     public class ScheduleManager
     {
-        private static ScheduleManager _instance;
+        private static ScheduleManager _instance = null!;
         private static readonly object _lock = new object();
 
         public List<ScheduledTask> ScheduledTasks { get; private set; }
         private string _schedulesFilePath;
         private DispatcherTimer _checkTimer;
-        private Action<string> _logAction;
-        private Func<string, string, string, bool, Task<bool>> _processBatchAction;
+        private readonly Action<string> _logAction = _ => { }; // Default to a no-op action
+        private readonly Func<string, string, string, bool, System.Threading.Tasks.Task<bool>> _processBatchAction =
+    (_, _, _, _) => System.Threading.Tasks.Task.FromResult(false); // Default to a no-op function
+
+
+
 
         private ScheduleManager(Action<string> logAction, Func<string, string, string, bool, Task<bool>> processBatchAction)
         {
-            _logAction = logAction;
-            _processBatchAction = processBatchAction;
+            _logAction = logAction ?? throw new ArgumentNullException(nameof(logAction));
+            _processBatchAction = processBatchAction ?? throw new ArgumentNullException(nameof(processBatchAction));
             ScheduledTasks = new List<ScheduledTask>();
             _schedulesFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schedules.xml");
 
@@ -40,6 +44,7 @@ namespace InvoiceBalanceRefresher
 
             LoadSchedules();
         }
+
 
         public static ScheduleManager GetInstance(Action<string> logAction, Func<string, string, string, bool, Task<bool>> processBatchAction)
         {
@@ -57,7 +62,7 @@ namespace InvoiceBalanceRefresher
             return _instance;
         }
 
-        private void CheckScheduledTasks(object sender, EventArgs e)
+        private void CheckScheduledTasks(object? sender, EventArgs e)
         {
             var now = DateTime.Now;
             var tasksToRun = ScheduledTasks.Where(t => t.IsEnabled && t.NextRunTime <= now).ToList();
@@ -208,7 +213,8 @@ namespace InvoiceBalanceRefresher
                     using (var reader = new StreamReader(_schedulesFilePath))
                     {
                         XmlSerializer serializer = new XmlSerializer(typeof(List<ScheduledTask>));
-                        ScheduledTasks = (List<ScheduledTask>)serializer.Deserialize(reader);
+                        var deserializedTasks = serializer.Deserialize(reader) as List<ScheduledTask>;
+                        ScheduledTasks = deserializedTasks ?? new List<ScheduledTask>();
                         _logAction?.Invoke($"Loaded {ScheduledTasks.Count} scheduled tasks from {_schedulesFilePath}");
                     }
                 }
@@ -252,7 +258,9 @@ namespace InvoiceBalanceRefresher
                     return;
 
                 // Get the path to the current executable
-                string exePath = Process.GetCurrentProcess().MainModule.FileName;
+                string exePath = Process.GetCurrentProcess()?.MainModule?.FileName
+    ?? throw new InvalidOperationException("Unable to retrieve the executable path.");
+
 
                 // Create a new TaskDefinition
                 using (TaskService ts = new TaskService())

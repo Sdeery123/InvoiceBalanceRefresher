@@ -8,11 +8,11 @@ namespace InvoiceBalanceRefresher
     public class ScheduledTask
     {
         public Guid Id { get; set; } = Guid.NewGuid();
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public string CsvFilePath { get; set; }
-        public string BillerGUID { get; set; }
-        public string WebServiceKey { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string CsvFilePath { get; set; } = string.Empty;
+        public string BillerGUID { get; set; } = string.Empty;
+        public string WebServiceKey { get; set; } = string.Empty;
         public bool HasAccountNumbers { get; set; }
         public DateTime NextRunTime { get; set; }
         public ScheduleFrequency Frequency { get; set; }
@@ -20,7 +20,7 @@ namespace InvoiceBalanceRefresher
         public bool IsEnabled { get; set; } = true;
         public DateTime LastRunTime { get; set; }
         public bool LastRunSuccessful { get; set; }
-        public string LastRunResult { get; set; }
+        public string LastRunResult { get; set; } = string.Empty;
         // Add to ScheduledTask.cs
         public string CustomOption { get; set; } = string.Empty;
         // Add to ScheduledTask.cs
