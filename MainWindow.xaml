@@ -96,9 +96,11 @@
         </Style>
 
         <Style TargetType="Button">
-            <Setter Property="Background" Value="{StaticResource DeepTealBrush}"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderBrush" Value="{StaticResource DeepTealBrush}"/>
+            <Setter Property="Background" Value="{StaticResource MintGreenBrush}"/>
+            <!-- Updated background to MintGreenBrush -->
+            <Setter Property="Foreground" Value="{StaticResource CharcoalBrush}"/>
+            <!-- Updated text color to CharcoalBrush -->
+            <Setter Property="BorderBrush" Value="{StaticResource MintGreenBrush}"/>
             <Setter Property="FontFamily" Value="Arial"/>
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="Padding" Value="12,6"/>
@@ -108,11 +110,13 @@
                     <Setter Property="BorderBrush" Value="{StaticResource SkyBlueBrush}"/>
                 </Trigger>
                 <Trigger Property="IsPressed" Value="True">
-                    <Setter Property="Background" Value="{StaticResource DeepTealBrush}"/>
+                    <Setter Property="Background" Value="{StaticResource MintGreenBrush}"/>
                     <Setter Property="Opacity" Value="0.8"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
+
+
 
         <Style TargetType="Menu">
             <Setter Property="Background" Value="{StaticResource BackgroundBrush}"/>

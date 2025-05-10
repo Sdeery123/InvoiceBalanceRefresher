@@ -1327,6 +1327,15 @@ namespace InvoiceBalanceRefresher
             Application.Current.Resources["SeparatorBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E0E0E0"));
             Application.Current.Resources["ConsoleHeaderBrush"] = Application.Current.Resources["LightConsoleHeaderBrush"];
 
+            // Update button background and text color for light mode
+            // Use MintGreenBrush for button backgrounds instead of hardcoded color
+            foreach (Button button in FindVisualChildren<Button>(this))
+            {
+                button.Background = (SolidColorBrush)Application.Current.Resources["MintGreenBrush"];
+                button.Foreground = (SolidColorBrush)Application.Current.Resources["CharcoalBrush"];
+                button.BorderBrush = (SolidColorBrush)Application.Current.Resources["MintGreenBrush"];
+            }
+
             // Update controls that aren't automatically updated by resource changes
             UpdateControlsForLightMode();
 
@@ -1339,6 +1348,10 @@ namespace InvoiceBalanceRefresher
 
             Log(LogLevel.Info, "Switched to light mode");
         }
+
+
+
+
 
         // Helper method to find visual children of a specific type
         private IEnumerable<T> FindVisualChildren<T>(DependencyObject depObj) where T : DependencyObject
@@ -1627,12 +1640,12 @@ namespace InvoiceBalanceRefresher
                 progressBar.BorderBrush = Application.Current.Resources["LightBorderBrush"] as Brush;
             }
 
-            // Update Buttons in light mode
+            // Update Buttons in light mode - Use MintGreenBrush for the new style
             foreach (Button button in FindVisualChildren<Button>(this))
             {
-                button.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#085368"));
-                button.Foreground = Brushes.White;
-                button.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#085368"));
+                button.Background = (SolidColorBrush)Application.Current.Resources["MintGreenBrush"];
+                button.Foreground = (SolidColorBrush)Application.Current.Resources["CharcoalBrush"];
+                button.BorderBrush = (SolidColorBrush)Application.Current.Resources["MintGreenBrush"];
             }
 
             // Update RadioButtons in light mode
@@ -1652,6 +1665,7 @@ namespace InvoiceBalanceRefresher
             // Force visual refresh
             InvalidateVisual();
         }
+
 
 
         // Update the method to handle the nullability issue by using a nullable type and null check.
@@ -2909,8 +2923,14 @@ namespace InvoiceBalanceRefresher
         private void About_Click(object sender, RoutedEventArgs e)
         {
             Log(LogLevel.Info, "About dialog requested");
-            ShowAboutDialog();
+            // Use a cast to convert between the two enums
+            var aboutDialog = new AboutDialog(this, APP_VERSION,
+                (level, message) => Log((MainWindow.LogLevel)(int)level, message));
+            aboutDialog.Show();
         }
+
+
+
 
         private void ShowDocumentationWindow()
         {
@@ -3509,9 +3529,6 @@ namespace InvoiceBalanceRefresher
             AddParagraph(section1,
                 "All operations are logged in the console at the bottom of the application with searchable history.");
 
-            // Add a screenshot image placeholder
-            AddImagePlaceholder(section1, "Main Application Window");
-
             // SECTION 2: SINGLE INVOICE PROCESSING
             var section2 = sections["2"];
 
@@ -3905,63 +3922,9 @@ namespace InvoiceBalanceRefresher
             panel.Children.Add(codeBorder);
         }
 
-        private void AddImagePlaceholder(StackPanel panel, string caption)
-        {
-            var imageBorder = new Border
-            {
-                BorderThickness = new Thickness(1),
-                BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#124050")),
-                Background = new SolidColorBrush(Color.FromArgb(40, 18, 83, 106)),
-                Height = 200,
-                Margin = new Thickness(0, 10, 0, 5),
-                CornerRadius = new CornerRadius(4)
-            };
+        
 
-            var imagePanel = new StackPanel
-            {
-                VerticalAlignment = VerticalAlignment.Center,
-                HorizontalAlignment = HorizontalAlignment.Center
-            };
 
-            var imageIcon = new TextBlock
-            {
-                Text = "🖼️",
-                FontSize = 24,
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9")),
-                HorizontalAlignment = HorizontalAlignment.Center
-            };
-
-            var imageText = new TextBlock
-            {
-                Text = "[Image: " + caption + "]",
-                Foreground = (SolidColorBrush)FindResource("ForegroundBrush"),
-                HorizontalAlignment = HorizontalAlignment.Center,
-                Margin = new Thickness(0, 10, 0, 0)
-            };
-
-            // Store original font weights as strings
-            imageIcon.Tag = imageIcon.FontWeight.ToString();
-            imageText.Tag = imageText.FontWeight.ToString();
-
-            imagePanel.Children.Add(imageIcon);
-            imagePanel.Children.Add(imageText);
-            imageBorder.Child = imagePanel;
-            panel.Children.Add(imageBorder);
-
-            // Add caption below
-            var captionText = new TextBlock
-            {
-                Text = "Figure: " + caption,
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9")),
-                FontStyle = FontStyles.Italic,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                Margin = new Thickness(0, 5, 0, 15)
-            };
-
-            // Store original font weight as a string
-            captionText.Tag = captionText.FontWeight.ToString();
-            panel.Children.Add(captionText);
-        }
 
         private void AddFAQItem(StackPanel panel, string question, string answer)
         {
@@ -4006,600 +3969,7 @@ namespace InvoiceBalanceRefresher
 
 
 
-        private void ShowAboutDialog()
-        {
-            Log(LogLevel.Info, "About dialog requested");
-
-            // Create custom About window with enhanced styling
-            var aboutWindow = new Window
-            {
-                Title = "About Invoice Balance Refresher",
-                Width = 700,
-                Height = 650, // Increased height for schedule info
-                Background = (System.Windows.Media.SolidColorBrush)FindResource("BackgroundBrush"),
-                WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                Owner = this,
-                ResizeMode = ResizeMode.NoResize,
-                WindowStyle = WindowStyle.ToolWindow
-            };
-
-            // Create a Grid as the main container
-            var mainGrid = new Grid();
-            aboutWindow.Content = mainGrid;
-
-            // Add scanlines overlay (same as main window but a bit more visible)
-            var scanlinesGrid = new Grid();
-            scanlinesGrid.SetValue(Panel.ZIndexProperty, -1);
-            scanlinesGrid.Background = new DrawingBrush
-            {
-                TileMode = TileMode.Tile,
-                Viewport = new Rect(0, 0, 2, 2),
-                ViewportUnits = BrushMappingMode.Absolute,
-                Opacity = 0.07,
-                Drawing = new DrawingGroup
-                {
-                    Children =
-                    {
-                        new GeometryDrawing
-                        {
-                            Brush = System.Windows.Media.Brushes.Transparent,
-                            Geometry = new RectangleGeometry(new Rect(0, 0, 2, 2))
-                        },
-                        new GeometryDrawing
-                        {
-                            Brush = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)ColorConverter.ConvertFromString("#00FF00")),
-                            Geometry = new RectangleGeometry(new Rect(0, 0, 2, 1))
-                        }
-                    }
-                }
-            };
-            mainGrid.Children.Add(scanlinesGrid);
-
-            // Add a "terminal status" line at the top
-            var statusBar = new Border
-            {
-                Height = 25,
-                Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18536A")),
-                VerticalAlignment = VerticalAlignment.Top,
-                BorderThickness = new Thickness(0, 0, 0, 1),
-                BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#124050"))
-            };
-
-            var statusPanel = new StackPanel { Orientation = Orientation.Horizontal };
-            statusBar.Child = statusPanel;
-
-            statusPanel.Children.Add(new TextBlock
-            {
-                Text = "SYSTEM: ONLINE",
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#B2F0FF")),
-                Margin = new Thickness(10, 0, 0, 0),
-                VerticalAlignment = VerticalAlignment.Center,
-                FontFamily = new FontFamily("Consolas"),
-                FontWeight = FontWeights.Bold
-            });
-
-            // Add a "terminal" blinking cursor effect
-            var cursorBorder = new Border
-            {
-                Width = 8,
-                Height = 15,
-                Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9")),
-                Margin = new Thickness(10, 0, 0, 0),
-                VerticalAlignment = VerticalAlignment.Center,
-                HorizontalAlignment = HorizontalAlignment.Left
-            };
-
-            // Add animation for blinking cursor
-            var blinkAnimation = new System.Windows.Media.Animation.Storyboard();
-            var opacityAnimation = new System.Windows.Media.Animation.DoubleAnimation
-            {
-                From = 1.0,
-                To = 0.0,
-                Duration = new Duration(TimeSpan.FromSeconds(0.8)),
-                AutoReverse = true,
-                RepeatBehavior = System.Windows.Media.Animation.RepeatBehavior.Forever
-            };
-
-            System.Windows.Media.Animation.Storyboard.SetTarget(opacityAnimation, cursorBorder);
-            System.Windows.Media.Animation.Storyboard.SetTargetProperty(opacityAnimation, new PropertyPath("Opacity"));
-            blinkAnimation.Children.Add(opacityAnimation);
-
-            statusPanel.Children.Add(cursorBorder);
-            blinkAnimation.Begin();
-
-            mainGrid.Children.Add(statusBar);
-
-            // Create a ScrollViewer to contain all content
-            var scrollViewer = new ScrollViewer
-            {
-                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-                Margin = new Thickness(20, 35, 20, 20)
-            };
-            mainGrid.Children.Add(scrollViewer);
-
-            // Create a StackPanel for the content
-            var contentPanel = new StackPanel
-            {
-                Margin = new Thickness(0)
-            };
-            scrollViewer.Content = contentPanel;
-
-            // Add "computer readout" header above the title
-            var headerBlock = new TextBlock
-            {
-                Text = "// SYSTEM INFORMATION READOUT //",
-                FontSize = 10,
-                FontFamily = new FontFamily("Consolas"),
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9")),
-                TextAlignment = TextAlignment.Center,
-                Margin = new Thickness(0, 5, 0, 5)
-            };
-            contentPanel.Children.Add(headerBlock);
-
-            // Add logo/title with enhanced glow effect
-            var titleBlock = new TextBlock
-            {
-                Text = ">> INVOICE BALANCE REFRESHER <<",
-                FontSize = 28,
-                FontWeight = FontWeights.Bold,
-                Foreground = (System.Windows.Media.SolidColorBrush)FindResource("AccentBrush"),
-                TextAlignment = TextAlignment.Center,
-                Margin = new Thickness(0, 0, 0, 5),
-                Effect = new DropShadowEffect
-                {
-                    Color = ((System.Windows.Media.SolidColorBrush)FindResource("AccentBrush")).Color,
-                    ShadowDepth = 0,
-                    BlurRadius = 20,
-                    Opacity = 0.8
-                }
-            };
-            contentPanel.Children.Add(titleBlock);
-
-            // Add version info with build date
-            var versionBlock = new TextBlock
-            {
-                Text = $"Version {APP_VERSION} (Build: {DateTime.Now:MMM dd, yyyy})",
-                FontSize = 14,
-                Foreground = (System.Windows.Media.SolidColorBrush)FindResource("AccentBrush2"),
-                TextAlignment = TextAlignment.Center,
-                Margin = new Thickness(0, 0, 0, 15)
-            };
-            contentPanel.Children.Add(versionBlock);
-
-            // Add divider with slightly more visual appeal
-            var divider1 = new Rectangle
-            {
-                Height = 2,
-                Fill = new LinearGradientBrush
-                {
-                    StartPoint = new Point(0, 0),
-                    EndPoint = new Point(1, 0),
-                    GradientStops = new GradientStopCollection
-                    {
-                        new GradientStop((Color)ColorConverter.ConvertFromString("#105062"), 0.0),
-                        new GradientStop((Color)ColorConverter.ConvertFromString("#18B4E9"), 0.5),
-                        new GradientStop((Color)ColorConverter.ConvertFromString("#105062"), 1.0)
-                    }
-                },
-                Margin = new Thickness(50, 0, 50, 15),
-                HorizontalAlignment = HorizontalAlignment.Stretch
-            };
-            contentPanel.Children.Add(divider1);
-
-            // Build company info with enhanced terminal-style
-            var infoBorder = new Border
-            {
-                BorderBrush = (System.Windows.Media.SolidColorBrush)FindResource("BorderBrush"),
-                BorderThickness = new Thickness(1),
-                Background = new SolidColorBrush(Color.FromArgb(40, 18, 180, 233)),
-                CornerRadius = new CornerRadius(4),
-                Padding = new Thickness(15),
-                Margin = new Thickness(10, 0, 10, 15)
-            };
-            contentPanel.Children.Add(infoBorder);
-
-            var infoPanel = new StackPanel
-            {
-                Margin = new Thickness(0)
-            };
-            infoBorder.Child = infoPanel;
-
-            // Add description section with terminal styling and improved header
-            var descriptionBlock = new TextBlock
-            {
-                Text = "[ SYSTEM INFORMATION ]",
-                Foreground = (System.Windows.Media.SolidColorBrush)FindResource("AccentBrush"),
-                FontWeight = FontWeights.Bold,
-                FontFamily = new FontFamily("Consolas"),
-                Margin = new Thickness(0, 0, 0, 10)
-            };
-            infoPanel.Children.Add(descriptionBlock);
-
-            // Application description with typewriter-style text
-            var appDescriptionBlock = new TextBlock
-            {
-                Text = "A terminal-style application built for Invoice Cloud clients to efficiently refresh and validate invoice balances through the secure SOAP API service. The application features both single and batch processing capabilities with comprehensive logging and error handling.",
-                Foreground = (System.Windows.Media.SolidColorBrush)FindResource("ForegroundBrush"),
-                TextWrapping = TextWrapping.Wrap,
-                Margin = new Thickness(10, 0, 10, 10)
-            };
-            infoPanel.Children.Add(appDescriptionBlock);
-
-            // Add "System Check" display with simulated diagnostics
-            var systemCheck = new TextBlock
-            {
-                Text = "SYSTEM CHECK: ALL COMPONENTS OPERATIONAL",
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#5BFF64")),
-                FontFamily = new FontFamily("Consolas"),
-                FontSize = 12,
-                Margin = new Thickness(10, 5, 10, 5),
-                HorizontalAlignment = HorizontalAlignment.Center
-            };
-            infoPanel.Children.Add(systemCheck);
-
-            // Add copyright info with enhanced styling
-            var copyrightBorder = new Border
-            {
-                Background = new SolidColorBrush(Color.FromArgb(60, 24, 180, 233)),
-                CornerRadius = new CornerRadius(2),
-                Padding = new Thickness(5),
-                Margin = new Thickness(60, 10, 60, 10),
-                HorizontalAlignment = HorizontalAlignment.Stretch
-            };
-
-            var copyrightBlock = new TextBlock
-            {
-                Text = $"© {DateTime.Now.Year} Invoice Cloud, Inc. All Rights Reserved.",
-                Foreground = (System.Windows.Media.SolidColorBrush)FindResource("ForegroundBrush"),
-                TextAlignment = TextAlignment.Center,
-                FontFamily = new FontFamily("Consolas"),
-                FontSize = 11
-            };
-            copyrightBorder.Child = copyrightBlock;
-            infoPanel.Children.Add(copyrightBorder);
-
-            // Add second divider with improved visual appeal
-            var divider2 = new Rectangle
-            {
-                Height = 2,
-                Fill = new LinearGradientBrush
-                {
-                    StartPoint = new Point(0, 0),
-                    EndPoint = new Point(1, 0),
-                    GradientStops = new GradientStopCollection
-                    {
-                        new GradientStop((Color)ColorConverter.ConvertFromString("#105062"), 0.0),
-                        new GradientStop((Color)ColorConverter.ConvertFromString("#18B4E9"), 0.5),
-                        new GradientStop((Color)ColorConverter.ConvertFromString("#105062"), 1.0)
-                    }
-                },
-                Margin = new Thickness(50, 5, 50, 15),
-                HorizontalAlignment = HorizontalAlignment.Stretch
-            };
-            contentPanel.Children.Add(divider2);
-
-            // Features border with enhanced terminal styling
-            var featuresBorder = new Border
-            {
-                BorderBrush = (System.Windows.Media.SolidColorBrush)FindResource("BorderBrush"),
-                BorderThickness = new Thickness(1),
-                Background = (System.Windows.Media.SolidColorBrush)FindResource("GroupBackgroundBrush"),
-                CornerRadius = new CornerRadius(4),
-                Padding = new Thickness(15),
-                Margin = new Thickness(10, 0, 10, 15)
-            };
-            contentPanel.Children.Add(featuresBorder);
-
-            // Features stack panel
-            var featuresPanel = new StackPanel();
-            featuresBorder.Child = featuresPanel;
-
-            // Features header with enhanced styling
-            var featuresHeader = new TextBlock
-            {
-                Text = "[ FEATURES ]",
-                Foreground = (System.Windows.Media.SolidColorBrush)FindResource("AccentBrush"),
-                FontWeight = FontWeights.Bold,
-                FontFamily = new FontFamily("Consolas"),
-                Margin = new Thickness(0, 0, 0, 10)
-            };
-            featuresPanel.Children.Add(featuresHeader);
-
-            // Add feature list with enhanced bullet points
-            string[] features = new string[]
-            {
-                "Single invoice processing with real-time balance updates",
-                "Batch processing of multiple invoices via CSV with account number support",
-                "Comprehensive logging system with session history and search",
-                "Terminal-inspired UI with light/dark mode support",
-                "Secure invoice balance checking via SOAP API integration",
-                "CSV sample generation for easier batch processing setup",
-                "Advanced error handling with automatic retry mechanisms",
-                "Customer record lookup and balance refresh capabilities",
-                "Automated batch scheduling with built-in Schedule Manager",
-                "Windows Task Scheduler integration for background execution"
-            };
-
-            // Create a two-column grid for features
-            var featuresGrid = new Grid();
-            featuresGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            featuresGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-
-            var leftPanel = new StackPanel();
-            var rightPanel = new StackPanel();
-
-            Grid.SetColumn(leftPanel, 0);
-            Grid.SetColumn(rightPanel, 1);
-
-            featuresGrid.Children.Add(leftPanel);
-            featuresGrid.Children.Add(rightPanel);
-
-            featuresPanel.Children.Add(featuresGrid);
-
-            // Split features between two columns
-            for (int i = 0; i < features.Length; i++)
-            {
-                var bulletIcon = i % 2 == 0 ? "›" : "»"; // Alternate bullet style
-                var color = i % 2 == 0 ?
-                    new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9")) :
-                    new SolidColorBrush((Color)ColorConverter.ConvertFromString("#5BFF64"));
-
-                var featureBlock = new TextBlock
-                {
-                    Foreground = (System.Windows.Media.SolidColorBrush)FindResource("ForegroundBrush"),
-                    TextWrapping = TextWrapping.Wrap,
-                    Margin = new Thickness(5, 0, 5, 8)
-                };
-
-                // Create bullet with color
-                var bulletRun = new Run(bulletIcon + " ")
-                {
-                    Foreground = color,
-                    FontWeight = FontWeights.Bold,
-                    FontSize = 14
-                };
-
-                // Create feature text
-                var textRun = new Run(features[i]);
-
-                featureBlock.Inlines.Add(bulletRun);
-                featureBlock.Inlines.Add(textRun);
-
-                // Add to appropriate column
-                if (i < features.Length / 2)
-                    leftPanel.Children.Add(featureBlock);
-                else
-                    rightPanel.Children.Add(featureBlock);
-            }
-
-            // SCHEDULE INFO SECTION
-            var scheduleBorder = new Border
-            {
-                BorderBrush = (System.Windows.Media.SolidColorBrush)FindResource("BorderBrush"),
-                BorderThickness = new Thickness(1),
-                Background = new SolidColorBrush(Color.FromArgb(30, 24, 180, 233)),
-                CornerRadius = new CornerRadius(4),
-                Padding = new Thickness(15),
-                Margin = new Thickness(10, 0, 10, 15)
-            };
-            contentPanel.Children.Add(scheduleBorder);
-
-            var schedulePanel = new StackPanel();
-            scheduleBorder.Child = schedulePanel;
-
-            var scheduleHeader = new TextBlock
-            {
-                Text = "[ SCHEDULE MANAGER & AUTOMATION ]",
-                Foreground = (System.Windows.Media.SolidColorBrush)FindResource("AccentBrush"),
-                FontWeight = FontWeights.Bold,
-                FontFamily = new FontFamily("Consolas"),
-                Margin = new Thickness(0, 0, 0, 10)
-            };
-            schedulePanel.Children.Add(scheduleHeader);
-
-            var scheduleDesc = new TextBlock
-            {
-                Text = "Automate batch invoice processing with the built-in Schedule Manager. Create, edit, and manage scheduled tasks to run batch jobs at specific times (once, daily, weekly, or monthly). Optionally, enable Windows Task Scheduler integration to run tasks even when the application is closed.",
-                Foreground = (System.Windows.Media.SolidColorBrush)FindResource("ForegroundBrush"),
-                TextWrapping = TextWrapping.Wrap,
-                Margin = new Thickness(0, 0, 0, 8)
-            };
-            schedulePanel.Children.Add(scheduleDesc);
-
-            var scheduleFeatures = new string[]
-            {
-                "Add, edit, delete, enable/disable scheduled batch jobs",
-                "Flexible scheduling: Once, Daily, Weekly, Monthly",
-                "Manual [RUN NOW] option for any scheduled task",
-                "Track last run time, result, and status for each task",
-                "Windows Task Scheduler integration for background execution",
-                "All schedule activity is logged for audit and troubleshooting"
-            };
-
-            foreach (var feat in scheduleFeatures)
-            {
-                var featPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(10, 0, 0, 2) };
-                featPanel.Children.Add(new TextBlock
-                {
-                    Text = "•",
-                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9")),
-                    Margin = new Thickness(0, 0, 5, 0),
-                    FontWeight = FontWeights.Bold
-                });
-                featPanel.Children.Add(new TextBlock
-                {
-                    Text = feat,
-                    Foreground = (System.Windows.Media.SolidColorBrush)FindResource("ForegroundBrush"),
-                    TextWrapping = TextWrapping.Wrap
-                });
-                schedulePanel.Children.Add(featPanel);
-            }
-
-            // Technical info with enhanced styling
-            var techInfoBorder = new Border
-            {
-                BorderBrush = (System.Windows.Media.SolidColorBrush)FindResource("BorderBrush"),
-                BorderThickness = new Thickness(1),
-                Background = (System.Windows.Media.SolidColorBrush)FindResource("ConsoleBackgroundBrush"),
-                CornerRadius = new CornerRadius(4),
-                Padding = new Thickness(15),
-                Margin = new Thickness(10, 0, 10, 15)
-            };
-            contentPanel.Children.Add(techInfoBorder);
-
-            // Technical info stack panel
-            var techInfoPanel = new StackPanel();
-            techInfoBorder.Child = techInfoPanel;
-
-            // Technical info header with enhanced styling
-            var techInfoHeader = new TextBlock
-            {
-                Text = "[ TECHNICAL SPECIFICATIONS ]",
-                Foreground = (System.Windows.Media.SolidColorBrush)FindResource("AccentBrush"),
-                FontWeight = FontWeights.Bold,
-                FontFamily = new FontFamily("Consolas"),
-                Margin = new Thickness(0, 0, 0, 10)
-            };
-            techInfoPanel.Children.Add(techInfoHeader);
-
-            // Technical details with improved formatting using a Grid
-            var techGrid = new Grid();
-            techGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            techGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            techGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            techGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            techGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            techGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            techGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            techGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-
-            string[][] techSpecs = new string[][]
-            {
-                new string[] { "Framework:", ".NET 8" },
-                new string[] { "Language:", "C# 12.0" },
-                new string[] { "UI Framework:", "WPF" },
-                new string[] { "API:", "SOAP XML" },
-                new string[] { "Created:", "May 2025" },
-                new string[] { "Build:", $"{APP_VERSION}.0" }
-            };
-
-            for (int i = 0; i < techSpecs.Length; i++)
-            {
-                var label = new TextBlock
-                {
-                    Text = techSpecs[i][0],
-                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9")),
-                    FontFamily = new FontFamily("Consolas"),
-                    Margin = new Thickness(10, 2, 5, 2),
-                    FontWeight = FontWeights.Bold
-                };
-
-                var value = new TextBlock
-                {
-                    Text = techSpecs[i][1],
-                    Foreground = (System.Windows.Media.SolidColorBrush)FindResource("ForegroundBrush"),
-                    FontFamily = new FontFamily("Consolas"),
-                    Margin = new Thickness(0, 2, 0, 2)
-                };
-
-                Grid.SetRow(label, i);
-                Grid.SetColumn(label, 0);
-                Grid.SetRow(value, i);
-                Grid.SetColumn(value, 1);
-
-                techGrid.Children.Add(label);
-                techGrid.Children.Add(value);
-            }
-
-            techInfoPanel.Children.Add(techGrid);
-
-            // Add version check info
-            var versionCheckBorder = new Border
-            {
-                Background = new SolidColorBrush(Color.FromArgb(40, 24, 180, 233)),
-                CornerRadius = new CornerRadius(2),
-                Padding = new Thickness(8),
-                Margin = new Thickness(10, 10, 10, 0)
-            };
-
-            var versionCheckPanel = new StackPanel();
-            versionCheckBorder.Child = versionCheckPanel;
-
-            var versionCheckText = new TextBlock
-            {
-                Text = "VERSION STATUS: CURRENT",
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#5BFF64")),
-                FontFamily = new FontFamily("Consolas"),
-                TextAlignment = TextAlignment.Center,
-                FontSize = 11
-            };
-            versionCheckPanel.Children.Add(versionCheckText);
-
-            techInfoPanel.Children.Add(versionCheckBorder);
-
-            // Add bottom buttons with enhanced styling
-            var buttonPanel = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                Margin = new Thickness(0, 15, 0, 0)
-            };
-
-            var buttonStyle = new Style(typeof(Button));
-            buttonStyle.Setters.Add(new Setter(Button.BackgroundProperty, new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18536A"))));
-            buttonStyle.Setters.Add(new Setter(Button.ForegroundProperty, Brushes.White));
-            buttonStyle.Setters.Add(new Setter(Button.PaddingProperty, new Thickness(15, 8, 15, 8)));
-            buttonStyle.Setters.Add(new Setter(Button.BorderBrushProperty, new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9"))));
-            buttonStyle.Setters.Add(new Setter(Button.BorderThicknessProperty, new Thickness(1)));
-            buttonStyle.Setters.Add(new Setter(Button.FontFamilyProperty, new FontFamily("Consolas")));
-            buttonStyle.Setters.Add(new Setter(Button.MarginProperty, new Thickness(5)));
-            buttonStyle.Setters.Add(new Setter(Button.FontWeightProperty, FontWeights.Bold));
-            buttonStyle.Setters.Add(new Setter(Button.EffectProperty, new DropShadowEffect
-            {
-                Color = (Color)ColorConverter.ConvertFromString("#18B4E9"),
-                ShadowDepth = 0,
-                BlurRadius = 10,
-                Opacity = 0.6
-            }));
-
-            var closeButton = new Button
-            {
-                Content = "[ CLOSE ]",
-                Width = 150,
-                Style = buttonStyle
-            };
-            closeButton.Click += (s, e) => aboutWindow.Close();
-
-            var websiteButton = new Button
-            {
-                Content = "[ VISIT WEBSITE ]",
-                Width = 150,
-                Style = buttonStyle
-            };
-            websiteButton.Click += (s, e) =>
-            {
-                try
-                {
-                    // Launch browser to website
-                    Process.Start(new ProcessStartInfo
-                    {
-                        FileName = "https://www.invoicecloud.com",
-                        UseShellExecute = true
-                    });
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Unable to open website: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            };
-
-            buttonPanel.Children.Add(websiteButton);
-            buttonPanel.Children.Add(closeButton);
-            contentPanel.Children.Add(buttonPanel);
-
-            // Show the about window
-            aboutWindow.ShowDialog();
-        }
+        
 
 
         #endregion
