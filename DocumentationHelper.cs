@@ -83,7 +83,7 @@ namespace InvoiceBalanceRefresher
             // Update the docHeaderText to include version
             var docHeaderText = new TextBlock
             {
-                Text = "INVOICE BALANCE REFRESHER DOCUMENTATION - V1.4.0",
+                Text = "INVOICE BALANCE REFRESHER DOCUMENTATION - V2.0.0",
                 Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#B2F0FF")),
                 FontWeight = FontWeights.Bold,
                 FontSize = 16,
@@ -526,115 +526,192 @@ namespace InvoiceBalanceRefresher
                 "error handling, and retry logic for intermittent failures.");
 
             // SECTION 8: RATE LIMITING (NEW SECTION)
-            var section8 = sections["8"];
+            // SECTION 8: RATE LIMITING (UPDATED)
+            // SECTION 8: RATE LIMITING (UPDATED)
+var section8 = sections["8"];
 
-            DocumentFormatHelper.AddParagraph(section8,
-                "The Invoice Balance Refresher includes built-in rate limiting functionality to prevent API throttling and ensure " +
-                "reliable operation when processing large batches of invoices. Rate limiting controls how quickly the application " +
-                "sends requests to the Invoice Cloud API service.",
-                isIntro: true);
+DocumentFormatHelper.AddParagraph(section8,
+    "The Invoice Balance Refresher includes built-in rate limiting functionality to prevent API throttling and ensure " +
+    "reliable operation when processing large batches of invoices. Rate limiting controls how quickly the application " +
+    "sends requests to the Invoice Cloud API service.",
+    isIntro: true);
 
-            DocumentFormatHelper.AddSubheading(section8, "Rate Limiting Configuration");
+DocumentFormatHelper.AddSubheading(section8, "Rate Limiting Configuration");
 
-            DocumentFormatHelper.AddParagraph(section8,
-                "The application's rate limiting system has several configurable settings that determine how API requests are managed:");
+DocumentFormatHelper.AddParagraph(section8,
+    "The application's rate limiting system has several configurable settings that determine how API requests are managed:");
 
-            // Create a grid for rate limiting settings
-            var rateLimitGrid = new Grid();
-            rateLimitGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            rateLimitGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+// Create a grid for rate limiting settings
+var rateLimitGrid = new Grid();
+rateLimitGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+rateLimitGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
-            rateLimitGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            rateLimitGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            rateLimitGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            rateLimitGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            rateLimitGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+rateLimitGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+rateLimitGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+rateLimitGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+rateLimitGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+rateLimitGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
-            // Setting labels and descriptions
-            string[][] rateSettings = new string[][]
-            {
-                new string[] { "Request Interval:", "500ms (Default)" },
-                new string[] { "Request Count Threshold:", "50 requests (Default)" },
-                new string[] { "Threshold Cooldown:", "5000ms (Default)" },
-                new string[] { "Rate Limit Retry Delay:", "5000ms (Default)" },
-                new string[] { "Rate Limiting Enabled:", "Yes (Default)" }
-            };
+// Setting labels and descriptions
+string[][] rateSettings = new string[][]
+{
+    new string[] { "Request Interval:", "500ms (Default)" },
+    new string[] { "Request Count Threshold:", "50 requests (Default)" },
+    new string[] { "Threshold Cooldown:", "5000ms (Default)" },
+    new string[] { "Rate Limit Retry Delay:", "5000ms (Default)" },
+    new string[] { "Rate Limiting Enabled:", "Yes (Default)" }
+};
 
-            for (int i = 0; i < rateSettings.Length; i++)
-            {
-                var settingLabel = new TextBlock
-                {
-                    Text = rateSettings[i][0],
-                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E55555")),
-                    FontFamily = new FontFamily("Consolas"),
-                    FontWeight = FontWeights.Bold,
-                    Margin = new Thickness(15, 5, 15, 5)
-                };
+for (int i = 0; i < rateSettings.Length; i++)
+{
+    var settingLabel = new TextBlock
+    {
+        Text = rateSettings[i][0],
+        Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E55555")),
+        FontFamily = new FontFamily("Consolas"),
+        FontWeight = FontWeights.Bold,
+        Margin = new Thickness(15, 5, 15, 5)
+    };
 
-                var settingValue = new TextBlock
-                {
-                    Text = rateSettings[i][1],
-                    Foreground = (SolidColorBrush)owner.FindResource("ForegroundBrush"),
-                    TextWrapping = TextWrapping.Wrap,
-                    Margin = new Thickness(0, 5, 0, 5)
-                };
+    var settingValue = new TextBlock
+    {
+        Text = rateSettings[i][1],
+        Foreground = (SolidColorBrush)owner.FindResource("ForegroundBrush"),
+        TextWrapping = TextWrapping.Wrap,
+        Margin = new Thickness(0, 5, 0, 5)
+    };
 
-                Grid.SetRow(settingLabel, i);
-                Grid.SetColumn(settingLabel, 0);
-                Grid.SetRow(settingValue, i);
-                Grid.SetColumn(settingValue, 1);
+    Grid.SetRow(settingLabel, i);
+    Grid.SetColumn(settingLabel, 0);
+    Grid.SetRow(settingValue, i);
+    Grid.SetColumn(settingValue, 1);
 
-                rateLimitGrid.Children.Add(settingLabel);
-                rateLimitGrid.Children.Add(settingValue);
-            }
+    rateLimitGrid.Children.Add(settingLabel);
+    rateLimitGrid.Children.Add(settingValue);
+}
 
-            section8.Children.Add(rateLimitGrid);
+section8.Children.Add(rateLimitGrid);
 
-            DocumentFormatHelper.AddSubheading(section8, "Understanding Rate Limiting Settings");
+DocumentFormatHelper.AddSubheading(section8, "Understanding Rate Limiting Settings");
 
-            DocumentFormatHelper.AddParagraph(section8,
-                "Each rate limiting setting controls a specific aspect of the application's API request behavior:");
+DocumentFormatHelper.AddParagraph(section8,
+    "Each rate limiting setting controls a specific aspect of the application's API request behavior:");
 
-            DocumentFormatHelper.AddBulletPoint(section8,
-                "Request Interval: The minimum time in milliseconds between consecutive API requests. " +
-                "This setting spreads out requests to avoid overwhelming the API service with sudden bursts of traffic.");
+DocumentFormatHelper.AddBulletPoint(section8,
+    "Request Interval: The minimum time in milliseconds between consecutive API requests. " +
+    "This setting spreads out requests to avoid overwhelming the API service with sudden bursts of traffic.");
 
-            DocumentFormatHelper.AddBulletPoint(section8,
-                "Request Count Threshold: The maximum number of requests that will be sent before enforcing a cooldown period. " +
-                "This prevents the application from sending too many requests in a short timeframe.");
+DocumentFormatHelper.AddBulletPoint(section8,
+    "Request Count Threshold: The maximum number of requests that will be sent before enforcing a cooldown period. " +
+    "This prevents the application from sending too many requests in a short timeframe.");
 
-            DocumentFormatHelper.AddBulletPoint(section8,
-                "Threshold Cooldown: The duration in milliseconds that the application will pause after reaching the request count threshold. " +
-                "This gives the API service time to process existing requests before sending more.");
+DocumentFormatHelper.AddBulletPoint(section8,
+    "Threshold Cooldown: The duration in milliseconds that the application will pause after reaching the request count threshold. " +
+    "This gives the API service time to process existing requests before sending more.");
 
-            DocumentFormatHelper.AddBulletPoint(section8,
-                "Rate Limit Retry Delay: The time in milliseconds the application will wait before retrying a request that received a " +
-                "rate limit response (HTTP 429) from the API server.");
+DocumentFormatHelper.AddBulletPoint(section8,
+    "Rate Limit Retry Delay: The time in milliseconds the application will wait before retrying a request that received a " +
+    "rate limit response (HTTP 429) from the API server.");
 
-            DocumentFormatHelper.AddBulletPoint(section8,
-                "Rate Limiting Enabled: Master toggle that enables or disables all rate limiting functionality. It's recommended to " +
-                "keep this enabled to ensure reliable API communication.");
+DocumentFormatHelper.AddBulletPoint(section8,
+    "Rate Limiting Enabled: Master toggle that enables or disables all rate limiting functionality. It's recommended to " +
+    "keep this enabled to ensure reliable API communication.");
 
-            DocumentFormatHelper.AddSubheading(section8, "Configuring Rate Limiting");
+DocumentFormatHelper.AddSubheading(section8, "Configuring Rate Limiting");
 
-            DocumentFormatHelper.AddSteps(section8, "To adjust rate limiting settings:", new[]
-            {
-                "Open the application menu and select [Settings] > [Rate Limiting]",
-                "The Rate Limiting Settings dialog will appear",
-                "Enable or disable rate limiting using the checkbox at the top",
-                "Adjust each setting according to your needs",
-                "Click [Save] to apply your changes, or [Reset] to restore default values",
-                "Click [Cancel] to close without saving changes"
-            });
+DocumentFormatHelper.AddSteps(section8, "To adjust rate limiting settings:", new[]
+{
+    "Open the application menu and select [Settings] > [Rate Limiting]",
+    "The Rate Limiting Settings dialog will appear",
+    "Enable or disable rate limiting using the checkbox at the top",
+    "Adjust each setting according to your needs",
+    "Click [Save] to apply your changes, or [Reset] to restore default values",
+    "Click [Cancel] to close without saving changes"
+});
 
-            DocumentFormatHelper.AddParagraph(section8,
-                "For large batch processing operations, the application displays rate limiting status in the progress information. " +
-                "If requests are being limited, the application will automatically adjust its behavior according to these settings.");
+DocumentFormatHelper.AddParagraph(section8,
+    "For large batch processing operations, the application displays rate limiting status in the progress information. " +
+    "If requests are being limited, the application will automatically adjust its behavior according to these settings.");
 
-            DocumentFormatHelper.AddNote(section8,
-                "If you experience frequent 'Rate Limit Exceeded' or '429 Too Many Requests' errors, try increasing the Request Interval " +
-                "or reducing the Request Count Threshold. The default settings work well for most accounts, but some may require adjustment " +
-                "based on specific API limits assigned to your Invoice Cloud account.");
+DocumentFormatHelper.AddNote(section8,
+    "If you experience frequent 'Rate Limit Exceeded' or '429 Too Many Requests' errors, try increasing the Request Interval " +
+    "or reducing the Request Count Threshold. The default settings work well for most accounts, but some may require adjustment " +
+    "based on specific API limits assigned to your Invoice Cloud account.");
+
+// RTDR Special Options Section
+DocumentFormatHelper.AddSubheading(section8, "RTDR Special Options");
+
+DocumentFormatHelper.AddParagraph(section8,
+    "For billers using RTDR (Real-Time Data Refresh), the application provides special options to control how invoice " +
+    "balances are refreshed under specific conditions:");
+
+// Option 1: RTDR - Override 6 Hour Previous RTDR Check
+DocumentFormatHelper.AddSubheading(section8, "RTDR - Override 6 Hour Previous RTDR Check");
+
+DocumentFormatHelper.AddParagraph(section8,
+    "For billers with RTDR, the system normally does not pull an RTDR balance if a successful balance refresh occurred within the past 6 hours. " +
+    "Enabling this option forces a refresh regardless of the 6-hour restriction.");
+
+DocumentFormatHelper.AddNote(section8,
+    "This option is OFF by default. If you attempt to force a refresh while this option is disabled, the system will not refresh the balance " +
+    "if a successful refresh occurred in the last 6 hours.");
+
+// Option 2: Disable 24-hour payment check on RTDR for AutoPay Payments
+DocumentFormatHelper.AddSubheading(section8, "Disable 24-hour payment check on RTDR for AutoPay Payments");
+
+DocumentFormatHelper.AddParagraph(section8,
+    "When enabled, this option will override the 24-hour hold period for RTDR on invoices with recent AutoPay payment activity. " +
+    "This allows balance refreshes to occur on invoices that have had AutoPay payments within the last 24 hours.");
+
+DocumentFormatHelper.AddNote(section8,
+    "This option is OFF by default. To enable or disable this setting, you must contact Invoice Cloud support.");
+
+// Option 3: Disable 24-hour payment check for RTDR
+DocumentFormatHelper.AddSubheading(section8, "Disable 24-hour payment check for RTDR");
+
+DocumentFormatHelper.AddParagraph(section8,
+    "RTDR will not refresh balances on invoices with any payment within the previous 24 hours. When enabled, " +
+    "this option will bypass that check, allowing balance refreshes to occur regardless of recent payment activity.");
+
+DocumentFormatHelper.AddNote(section8,
+    "This option is OFF by default. To enable or disable this setting, you must contact Invoice Cloud support.");
+
+// Add warning about RTDR options
+var warningBorder = new Border
+{
+    BorderThickness = new Thickness(1),
+    BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E55555")),
+    Background = new SolidColorBrush(Color.FromArgb(20, 229, 85, 85)),
+    Padding = new Thickness(10),
+    Margin = new Thickness(0, 5, 0, 15),
+    CornerRadius = new CornerRadius(4)
+};
+
+var warningPanel = new StackPanel { Orientation = Orientation.Horizontal };
+
+var warningIcon = new TextBlock
+{
+    Text = "⚠️",
+    FontSize = 14,
+    Margin = new Thickness(0, 0, 8, 0),
+    VerticalAlignment = VerticalAlignment.Top
+};
+
+var warningText = new TextBlock
+{
+    Text = "Warning: Use these RTDR override options with caution. They are designed for specific business use cases where immediate " +
+           "balance refreshes are required even after recent payments. Enabling these options may cause balance discrepancies " +
+           "if payment posting is still in progress.",
+    Foreground = (SolidColorBrush)Application.Current.Resources["ForegroundBrush"],
+    TextWrapping = TextWrapping.Wrap
+};
+
+warningPanel.Children.Add(warningIcon);
+warningPanel.Children.Add(warningText);
+warningBorder.Child = warningPanel;
+section8.Children.Add(warningBorder);
+
+
 
             // SECTION 9: FAQ
             var section9 = sections["9"];

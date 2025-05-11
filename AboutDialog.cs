@@ -243,10 +243,10 @@ namespace InvoiceBalanceRefresher
             };
             infoPanel.Children.Add(descriptionBlock);
 
-            // Application description with typewriter-style text
+            // Application description with typewriter-style text - Updated to mention new features
             var appDescriptionBlock = new TextBlock
             {
-                Text = "A terminal-style application built for Invoice Cloud clients to efficiently refresh and validate invoice balances through the secure SOAP API service. The application features single invoice processing, batch processing via CSV files, secure credential management, and built-in rate limiting to ensure optimal API interactions.",
+                Text = "A terminal-style application built for Invoice Cloud clients to efficiently refresh and validate invoice balances through the secure SOAP API service. Features include single invoice processing, batch processing via CSV files, secure credential management, enhanced RTDR options, automated maintenance, and configurable rate limiting to ensure optimal API interactions.",
                 Foreground = (SolidColorBrush)_ownerWindow.FindResource("ForegroundBrush"),
                 TextWrapping = TextWrapping.Wrap,
                 Margin = new Thickness(10, 0, 10, 10)
@@ -347,7 +347,9 @@ namespace InvoiceBalanceRefresher
                 "Customer record lookup and balance refresh capabilities",
                 "Automated batch scheduling with built-in Schedule Manager",
                 "Windows Task Scheduler integration for background execution",
-                "Configurable API rate limiting to prevent throttling"
+                "Configurable API rate limiting to prevent throttling",
+                "Enhanced RTDR balance check options",
+                "Automated log and task maintenance"
             };
 
             // Create a two-column grid for features
@@ -607,6 +609,64 @@ namespace InvoiceBalanceRefresher
                 rateLimitPanel.Children.Add(featPanel);
             }
 
+            // RTDR Special Options Header
+            var rtdrHeader = new TextBlock
+            {
+                Text = "RTDR Special Options:",
+                Foreground = (SolidColorBrush)_ownerWindow.FindResource("AccentBrush2"),
+                FontFamily = new FontFamily("Consolas"),
+                FontWeight = FontWeights.Bold,
+                Margin = new Thickness(0, 15, 0, 5)
+            };
+            rateLimitPanel.Children.Add(rtdrHeader);
+
+            // Add RTDR options
+            var rtdrOptions = new string[]
+            {
+                "RTDR - Override 6 Hour Previous RTDR Check: Forces refresh regardless of recent successful refreshes",
+                "Disable 24-hour payment check on RTDR for AutoPay Payments: Overrides hold period for AutoPay invoices",
+                "Disable 24-hour payment check for RTDR: Allows balance refresh on invoices with recent payment activity"
+            };
+
+            foreach (var option in rtdrOptions)
+            {
+                var optionPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(10, 0, 0, 2) };
+                optionPanel.Children.Add(new TextBlock
+                {
+                    Text = "•",
+                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E55555")),
+                    Margin = new Thickness(0, 0, 5, 0),
+                    FontWeight = FontWeights.Bold
+                });
+                optionPanel.Children.Add(new TextBlock
+                {
+                    Text = option,
+                    Foreground = (SolidColorBrush)_ownerWindow.FindResource("ForegroundBrush"),
+                    TextWrapping = TextWrapping.Wrap
+                });
+                rateLimitPanel.Children.Add(optionPanel);
+            }
+
+            // Add a note about RTDR options
+            var rtdrNote = new Border
+            {
+                Background = new SolidColorBrush(Color.FromArgb(20, 229, 85, 85)),
+                CornerRadius = new CornerRadius(2),
+                Padding = new Thickness(8),
+                Margin = new Thickness(10, 5, 10, 5)
+            };
+
+            var rtdrNoteText = new TextBlock
+            {
+                Text = "Note: All RTDR options are OFF by default and require Invoice Cloud support to enable.",
+                Foreground = (SolidColorBrush)_ownerWindow.FindResource("ForegroundBrush"),
+                TextWrapping = TextWrapping.Wrap,
+                FontStyle = FontStyles.Italic,
+                FontSize = 11
+            };
+            rtdrNote.Child = rtdrNoteText;
+            rateLimitPanel.Children.Add(rtdrNote);
+
             // Rate limit status indicator
             var rateLimitStatusBorder = new Border
             {
@@ -690,6 +750,89 @@ namespace InvoiceBalanceRefresher
                 });
                 schedulePanel.Children.Add(featPanel);
             }
+
+            // MAINTENANCE SYSTEM SECTION (NEW)
+            var maintenanceBorder = new Border
+            {
+                BorderBrush = (SolidColorBrush)_ownerWindow.FindResource("BorderBrush"),
+                BorderThickness = new Thickness(1),
+                Background = new SolidColorBrush(Color.FromArgb(30, 24, 180, 233)),
+                CornerRadius = new CornerRadius(4),
+                Padding = new Thickness(15),
+                Margin = new Thickness(10, 0, 10, 15)
+            };
+            contentPanel.Children.Add(maintenanceBorder);
+
+            var maintenancePanel = new StackPanel();
+            maintenanceBorder.Child = maintenancePanel;
+
+            var maintenanceHeader = new TextBlock
+            {
+                Text = "[ MAINTENANCE SYSTEM ]",
+                Foreground = (SolidColorBrush)_ownerWindow.FindResource("AccentBrush"),
+                FontWeight = FontWeights.Bold,
+                FontFamily = new FontFamily("Consolas"),
+                Margin = new Thickness(0, 0, 0, 10)
+            };
+            maintenancePanel.Children.Add(maintenanceHeader);
+
+            var maintenanceDesc = new TextBlock
+            {
+                Text = "The application includes an automated maintenance system that helps keep the application running smoothly by managing log files and scheduled tasks.",
+                Foreground = (SolidColorBrush)_ownerWindow.FindResource("ForegroundBrush"),
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 0, 0, 8)
+            };
+            maintenancePanel.Children.Add(maintenanceDesc);
+
+            var maintenanceFeatures = new string[]
+            {
+                "Automatic log cleanup with configurable retention period",
+                "Session file management to prevent disk space issues",
+                "Orphaned task cleanup for Windows Task Scheduler integration",
+                "Configurable maintenance frequency (Every Startup, Daily, Weekly, Monthly)",
+                "Manual maintenance option with detailed logging",
+                "Comprehensive maintenance settings interface"
+            };
+
+            foreach (var feat in maintenanceFeatures)
+            {
+                var featPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(10, 0, 0, 2) };
+                featPanel.Children.Add(new TextBlock
+                {
+                    Text = "•",
+                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#5BFF64")),
+                    Margin = new Thickness(0, 0, 5, 0),
+                    FontWeight = FontWeights.Bold
+                });
+                featPanel.Children.Add(new TextBlock
+                {
+                    Text = feat,
+                    Foreground = (SolidColorBrush)_ownerWindow.FindResource("ForegroundBrush"),
+                    TextWrapping = TextWrapping.Wrap
+                });
+                maintenancePanel.Children.Add(featPanel);
+            }
+
+            // Add maintenance status indicator
+            var maintenanceStatusBorder = new Border
+            {
+                Background = new SolidColorBrush(Color.FromArgb(40, 91, 255, 100)),
+                CornerRadius = new CornerRadius(2),
+                Padding = new Thickness(8),
+                Margin = new Thickness(10, 10, 10, 0)
+            };
+
+            var maintenanceStatus = new TextBlock
+            {
+                Text = "STATUS: MAINTENANCE SYSTEM ACTIVE",
+                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#5BFF64")),
+                FontFamily = new FontFamily("Consolas"),
+                TextAlignment = TextAlignment.Center,
+                FontSize = 11
+            };
+            maintenanceStatusBorder.Child = maintenanceStatus;
+            maintenancePanel.Children.Add(maintenanceStatusBorder);
 
             // Technical info with enhanced styling
             var techInfoBorder = new Border
