@@ -64,6 +64,10 @@
         <SolidColorBrush x:Key="MintGreenBrush" Color="#98DFAF"/>
         <SolidColorBrush x:Key="LightGoldBrush" Color="#F2D16B"/>
         <SolidColorBrush x:Key="CharcoalBrush" Color="#393739"/>
+        <SolidColorBrush x:Key="WarningBrush" Color="#F2D16B"/>
+        <!-- Using LightGold for warnings -->
+        <SolidColorBrush x:Key="WarningTextBrush" Color="#8B4513"/>
+        <!-- Dark brown for warning text -->
 
         <!-- Dark Mode Colors -->
         <SolidColorBrush x:Key="DarkBackgroundBrush" Color="#1E1E1E"/>
@@ -125,6 +129,14 @@
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="LineHeight" Value="14"/>
             <Setter Property="Foreground" Value="{StaticResource CharcoalBrush}"/>
+        </Style>
+
+        <Style x:Key="WarningText" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Arial"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="LineHeight" Value="18"/>
+            <Setter Property="Foreground" Value="{StaticResource WarningTextBrush}"/>
         </Style>
 
         <!-- Control Styles -->
@@ -235,6 +247,9 @@
             <MenuItem Header="Credentials">
                 <MenuItem Header="Manage Credential Sets" Click="ManageCredentials_Click"/>
             </MenuItem>
+            <MenuItem Header="Settings">
+                <MenuItem Header="Rate Limiting Configuration" Click="RateLimitSettings_Click"/>
+            </MenuItem>
             <MenuItem Header="Help">
                 <MenuItem Header="Documentation" Click="Documentation_Click"/>
                 <MenuItem Header="About" Click="About_Click"/>
@@ -343,6 +358,8 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <!-- For API Warning Alert -->
+                                <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="220"/>
@@ -372,15 +389,35 @@
                                            VerticalAlignment="Center"/>
                             </Grid>
 
-                            <Button Grid.Row="3" Content="Process CSV" Width="200" 
-                                    HorizontalAlignment="Left" Margin="0,15,0,15" Click="ProcessCSV_Click"/>
+                            <!-- API Call Warning Alert -->
+                            <Border Grid.Row="3" Margin="0,15,0,10" Background="{StaticResource WarningBrush}" 
+                                    BorderThickness="1" BorderBrush="#8B4513" CornerRadius="4" Padding="10">
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource WarningText}" TextWrapping="Wrap">
+                                        WARNING: Each invoice in the batch will make a separate API call to the server. 
+                                        Please be aware of:
+                                    </TextBlock>
+                                    <TextBlock Margin="15,5,0,0" Style="{StaticResource WarningText}" TextWrapping="Wrap">
+                                        • Potential rate limits on the API
+                                    </TextBlock>
+                                    <TextBlock Margin="15,2,0,0" Style="{StaticResource WarningText}" TextWrapping="Wrap">
+                                        • API usage costs or quotas that may apply
+                                    </TextBlock>
+                                    <TextBlock Margin="15,2,0,0" Style="{StaticResource WarningText}" TextWrapping="Wrap">
+                                        • Processing time for large batches
+                                    </TextBlock>
+                                </StackPanel>
+                            </Border>
 
-                            <ProgressBar Grid.Row="4" x:Name="BatchProgress" Height="20" Margin="0,5,0,5"/>
+                            <Button Grid.Row="4" Content="Process CSV" Width="200" 
+                                    HorizontalAlignment="Left" Margin="0,5,0,15" Click="ProcessCSV_Click"/>
 
-                            <TextBlock Grid.Row="5" x:Name="BatchStatus" Margin="0,5,0,5" Style="{StaticResource Paragraph}" TextWrapping="Wrap"/>
+                            <ProgressBar Grid.Row="5" x:Name="BatchProgress" Height="20" Margin="0,5,0,5"/>
+
+                            <TextBlock Grid.Row="6" x:Name="BatchStatus" Margin="0,5,0,5" Style="{StaticResource Paragraph}" TextWrapping="Wrap"/>
 
                             <!-- Batch Results Search Bar -->
-                            <Grid Grid.Row="6" Margin="0,10,0,5">
+                            <Grid Grid.Row="7" Margin="0,10,0,5">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="*"/>
@@ -400,7 +437,7 @@
                             </Grid>
 
                             <!-- Batch Results Display -->
-                            <Border Grid.Row="7" BorderThickness="1" 
+                            <Border Grid.Row="8" BorderThickness="1" 
                                     BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource ConsoleBackgroundBrush}" 
                                     Margin="0,5,0,0" CornerRadius="2">
                                 <DockPanel>

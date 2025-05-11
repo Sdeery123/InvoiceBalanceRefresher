@@ -1,6 +1,7 @@
 using System;
 using System.Net.Http;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace InvoiceBalanceRefresher
@@ -14,9 +15,82 @@ namespace InvoiceBalanceRefresher
         private const int MaxRetries = 3;
         private const int InitialRetryDelayMs = 1000;
 
+        // Rate limiting parameters
+        private static readonly SemaphoreSlim _throttleSemaphore = new SemaphoreSlim(1, 1);
+        private static DateTime _lastRequestTime = DateTime.MinValue;
+        private static int _requestCount = 0;
+
+        // Configuration settings - will be loaded from config
+        // Declare the field as nullable to satisfy the compiler
+        private static RateLimitingConfig? _rateLimitConfig;
+
+        // Update the constructor to ensure the field is initialized if null
         public InvoiceCloudApiService(Action<LogLevel, string> logAction)
         {
             _logAction = logAction ?? throw new ArgumentNullException(nameof(logAction));
+
+            // Load rate limiting config if not already loaded
+            if (_rateLimitConfig == null)
+            {
+                _rateLimitConfig = RateLimitingConfig.Load();
+            }
+        }
+
+
+        /// <summary>
+        /// Updates the rate limiting configuration settings
+        /// </summary>
+        public static void UpdateRateLimitConfig(RateLimitingConfig config)
+        {
+            if (config != null)
+            {
+                _rateLimitConfig = config;
+            }
+        }
+
+        /// <summary>
+        /// Applies rate limiting to ensure we don't overload the API
+        /// </summary>
+        private async Task ApplyRateLimiting()
+        {
+            // Skip rate limiting if disabled
+            if (_rateLimitConfig == null || !_rateLimitConfig.RateLimitingEnabled)
+            {
+                return;
+            }
+
+            await _throttleSemaphore.WaitAsync();
+            try
+            {
+                // Calculate time since last request
+                TimeSpan timeSinceLastRequest = DateTime.UtcNow - _lastRequestTime;
+
+                // If we've made a recent request, wait until the minimum interval has passed
+                if (timeSinceLastRequest < TimeSpan.FromMilliseconds(_rateLimitConfig.RequestIntervalMs))
+                {
+                    int delayMs = (int)(TimeSpan.FromMilliseconds(_rateLimitConfig.RequestIntervalMs) - timeSinceLastRequest).TotalMilliseconds;
+                    _logAction(LogLevel.Debug, $"Rate limiting: Waiting {delayMs}ms before next request");
+                    await Task.Delay(delayMs);
+                }
+
+                // Increment request counter and apply additional cooling period if threshold reached
+                _requestCount++;
+                if (_requestCount >= _rateLimitConfig.RequestCountThreshold)
+                {
+                    _logAction(LogLevel.Info,
+                        $"Rate limiting: Reached {_rateLimitConfig.RequestCountThreshold} requests, " +
+                        $"applying cooldown period of {_rateLimitConfig.ThresholdCooldownMs}ms");
+                    await Task.Delay(_rateLimitConfig.ThresholdCooldownMs);
+                    _requestCount = 0;
+                }
+
+                // Update last request time to now
+                _lastRequestTime = DateTime.UtcNow;
+            }
+            finally
+            {
+                _throttleSemaphore.Release();
+            }
         }
 
         /// <summary>
@@ -28,6 +102,9 @@ namespace InvoiceBalanceRefresher
         /// <returns>Formatted invoice information</returns>
         public async Task<string> GetInvoiceByNumber(string billerGUID, string webServiceKey, string invoiceNumber)
         {
+            // Apply rate limiting before making the request
+            await ApplyRateLimiting();
+
             string soapRequest = $@"
 <soap12:Envelope xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns:xsd='http://www.w3.org/2001/XMLSchema' xmlns:soap12='http://www.w3.org/2003/05/soap-envelope'>
     <soap12:Body>
@@ -65,6 +142,15 @@ namespace InvoiceBalanceRefresher
                         if (!response.IsSuccessStatusCode)
                         {
                             _logAction(LogLevel.Warning, $"HTTP error: {(int)response.StatusCode} {response.StatusCode} for invoice {invoiceNumber}");
+
+                            // For rate limiting specific error codes (429 Too Many Requests)
+                            if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+                            {
+                                int retryDelay = _rateLimitConfig != null ? _rateLimitConfig.RateLimitRetryDelayMs : 5000;
+                                _logAction(LogLevel.Warning, $"Rate limit hit (429). Adding additional delay of {retryDelay}ms before retry.");
+                                await Task.Delay(retryDelay);
+                                throw new HttpRequestException("Rate limit exceeded");
+                            }
 
                             // For specific error codes that might be temporary, we'll retry
                             if ((int)response.StatusCode >= 500 || response.StatusCode == System.Net.HttpStatusCode.RequestTimeout)
@@ -116,6 +202,9 @@ namespace InvoiceBalanceRefresher
         /// <returns>Formatted customer record information</returns>
         public async Task<string> GetCustomerRecord(string billerGUID, string webServiceKey, string accountNumber)
         {
+            // Apply rate limiting before making the request
+            await ApplyRateLimiting();
+
             string soapRequest = $@"
 <soap12:Envelope xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xmlns:xsd='http://www.w3.org/2001/XMLSchema' xmlns:soap12='http://www.w3.org/2003/05/soap-envelope'>
   <soap12:Body>
@@ -151,6 +240,15 @@ namespace InvoiceBalanceRefresher
                         if (!response.IsSuccessStatusCode)
                         {
                             _logAction(LogLevel.Warning, $"HTTP error: {(int)response.StatusCode} {response.StatusCode} for account {accountNumber}");
+
+                            // For rate limiting specific error codes (429 Too Many Requests)
+                            if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+                            {
+                                int retryDelay = _rateLimitConfig != null ? _rateLimitConfig.RateLimitRetryDelayMs : 5000;
+                                _logAction(LogLevel.Warning, $"Rate limit hit (429). Adding additional delay of {retryDelay}ms before retry.");
+                                await Task.Delay(retryDelay);
+                                throw new HttpRequestException("Rate limit exceeded");
+                            }
 
                             // For specific error codes that might be temporary, we'll retry
                             if ((int)response.StatusCode >= 500 || response.StatusCode == System.Net.HttpStatusCode.RequestTimeout)
