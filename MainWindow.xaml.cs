@@ -44,7 +44,7 @@ namespace InvoiceBalanceRefresher
 
 
         // Application version
-        private const string APP_VERSION = "1.3.0"; // Updated version
+        private const string APP_VERSION = "1.4.0"; // Updated version
 
         public MainWindow()
         {
