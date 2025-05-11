@@ -240,16 +240,17 @@
                 <Separator/>
                 <MenuItem Header="Exit" Click="Exit_Click"/>
             </MenuItem>
-            <MenuItem Header="Theme">
-                <MenuItem x:Name="LightModeMenuItem" Header="Light Mode" IsChecked="True" Click="LightMode_Click"/>
-                <MenuItem x:Name="DarkModeMenuItem" Header="Dark Mode" Click="DarkMode_Click"/>
-            </MenuItem>
-            <MenuItem Header="Credentials">
-                <MenuItem Header="Manage Credential Sets" Click="ManageCredentials_Click"/>
-            </MenuItem>
+
             <MenuItem Header="Settings">
                 <MenuItem Header="Rate Limiting Configuration" Click="RateLimitSettings_Click"/>
+                <MenuItem Header="Manage Credential Sets" Click="ManageCredentials_Click"/>
+                <Separator/>
+                <MenuItem Header="Theme">
+                    <MenuItem x:Name="LightModeMenuItem" Header="Light Mode" IsChecked="True" Click="LightMode_Click"/>
+                    <MenuItem x:Name="DarkModeMenuItem" Header="Dark Mode" Click="DarkMode_Click"/>
+                </MenuItem>
             </MenuItem>
+
             <MenuItem Header="Help">
                 <MenuItem Header="Documentation" Click="Documentation_Click"/>
                 <MenuItem Header="About" Click="About_Click"/>

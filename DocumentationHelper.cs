@@ -157,10 +157,11 @@ namespace InvoiceBalanceRefresher
                 new string[] { "5", "Logging", "#F0A030", "📋" },
                 new string[] { "6", "Sample CSV Generation", "#F0A030", "📁" },
                 new string[] { "7", "API Format", "#E55555", "🔌" },
-                new string[] { "8", "Frequently Asked Questions (FAQ)", "#18B4E9", "❓" },
-                new string[] { "9", "Keyboard Shortcuts", "#F0A030", "⌨️" },
-                new string[] { "10", "Troubleshooting", "#E55555", "🔧" },
-                new string[] { "11", "System Requirements", "#18B4E9", "💻" }
+                new string[] { "8", "Rate Limiting", "#E55555", "⏱️" },
+                new string[] { "9", "Frequently Asked Questions (FAQ)", "#18B4E9", "❓" },
+                new string[] { "10", "Keyboard Shortcuts", "#F0A030", "��️" },
+                new string[] { "11", "Troubleshooting", "#E55555", "🔧" },
+                new string[] { "12", "System Requirements", "#18B4E9", "💻" }
             };
 
             // Document sections
@@ -253,7 +254,7 @@ namespace InvoiceBalanceRefresher
 
             var timestampText = new TextBlock
             {
-                Text = $"Documentation generated: 2025-05-11 00:29:28 UTC | User: Sdeery123",
+                Text = $"Documentation generated: 2025-05-11 03:43:31 UTC | User: Sdeery123",
                 Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#B2F0FF")),
                 FontFamily = new FontFamily("Consolas"),
                 FontSize = 10,
@@ -330,7 +331,7 @@ namespace InvoiceBalanceRefresher
                 "   • Select a credential set to view or edit its details",
                 "   • Click [New] to create a new credential set",
                 "   • Click [Delete] to remove a selected credential set",
-                "   �� Edit the details and click [Save] to update a credential set",
+                "   ­­• Edit the details and click [Save] to update a credential set",
                 "   • Click [Close] when finished to return to the main window"
             });
 
@@ -415,7 +416,7 @@ namespace InvoiceBalanceRefresher
 
             DocumentFormatHelper.AddParagraph(section4,
                 "Scheduled tasks will appear in the Schedule Manager window, where you can edit, delete, or run them manually using the [RUN NOW] button. " +
-                "The application will automatically execute enabled tasks at their scheduled times. If 'Add to Windows Task Scheduler' is checked, the task will be registered with Windows and can run independently of the app.");
+                "The application will automatically execute enabled tasks at their scheduled times. If 'Add to Windows Task Scheduler' is checked, the task will be registered with Windows and can run even when the application is closed.");
 
             DocumentFormatHelper.AddNote(section4,
                 "You can manage all scheduled tasks from the Schedule Manager, including enabling/disabling, editing, or removing them. " +
@@ -497,22 +498,145 @@ namespace InvoiceBalanceRefresher
                 "The application handles all the API communication details for you, including authentication, " +
                 "error handling, and retry logic for intermittent failures.");
 
-            // SECTION 8: FAQ
+            // SECTION 8: RATE LIMITING (NEW SECTION)
             var section8 = sections["8"];
 
-            DocumentFormatHelper.AddFAQItem(section8,
+            DocumentFormatHelper.AddParagraph(section8,
+                "The Invoice Balance Refresher includes built-in rate limiting functionality to manage API request frequency " +
+                "and ensure reliable performance when interacting with the Invoice Cloud API. This helps prevent throttling " +
+                "or temporary blocks due to excessive request rates.",
+                isIntro: true);
+
+            DocumentFormatHelper.AddSubheading(section8, "Rate Limiting Settings");
+
+            DocumentFormatHelper.AddParagraph(section8,
+                "The application provides configurable rate limiting settings to help you optimize API interactions based on " +
+                "your specific needs and account limits:");
+
+            // Create a grid for rate limiting settings
+            var rateLimitGrid = new Grid();
+            rateLimitGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            rateLimitGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            rateLimitGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            rateLimitGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            rateLimitGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            rateLimitGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            rateLimitGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+            // Setting labels and descriptions
+            string[][] rateSettings = new string[][]
+            {
+                new string[] { "Request Interval:", "500ms (Default)" },
+                new string[] { "Request Count Threshold:", "50 (Default)" },
+                new string[] { "Threshold Cooldown:", "5000ms (Default)" },
+                new string[] { "Rate Limit Retry Delay:", "5000ms (Default)" },
+                new string[] { "Rate Limiting Enabled:", "Yes (Default)" }
+            };
+
+            for (int i = 0; i < rateSettings.Length; i++)
+            {
+                var settingLabel = new TextBlock
+                {
+                    Text = rateSettings[i][0],
+                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E55555")),
+                    FontFamily = new FontFamily("Consolas"),
+                    FontWeight = FontWeights.Bold,
+                    Margin = new Thickness(15, 5, 15, 5)
+                };
+
+                var settingValue = new TextBlock
+                {
+                    Text = rateSettings[i][1],
+                    Foreground = (SolidColorBrush)owner.FindResource("ForegroundBrush"),
+                    TextWrapping = TextWrapping.Wrap,
+                    Margin = new Thickness(0, 5, 0, 5)
+                };
+
+                Grid.SetRow(settingLabel, i);
+                Grid.SetColumn(settingLabel, 0);
+                Grid.SetRow(settingValue, i);
+                Grid.SetColumn(settingValue, 1);
+
+                rateLimitGrid.Children.Add(settingLabel);
+                rateLimitGrid.Children.Add(settingValue);
+            }
+
+            section8.Children.Add(rateLimitGrid);
+
+            DocumentFormatHelper.AddSubheading(section8, "Understanding Rate Limiting Settings");
+
+            DocumentFormatHelper.AddParagraph(section8,
+                "Each rate limiting setting controls a specific aspect of how the application manages API request frequency:");
+
+            DocumentFormatHelper.AddBulletPoint(section8,
+                "Request Interval: The minimum time (in milliseconds) between consecutive API requests. " +
+                "This setting helps distribute requests evenly over time to prevent sudden bursts of traffic.");
+
+            DocumentFormatHelper.AddBulletPoint(section8,
+                "Request Count Threshold: The maximum number of requests that can be made before the system " +
+                "enforces a cooldown period. This prevents sending too many requests in a short time frame.");
+
+            DocumentFormatHelper.AddBulletPoint(section8,
+                "Threshold Cooldown: The duration (in milliseconds) the application will pause when the request " +
+                "count threshold is reached before resuming API requests.");
+
+            DocumentFormatHelper.AddBulletPoint(section8,
+                "Rate Limit Retry Delay: The waiting period (in milliseconds) before retrying a request that " +
+                "received a rate limiting response (HTTP 429) from the API server.");
+
+            DocumentFormatHelper.AddBulletPoint(section8,
+                "Rate Limiting Enabled: A master switch to enable or disable the rate limiting functionality. " +
+                "It's recommended to keep this enabled to prevent API throttling.");
+
+            DocumentFormatHelper.AddSubheading(section8, "Configuring Rate Limiting");
+
+            DocumentFormatHelper.AddSteps(section8, "To configure rate limiting settings:", new[]
+            {
+                "Open the application menu and select [Settings] > [Rate Limiting]",
+                "The Rate Limiting Settings dialog will appear",
+                "Adjust the settings based on your requirements and API limits",
+                "Click [Save] to apply the new settings",
+                "Click [Reset] to restore default values if needed",
+                "Click [Cancel] to close without saving changes"
+            });
+
+            DocumentFormatHelper.AddParagraph(section8,
+                "When processing large batches of invoices, the application automatically manages request rates according to " +
+                "these settings. This ensures reliable processing even for substantial batches without triggering API rate limits.");
+
+            DocumentFormatHelper.AddNote(section8,
+                "If you experience API throttling or 'Too Many Requests' errors, try increasing the request interval " +
+                "and/or decreasing the request count threshold. The default settings work well for most standard " +
+                "Invoice Cloud accounts, but your specific account may have different rate limits.");
+
+            DocumentFormatHelper.AddSubheading(section8, "Rate Limiting in Batch Processing");
+
+            DocumentFormatHelper.AddParagraph(section8,
+                "During batch processing, the application displays the current rate limiting status in the progress " +
+                "information. If a rate limit response is received from the server, the application will automatically " +
+                "apply the configured retry delay and continue processing without user intervention.");
+
+            DocumentFormatHelper.AddParagraph(section8,
+                "For scheduled tasks, the rate limiting settings in effect at the time the task runs will be used. " +
+                "If you update your rate limiting configuration, all subsequent scheduled tasks will use the new settings.");
+
+            // SECTION 9: FAQ
+            var section9 = sections["9"];
+
+            DocumentFormatHelper.AddFAQItem(section9,
                 "Where do I get my Biller GUID and Web Service Key?",
                 "These credentials are provided by Invoice Cloud. Contact your account " +
                 "representative or system administrator if you don't have them.",
                 owner);
 
-            DocumentFormatHelper.AddFAQItem(section8,
+            DocumentFormatHelper.AddFAQItem(section9,
                 "How do I know if an invoice balance was successfully refreshed?",
                 "After processing, the status will show 'Success' and display the updated " +
                 "balance information. The console log will also show a success message.",
                 owner);
 
-            DocumentFormatHelper.AddFAQItem(section8,
+            DocumentFormatHelper.AddFAQItem(section9,
                 "Can I process invoices with different account numbers in batch mode?",
                 "Yes. Select the 'Account Number,Invoice Number Format' option and format your CSV file with " +
                 "both account number and invoice number on each line separated by a comma:\n" +
@@ -520,95 +644,123 @@ namespace InvoiceBalanceRefresher
                 "ACCT002,INV0002",
                 owner);
 
-            DocumentFormatHelper.AddFAQItem(section8,
+            DocumentFormatHelper.AddFAQItem(section9,
                 "How can I search for specific invoices in batch results?",
                 "Use the search box above the batch results. It will filter results to show " +
                 "only invoices that contain your search text.",
                 owner);
 
-            DocumentFormatHelper.AddFAQItem(section8,
+            DocumentFormatHelper.AddFAQItem(section9,
                 "What do I do if I get a 'Server error' message?",
                 "The application automatically retries server errors up to 3 times. If it still " +
                 "fails, verify your network connection and check that the Invoice Cloud service " +
                 "is operating normally.",
                 owner);
 
-            DocumentFormatHelper.AddFAQItem(section8,
+            DocumentFormatHelper.AddFAQItem(section9,
                 "Where are logs stored?",
                 "Logs are automatically saved in the 'Logs' directory within the application folder. " +
                 "Each session creates a new log file with a timestamp in the filename.",
                 owner);
 
             // New FAQ items for credential management
-            DocumentFormatHelper.AddFAQItem(section8,
+            DocumentFormatHelper.AddFAQItem(section9,
                 "How secure are my saved credentials?",
                 "Credentials are encrypted using Windows Data Protection API (DPAPI) before being stored on your local machine. " +
                 "This encryption is tied to your Windows user account, meaning only you can decrypt the stored credentials. " +
                 "Credentials are never stored in plain text or transmitted outside your computer.",
                 owner);
 
-            DocumentFormatHelper.AddFAQItem(section8,
+            DocumentFormatHelper.AddFAQItem(section9,
                 "Can I use this application with multiple Biller GUIDs?",
                 "Yes. The credential management system allows you to save multiple credential sets with different names. " +
                 "You can easily switch between different Biller GUIDs by selecting a different credential set from the dropdown.",
                 owner);
 
-            DocumentFormatHelper.AddFAQItem(section8,
+            // New FAQ items for rate limiting
+            DocumentFormatHelper.AddFAQItem(section9,
+                "What are the recommended rate limiting settings?",
+                "The default settings (500ms request interval, 50 request threshold, 5000ms cooldown) work well for most standard accounts. " +
+                "If you're experiencing rate limit errors, try increasing the request interval or reducing the request threshold. " +
+                "Consult with your Invoice Cloud account manager if you need specific guidance for your account tier.",
+                owner);
+
+            DocumentFormatHelper.AddFAQItem(section9,
+                "How do rate limiting settings affect batch processing time?",
+                "More restrictive rate limiting settings (higher interval, lower threshold) will increase the total time needed to " +
+                "process large batches, but will ensure more reliable processing without API throttling. For example, with the default " +
+                "500ms interval, the application can process approximately 120 requests per minute at maximum throughput.",
+                owner);
+
+            DocumentFormatHelper.AddFAQItem(section9,
+                "Does rate limiting affect scheduled tasks?",
+                "Yes. Scheduled tasks use the rate limiting settings that are active when the task runs. If you modify your rate limiting " +
+                "settings, all future scheduled task executions will use the updated settings without requiring any changes to the schedule.",
+                owner);
+
+            DocumentFormatHelper.AddFAQItem(section9,
+                "What happens if I disable rate limiting?",
+                "Disabling rate limiting removes all restrictions on API request frequency from the application side. This may lead to " +
+                "faster processing initially, but could trigger API throttling or temporary blocks from the Invoice Cloud API if requests " +
+                "exceed their service limits. Generally, it's recommended to keep rate limiting enabled.",
+                owner);
+
+            DocumentFormatHelper.AddFAQItem(section9,
                 "Where are my credential sets stored?",
                 "Credential sets are stored in an encrypted file in your local application data folder: " +
                 "%LocalAppData%\\InvoiceBalanceRefresher\\credentials.dat. This file is encrypted and can only be " +
                 "accessed by your Windows user account.",
                 owner);
 
-            DocumentFormatHelper.AddFAQItem(section8,
+            DocumentFormatHelper.AddFAQItem(section9,
                 "Can I transfer my saved credential sets to another computer?",
                 "No. For security reasons, credential sets are encrypted using the Windows Data Protection API, which ties " +
                 "the encryption to your specific Windows user account. You'll need to re-create your credential sets " +
                 "when moving to a new computer or user account.",
                 owner);
 
-            DocumentFormatHelper.AddFAQItem(section8,
+            DocumentFormatHelper.AddFAQItem(section9,
                 "Is there a way to export my credential sets for backup?",
                 "The current version doesn't support direct export/import of credential sets due to security constraints of the Windows DPAPI encryption. " +
                 "For backup purposes, we recommend taking note of your credential information separately in a secure password manager.",
                 owner);
 
-            DocumentFormatHelper.AddFAQItem(section8,
+            DocumentFormatHelper.AddFAQItem(section9,
                 "Can I use keyboard shortcuts for common operations?",
                 "Yes, the application supports various keyboard shortcuts. See the Keyboard Shortcuts section of this documentation for a complete list. " +
                 "Common shortcuts include Ctrl+S to save credentials, Ctrl+P to process a single invoice, and Ctrl+B to process a batch.",
                 owner);
 
-            DocumentFormatHelper.AddFAQItem(section8,
+            DocumentFormatHelper.AddFAQItem(section9,
                 "Does the application support multiple users on the same computer?",
                 "Yes. Each Windows user account has its own separate credential storage. Credentials saved by one user are not accessible to other users " +
                 "on the same computer, ensuring security and privacy between different users.",
                 owner);
 
-            DocumentFormatHelper.AddFAQItem(section8,
+            DocumentFormatHelper.AddFAQItem(section9,
                 "What happens if I forget a credential set name?",
                 "You can open the Credential Management window and view all your saved credential sets. From there, you can select any set to view " +
                 "its details. The Biller GUID and Web Service Key will be displayed (but still securely stored).",
                 owner);
 
-            DocumentFormatHelper.AddFAQItem(section8,
+            DocumentFormatHelper.AddFAQItem(section9,
                 "How do I switch between light and dark mode?",
                 "Use the Theme menu and select either 'Light Mode' or 'Dark Mode'.",
                 owner);
 
-            DocumentFormatHelper.AddFAQItem(section8,
+            DocumentFormatHelper.AddFAQItem(section9,
                 "What happens if the CSV file has invalid invoice numbers?",
                 "The application will process valid invoice numbers and log errors for invalid ones. " +
                 "The results CSV will include error details for failed invoices.",
                 owner);
 
-            DocumentFormatHelper.AddFAQItem(section8,
+            DocumentFormatHelper.AddFAQItem(section9,
                 "Is there a limit to how many invoices I can process in batch mode?",
                 "There is no hard limit in the application, but processing very large batches " +
                 "may take significant time. Consider breaking very large batches into smaller files.",
                 owner);
 
-            DocumentFormatHelper.AddFAQItem(section8,
+            DocumentFormatHelper.AddFAQItem(section9,
                 "How does scheduling work?",
                 "You can automate batch invoice processing by creating scheduled tasks in the Schedule Manager. " +
                 "Tasks can be set to run at specific times and frequencies, and can be integrated with Windows Task Scheduler " +
@@ -616,13 +768,13 @@ namespace InvoiceBalanceRefresher
                 "The Schedule Manager allows you to add, edit, delete, enable/disable, and manually run scheduled tasks.",
                 owner);
 
-            // SECTION 9: KEYBOARD SHORTCUTS
-            var section9 = sections["9"];
+            // SECTION 10: KEYBOARD SHORTCUTS
+            var section10 = sections["10"];
 
-            DocumentFormatHelper.AddParagraph(section9,
+            DocumentFormatHelper.AddParagraph(section10,
                 "The Invoice Balance Refresher includes keyboard shortcuts to help you work more efficiently.");
 
-            DocumentFormatHelper.AddSubheading(section9, "Global Shortcuts:");
+            DocumentFormatHelper.AddSubheading(section10, "Global Shortcuts:");
 
             var shortcuts = new Dictionary<string, string>
             {
@@ -634,6 +786,7 @@ namespace InvoiceBalanceRefresher
                 { "Ctrl+F", "Focus search box" },
                 { "F1", "Show this documentation" },
                 { "Ctrl+M", "Open credential manager" },
+                { "Ctrl+R", "Open rate limiting settings" },
                 { "Alt+1", "Switch to Light Mode" },
                 { "Alt+2", "Switch to Dark Mode" },
                 { "Ctrl+Tab", "Cycle through credential sets" }
@@ -674,92 +827,98 @@ namespace InvoiceBalanceRefresher
                 row++;
             }
 
-            section9.Children.Add(shortcutGrid);
+            section10.Children.Add(shortcutGrid);
 
-            DocumentFormatHelper.AddNote(section9,
+            DocumentFormatHelper.AddNote(section10,
                 "Keyboard shortcuts can be customized in the application settings.(Future Update)");
 
-            // SECTION 10: TROUBLESHOOTING
-            var section10 = sections["10"];
+            // SECTION 11: TROUBLESHOOTING
+            var section11 = sections["11"];
 
-            DocumentFormatHelper.AddParagraph(section10,
+            DocumentFormatHelper.AddParagraph(section11,
                 "If you encounter issues while using the Invoice Balance Refresher, this section provides guidance on common problems and their solutions.");
 
-            DocumentFormatHelper.AddSubheading(section10, "Common Issues and Solutions:");
+            DocumentFormatHelper.AddSubheading(section11, "Common Issues and Solutions:");
 
             // Using the FAQItem format for troubleshooting items
-            DocumentFormatHelper.AddFAQItem(section10,
+            DocumentFormatHelper.AddFAQItem(section11,
                 "Application fails to start",
                 "Ensure you have the latest .NET Framework installed. Try running as administrator or reinstalling the application. Check Windows Event Log for details.",
                 owner);
 
-            DocumentFormatHelper.AddFAQItem(section10,
+            DocumentFormatHelper.AddFAQItem(section11,
                 "Error 'Cannot connect to service'",
                 "Verify your internet connection. Check if you can access other websites. The Invoice Cloud API may be temporarily unavailable - try again later or contact support.",
                 owner);
 
-            DocumentFormatHelper.AddFAQItem(section10,
+            DocumentFormatHelper.AddFAQItem(section11,
+                "Rate limit exceeded errors",
+                "If you receive rate limit errors, the API is indicating you're sending requests too quickly. Try adjusting your rate limiting settings by increasing the request interval or threshold cooldown period. For large batches, consider processing them in smaller chunks.",
+                owner);
+
+            DocumentFormatHelper.AddFAQItem(section11,
                 "Credential sets are not saving",
                 "Ensure you have write permissions to %LocalAppData%\\InvoiceBalanceRefresher. Try running the application as administrator. Check that Windows DPAPI is functioning correctly on your system.",
                 owner);
 
-            DocumentFormatHelper.AddFAQItem(section10,
+            DocumentFormatHelper.AddFAQItem(section11,
                 "Batch processing is very slow",
-                "Large batches may take significant time. Consider splitting your batch into smaller files. Close other applications to free up system resources. Ensure your network connection is stable.",
+                "Large batches may take significant time, especially with rate limiting enabled. Consider splitting your batch into smaller files. Check your rate limiting settings and adjust if necessary. Close other applications to free up system resources.",
                 owner);
 
-            DocumentFormatHelper.AddFAQItem(section10,
+            DocumentFormatHelper.AddFAQItem(section11,
                 "CSV file format errors",
-                "Ensure your CSV file is properly formatted according to the selected option (Invoice Only or Account,Invoice format). Verify there are no extra spaces, quotes, or special characters. Try re-generating a sample CSV and copying your data into it.",
+                "Ensure your CSV file is properly formatted according to the selected option (Invoice Only or Account,Invoice format). Verify there are no extra spaces, quotes, or special characters. Try opening and resaving the file in a text editor to ensure proper encoding.",
                 owner);
 
-            DocumentFormatHelper.AddSubheading(section10, "Error Logs and Diagnostics:");
-
-            DocumentFormatHelper.AddParagraph(section10,
-                "When contacting support, please provide the following information:");
-
-            DocumentFormatHelper.AddBulletPoint(section10, "Application version (displayed in About window)");
-            DocumentFormatHelper.AddBulletPoint(section10, "Full error message text");
-            DocumentFormatHelper.AddBulletPoint(section10, "Log files from the Logs directory");
-            DocumentFormatHelper.AddBulletPoint(section10, "Steps to reproduce the issue");
-            DocumentFormatHelper.AddBulletPoint(section10, "Operating system version");
-
-            DocumentFormatHelper.AddNote(section10,
-                "For security reasons, never share your Biller GUID or Web Service Key. Support staff will never ask for these credentials.");
-
-            // SECTION 11: SYSTEM REQUIREMENTS
-            var section11 = sections["11"];
+            DocumentFormatHelper.AddSubheading(section11, "Error Logs and Diagnostics:");
 
             DocumentFormatHelper.AddParagraph(section11,
+                "When contacting support, please provide the following information:");
+
+            DocumentFormatHelper.AddBulletPoint(section11, "Application version (displayed in About window)");
+            DocumentFormatHelper.AddBulletPoint(section11, "Full error message text");
+            DocumentFormatHelper.AddBulletPoint(section11, "Log files from the Logs directory");
+            DocumentFormatHelper.AddBulletPoint(section11, "Your current rate limiting settings");
+            DocumentFormatHelper.AddBulletPoint(section11, "Steps to reproduce the issue");
+            DocumentFormatHelper.AddBulletPoint(section11, "Operating system version");
+
+            DocumentFormatHelper.AddNote(section11,
+                "For security reasons, never share your Biller GUID or Web Service Key. Support staff will never ask for these credentials.");
+
+            // SECTION 12: SYSTEM REQUIREMENTS
+            var section12 = sections["12"];
+
+            DocumentFormatHelper.AddParagraph(section12,
                 "The Invoice Balance Refresher is designed to work efficiently on most modern Windows computers. " +
                 "Below are the minimum and recommended system requirements.");
 
-            DocumentFormatHelper.AddSubheading(section11, "Minimum Requirements:");
+            DocumentFormatHelper.AddSubheading(section12, "Minimum Requirements:");
 
-            DocumentFormatHelper.AddBulletPoint(section11, "Operating System: Windows 10 (64-bit) or newer");
-            DocumentFormatHelper.AddBulletPoint(section11, ".NET Framework: 8.0 or later");
-            DocumentFormatHelper.AddBulletPoint(section11, "Processor: Dual-core 2.0 GHz or higher");
-            DocumentFormatHelper.AddBulletPoint(section11, "Memory: 4 GB RAM");
-            DocumentFormatHelper.AddBulletPoint(section11, "Disk Space: 200 MB available");
-            DocumentFormatHelper.AddBulletPoint(section11, "Internet Connection: 1 Mbps or faster, reliable connection");
-            DocumentFormatHelper.AddBulletPoint(section11, "Display: 1366x768 resolution or higher");
+            DocumentFormatHelper.AddBulletPoint(section12, "Operating System: Windows 10 (64-bit) or newer");
+            DocumentFormatHelper.AddBulletPoint(section12, ".NET Framework: 8.0 or later");
+            DocumentFormatHelper.AddBulletPoint(section12, "Processor: Dual-core 2.0 GHz or higher");
+            DocumentFormatHelper.AddBulletPoint(section12, "Memory: 4 GB RAM");
+            DocumentFormatHelper.AddBulletPoint(section12, "Disk Space: 200 MB available");
+            DocumentFormatHelper.AddBulletPoint(section12, "Internet Connection: 1 Mbps or faster, reliable connection");
+            DocumentFormatHelper.AddBulletPoint(section12, "Display: 1366x768 resolution or higher");
 
-            DocumentFormatHelper.AddSubheading(section11, "Recommended Specifications:");
+            DocumentFormatHelper.AddSubheading(section12, "Recommended Specifications:");
 
-            DocumentFormatHelper.AddBulletPoint(section11, "Operating System: Windows 11 (64-bit)");
-            DocumentFormatHelper.AddBulletPoint(section11, "Processor: Quad-core 2.5 GHz or higher");
-            DocumentFormatHelper.AddBulletPoint(section11, "Memory: 8 GB RAM");
-            DocumentFormatHelper.AddBulletPoint(section11, "Disk Space: 500 MB available");
-            DocumentFormatHelper.AddBulletPoint(section11, "Internet Connection: 5 Mbps or faster, stable connection");
-            DocumentFormatHelper.AddBulletPoint(section11, "Display: 1920x1080 resolution or higher");
+            DocumentFormatHelper.AddBulletPoint(section12, "Operating System: Windows 11 (64-bit)");
+            DocumentFormatHelper.AddBulletPoint(section12, "Processor: Quad-core 2.5 GHz or higher");
+            DocumentFormatHelper.AddBulletPoint(section12, "Memory: 8 GB RAM");
+            DocumentFormatHelper.AddBulletPoint(section12, "Disk Space: 500 MB available");
+            DocumentFormatHelper.AddBulletPoint(section12, "Internet Connection: 5 Mbps or faster, stable connection");
+            DocumentFormatHelper.AddBulletPoint(section12, "Display: 1920x1080 resolution or higher");
 
-            DocumentFormatHelper.AddSubheading(section11, "Additional Notes:");
+            DocumentFormatHelper.AddSubheading(section12, "Additional Notes:");
 
-            DocumentFormatHelper.AddParagraph(section11,
+            DocumentFormatHelper.AddParagraph(section12,
                 "For batch processing of large CSV files (over 1000 invoices), additional RAM is recommended for improved performance. " +
                 "Scheduled tasks require Windows Task Scheduler to be enabled and running properly.");
 
-            DocumentFormatHelper.AddNote(section11,
+            DocumentFormatHelper.AddNote(section12,
                 "Microsoft Excel or compatible spreadsheet software is recommended for editing CSV files, " +
                 "but not required for application functionality.");
         }

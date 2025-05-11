@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
@@ -98,7 +98,7 @@ namespace InvoiceBalanceRefresher
             // Add version and user info
             statusPanel.Children.Add(new TextBlock
             {
-                Text = $" • TIME: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC • USER: {Environment.UserName}",
+                Text = $" â€¢ TIME: 2025-05-11 03:53:14 UTC â€¢ USER: Sdeery123",
                 Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#B2F0FF")),
                 Margin = new Thickness(10, 0, 0, 0),
                 VerticalAlignment = VerticalAlignment.Center,
@@ -246,7 +246,7 @@ namespace InvoiceBalanceRefresher
             // Application description with typewriter-style text
             var appDescriptionBlock = new TextBlock
             {
-                Text = "A terminal-style application built for Invoice Cloud clients to efficiently refresh and validate invoice balances through the secure SOAP API service. The application features both single and batch processing capabilities with comprehensive logging and error handling.",
+                Text = "A terminal-style application built for Invoice Cloud clients to efficiently refresh and validate invoice balances through the secure SOAP API service. The application features single invoice processing, batch processing via CSV files, secure credential management, and built-in rate limiting to ensure optimal API interactions.",
                 Foreground = (SolidColorBrush)_ownerWindow.FindResource("ForegroundBrush"),
                 TextWrapping = TextWrapping.Wrap,
                 Margin = new Thickness(10, 0, 10, 10)
@@ -277,7 +277,7 @@ namespace InvoiceBalanceRefresher
 
             var copyrightBlock = new TextBlock
             {
-                Text = $"© {DateTime.Now.Year} Invoice Cloud, Inc. All Rights Reserved.",
+                Text = $"Â© {DateTime.Now.Year} Invoice Cloud, Inc. All Rights Reserved.",
                 Foreground = (SolidColorBrush)_ownerWindow.FindResource("ForegroundBrush"),
                 TextAlignment = TextAlignment.Center,
                 FontFamily = new FontFamily("Consolas"),
@@ -346,7 +346,8 @@ namespace InvoiceBalanceRefresher
                 "Advanced error handling with automatic retry mechanisms",
                 "Customer record lookup and balance refresh capabilities",
                 "Automated batch scheduling with built-in Schedule Manager",
-                "Windows Task Scheduler integration for background execution"
+                "Windows Task Scheduler integration for background execution",
+                "Configurable API rate limiting to prevent throttling"
             };
 
             // Create a two-column grid for features
@@ -368,7 +369,7 @@ namespace InvoiceBalanceRefresher
             // Split features between two columns
             for (int i = 0; i < features.Length; i++)
             {
-                var bulletIcon = i % 2 == 0 ? "›" : "»"; // Alternate bullet style
+                var bulletIcon = i % 2 == 0 ? "â–º" : "â€¢"; // Alternate bullet style
                 var color = i % 2 == 0 ?
                     new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9")) :
                     new SolidColorBrush((Color)ColorConverter.ConvertFromString("#5BFF64"));
@@ -428,7 +429,7 @@ namespace InvoiceBalanceRefresher
 
             var credentialDesc = new TextBlock
             {
-                Text = "The Credential Manager provides secure storage and management of multiple API credential sets. Save and switch between different billers or environments (test/production) without re-entering credentials. All credential sets are encrypted using Windows Data Protection API (DPAPI) for maximum security.",
+                Text = "The Credential Manager provides secure storage and management of multiple API credential sets. Save and switch between different billers or environments (test/production) without re-entering your credentials each time.",
                 Foreground = (SolidColorBrush)_ownerWindow.FindResource("ForegroundBrush"),
                 TextWrapping = TextWrapping.Wrap,
                 Margin = new Thickness(0, 0, 0, 8)
@@ -450,7 +451,7 @@ namespace InvoiceBalanceRefresher
                 var featPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(10, 0, 0, 2) };
                 featPanel.Children.Add(new TextBlock
                 {
-                    Text = "•",
+                    Text = "â€¢",
                     Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9")),
                     Margin = new Thickness(0, 0, 5, 0),
                     FontWeight = FontWeights.Bold
@@ -484,6 +485,148 @@ namespace InvoiceBalanceRefresher
             securityStatusBorder.Child = securityStatus;
             credentialPanel.Children.Add(securityStatusBorder);
 
+            // RATE LIMITING SECTION (NEW)
+            var rateLimitBorder = new Border
+            {
+                BorderBrush = (SolidColorBrush)_ownerWindow.FindResource("BorderBrush"),
+                BorderThickness = new Thickness(1),
+                Background = new SolidColorBrush(Color.FromArgb(30, 24, 180, 233)),
+                CornerRadius = new CornerRadius(4),
+                Padding = new Thickness(15),
+                Margin = new Thickness(10, 0, 10, 15)
+            };
+            contentPanel.Children.Add(rateLimitBorder);
+
+            var rateLimitPanel = new StackPanel();
+            rateLimitBorder.Child = rateLimitPanel;
+
+            var rateLimitHeader = new TextBlock
+            {
+                Text = "[ RATE LIMITING ]",
+                Foreground = (SolidColorBrush)_ownerWindow.FindResource("AccentBrush"),
+                FontWeight = FontWeights.Bold,
+                FontFamily = new FontFamily("Consolas"),
+                Margin = new Thickness(0, 0, 0, 10)
+            };
+            rateLimitPanel.Children.Add(rateLimitHeader);
+
+            var rateLimitDesc = new TextBlock
+            {
+                Text = "The application includes configurable rate limiting to prevent API throttling and ensure reliable performance when processing large batches of invoices. Rate limiting controls the frequency and timing of API requests to optimize throughput while respecting server limits.",
+                Foreground = (SolidColorBrush)_ownerWindow.FindResource("ForegroundBrush"),
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 0, 0, 8)
+            };
+            rateLimitPanel.Children.Add(rateLimitDesc);
+
+            // Create a grid for rate limit settings
+            var rateLimitGrid = new Grid();
+            rateLimitGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            rateLimitGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            rateLimitGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            rateLimitGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            rateLimitGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            rateLimitGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            rateLimitGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+            string[][] rateSettings = new string[][]
+            {
+                new string[] { "Request Interval:", "500ms (Default)" },
+                new string[] { "Request Threshold:", "50 requests (Default)" },
+                new string[] { "Cooldown Period:", "5000ms (Default)" },
+                new string[] { "Rate Limit Retry Delay:", "5000ms (Default)" },
+                new string[] { "Rate Limiting Enabled:", "Yes (Default)" }
+            };
+
+            for (int i = 0; i < rateSettings.Length; i++)
+            {
+                var settingLabel = new TextBlock
+                {
+                    Text = rateSettings[i][0],
+                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E55555")),
+                    FontFamily = new FontFamily("Consolas"),
+                    FontWeight = FontWeights.Bold,
+                    Margin = new Thickness(15, 3, 15, 3)
+                };
+
+                var settingValue = new TextBlock
+                {
+                    Text = rateSettings[i][1],
+                    Foreground = (SolidColorBrush)_ownerWindow.FindResource("ForegroundBrush"),
+                    TextWrapping = TextWrapping.Wrap,
+                    Margin = new Thickness(0, 3, 0, 3)
+                };
+
+                Grid.SetRow(settingLabel, i);
+                Grid.SetColumn(settingLabel, 0);
+                Grid.SetRow(settingValue, i);
+                Grid.SetColumn(settingValue, 1);
+
+                rateLimitGrid.Children.Add(settingLabel);
+                rateLimitGrid.Children.Add(settingValue);
+            }
+
+            rateLimitPanel.Children.Add(rateLimitGrid);
+
+            var rateLimitFeatures = new string[]
+            {
+                "Configurable request interval to control API request frequency",
+                "Adjustable request threshold to manage API load",
+                "Automatic cooldown periods to prevent request bursts",
+                "Intelligent retry logic for rate-limited requests",
+                "Enable/disable option for testing environments"
+            };
+
+            var rateLimitFeaturesHeading = new TextBlock
+            {
+                Text = "Key Features:",
+                Foreground = (SolidColorBrush)_ownerWindow.FindResource("AccentBrush2"),
+                FontFamily = new FontFamily("Consolas"),
+                FontWeight = FontWeights.Bold,
+                Margin = new Thickness(0, 10, 0, 5)
+            };
+            rateLimitPanel.Children.Add(rateLimitFeaturesHeading);
+
+            foreach (var feat in rateLimitFeatures)
+            {
+                var featPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(10, 0, 0, 2) };
+                featPanel.Children.Add(new TextBlock
+                {
+                    Text = "â€¢",
+                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E55555")),
+                    Margin = new Thickness(0, 0, 5, 0),
+                    FontWeight = FontWeights.Bold
+                });
+                featPanel.Children.Add(new TextBlock
+                {
+                    Text = feat,
+                    Foreground = (SolidColorBrush)_ownerWindow.FindResource("ForegroundBrush"),
+                    TextWrapping = TextWrapping.Wrap
+                });
+                rateLimitPanel.Children.Add(featPanel);
+            }
+
+            // Rate limit status indicator
+            var rateLimitStatusBorder = new Border
+            {
+                Background = new SolidColorBrush(Color.FromArgb(40, 229, 85, 85)),
+                CornerRadius = new CornerRadius(2),
+                Padding = new Thickness(8),
+                Margin = new Thickness(10, 10, 10, 0)
+            };
+
+            var rateLimitStatus = new TextBlock
+            {
+                Text = "STATUS: RATE LIMITING ACTIVE",
+                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E55555")),
+                FontFamily = new FontFamily("Consolas"),
+                TextAlignment = TextAlignment.Center,
+                FontSize = 11
+            };
+            rateLimitStatusBorder.Child = rateLimitStatus;
+            rateLimitPanel.Children.Add(rateLimitStatusBorder);
+
             // SCHEDULE INFO SECTION
             var scheduleBorder = new Border
             {
@@ -511,7 +654,7 @@ namespace InvoiceBalanceRefresher
 
             var scheduleDesc = new TextBlock
             {
-                Text = "Automate batch invoice processing with the built-in Schedule Manager. Create, edit, and manage scheduled tasks to run batch jobs at specific times (once, daily, weekly, or monthly). Optionally, enable Windows Task Scheduler integration to run tasks even when the application is closed.",
+                Text = "Automate batch invoice processing with the built-in Schedule Manager. Create, edit, and manage scheduled tasks to run batch jobs at specific times (once, daily, weekly, or monthly). Tasks can run even when the application is closed via Windows Task Scheduler integration.",
                 Foreground = (SolidColorBrush)_ownerWindow.FindResource("ForegroundBrush"),
                 TextWrapping = TextWrapping.Wrap,
                 Margin = new Thickness(0, 0, 0, 8)
@@ -534,7 +677,7 @@ namespace InvoiceBalanceRefresher
                 var featPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(10, 0, 0, 2) };
                 featPanel.Children.Add(new TextBlock
                 {
-                    Text = "•",
+                    Text = "â€¢",
                     Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9")),
                     Margin = new Thickness(0, 0, 5, 0),
                     FontWeight = FontWeights.Bold
@@ -652,6 +795,113 @@ namespace InvoiceBalanceRefresher
 
             techInfoPanel.Children.Add(versionCheckBorder);
 
+            // Add current system info
+            techGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            techGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+            var osLabel = new TextBlock
+            {
+                Text = "OS:",
+                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9")),
+                FontFamily = new FontFamily("Consolas"),
+                Margin = new Thickness(10, 2, 5, 2),
+                FontWeight = FontWeights.Bold
+            };
+
+            var osValue = new TextBlock
+            {
+                Text = Environment.OSVersion.ToString(),
+                Foreground = (SolidColorBrush)_ownerWindow.FindResource("ForegroundBrush"),
+                FontFamily = new FontFamily("Consolas"),
+                Margin = new Thickness(0, 2, 0, 2)
+            };
+
+            Grid.SetRow(osLabel, techSpecs.Length);
+            Grid.SetColumn(osLabel, 0);
+            Grid.SetRow(osValue, techSpecs.Length);
+            Grid.SetColumn(osValue, 1);
+
+            techGrid.Children.Add(osLabel);
+            techGrid.Children.Add(osValue);
+
+            var userLabel = new TextBlock
+            {
+                Text = "Current User:",
+                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9")),
+                FontFamily = new FontFamily("Consolas"),
+                Margin = new Thickness(10, 2, 5, 2),
+                FontWeight = FontWeights.Bold
+            };
+
+            var userValue = new TextBlock
+            {
+                Text = Environment.UserName,
+                Foreground = (SolidColorBrush)_ownerWindow.FindResource("ForegroundBrush"),
+                FontFamily = new FontFamily("Consolas"),
+                Margin = new Thickness(0, 2, 0, 2)
+            };
+
+            Grid.SetRow(userLabel, techSpecs.Length + 1);
+            Grid.SetColumn(userLabel, 0);
+            Grid.SetRow(userValue, techSpecs.Length + 1);
+            Grid.SetColumn(userValue, 1);
+
+            techGrid.Children.Add(userLabel);
+            techGrid.Children.Add(userValue);
+
+            // Add a "Powered by" section under the feature section
+            var poweredByBorder = new Border
+            {
+                BorderBrush = (SolidColorBrush)_ownerWindow.FindResource("BorderBrush"),
+                BorderThickness = new Thickness(1),
+                Background = new SolidColorBrush(Color.FromArgb(30, 24, 180, 233)),
+                CornerRadius = new CornerRadius(4),
+                Padding = new Thickness(10),
+                Margin = new Thickness(10, 0, 10, 15)
+            };
+            contentPanel.Children.Add(poweredByBorder);
+
+            var poweredByPanel = new StackPanel();
+            poweredByBorder.Child = poweredByPanel;
+
+            var poweredByHeader = new TextBlock
+            {
+                Text = "[ POWERED BY ]",
+                Foreground = (SolidColorBrush)_ownerWindow.FindResource("AccentBrush"),
+                FontWeight = FontWeights.Bold,
+                FontFamily = new FontFamily("Consolas"),
+                Margin = new Thickness(0, 0, 0, 10)
+            };
+            poweredByPanel.Children.Add(poweredByHeader);
+
+            // Create a grid for technology icons
+            var techStackGrid = new Grid();
+            for (int i = 0; i < 6; i++)
+            {
+                techStackGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            }
+            poweredByPanel.Children.Add(techStackGrid);
+
+            // Add technology icons/labels
+            string[] technologies = { ".NET 8", "C# 12", "WPF", "XAML", "XML", "DPAPI" };
+            for (int i = 0; i < technologies.Length; i++)
+            {
+                var techPanel = new StackPanel { Margin = new Thickness(5) };
+                var techLabel = new TextBlock
+                {
+                    Text = technologies[i],
+                    Foreground = (SolidColorBrush)_ownerWindow.FindResource("ForegroundBrush"),
+                    TextAlignment = TextAlignment.Center,
+                    FontFamily = new FontFamily("Consolas"),
+                    FontSize = 12,
+                    Margin = new Thickness(0, 5, 0, 0)
+                };
+                techPanel.Children.Add(techLabel);
+
+                Grid.SetColumn(techPanel, i);
+                techStackGrid.Children.Add(techPanel);
+            }
+
             // Add bottom buttons with enhanced styling
             var buttonPanel = new StackPanel
             {
@@ -707,113 +957,6 @@ namespace InvoiceBalanceRefresher
                     MessageBox.Show($"Unable to open website: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             };
-
-            // Add a "Powered by" section under the feature section
-            var poweredByBorder = new Border
-            {
-                BorderBrush = (SolidColorBrush)_ownerWindow.FindResource("BorderBrush"),
-                BorderThickness = new Thickness(1),
-                Background = new SolidColorBrush(Color.FromArgb(30, 24, 180, 233)),
-                CornerRadius = new CornerRadius(4),
-                Padding = new Thickness(10),
-                Margin = new Thickness(10, 0, 10, 15)
-            };
-            contentPanel.Children.Add(poweredByBorder);
-
-            var poweredByPanel = new StackPanel();
-            poweredByBorder.Child = poweredByPanel;
-
-            var poweredByHeader = new TextBlock
-            {
-                Text = "[ POWERED BY ]",
-                Foreground = (SolidColorBrush)_ownerWindow.FindResource("AccentBrush"),
-                FontWeight = FontWeights.Bold,
-                FontFamily = new FontFamily("Consolas"),
-                Margin = new Thickness(0, 0, 0, 10)
-            };
-            poweredByPanel.Children.Add(poweredByHeader);
-
-            // Create a grid for technology icons
-            var techStackGrid = new Grid();
-            for (int i = 0; i < 6; i++)
-            {
-                techStackGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            }
-            poweredByPanel.Children.Add(techStackGrid);
-
-            // Add technology icons/labels
-            string[] technologies = { ".NET 8", "C# 12", "WPF", "XAML", "XML", "DPAPI" };
-            for (int i = 0; i < technologies.Length; i++)
-            {
-                var techPanel = new StackPanel { Margin = new Thickness(5) };
-                var techLabel = new TextBlock
-                {
-                    Text = technologies[i],
-                    Foreground = (SolidColorBrush)_ownerWindow.FindResource("ForegroundBrush"),
-                    TextAlignment = TextAlignment.Center,
-                    FontFamily = new FontFamily("Consolas"),
-                    FontSize = 12,
-                    Margin = new Thickness(0, 5, 0, 0)
-                };
-                techPanel.Children.Add(techLabel);
-
-                Grid.SetColumn(techPanel, i);
-                techStackGrid.Children.Add(techPanel);
-            }
-
-            // Add current system info
-            techGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            techGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-
-            var osLabel = new TextBlock
-            {
-                Text = "OS:",
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9")),
-                FontFamily = new FontFamily("Consolas"),
-                Margin = new Thickness(10, 2, 5, 2),
-                FontWeight = FontWeights.Bold
-            };
-
-            var osValue = new TextBlock
-            {
-                Text = Environment.OSVersion.ToString(),
-                Foreground = (SolidColorBrush)_ownerWindow.FindResource("ForegroundBrush"),
-                FontFamily = new FontFamily("Consolas"),
-                Margin = new Thickness(0, 2, 0, 2)
-            };
-
-            Grid.SetRow(osLabel, techSpecs.Length);
-            Grid.SetColumn(osLabel, 0);
-            Grid.SetRow(osValue, techSpecs.Length);
-            Grid.SetColumn(osValue, 1);
-
-            techGrid.Children.Add(osLabel);
-            techGrid.Children.Add(osValue);
-
-            var userLabel = new TextBlock
-            {
-                Text = "Current User:",
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9")),
-                FontFamily = new FontFamily("Consolas"),
-                Margin = new Thickness(10, 2, 5, 2),
-                FontWeight = FontWeights.Bold
-            };
-
-            var userValue = new TextBlock
-            {
-                Text = Environment.UserName,
-                Foreground = (SolidColorBrush)_ownerWindow.FindResource("ForegroundBrush"),
-                FontFamily = new FontFamily("Consolas"),
-                Margin = new Thickness(0, 2, 0, 2)
-            };
-
-            Grid.SetRow(userLabel, techSpecs.Length + 1);
-            Grid.SetColumn(userLabel, 0);
-            Grid.SetRow(userValue, techSpecs.Length + 1);
-            Grid.SetColumn(userValue, 1);
-
-            techGrid.Children.Add(userLabel);
-            techGrid.Children.Add(userValue);
 
             buttonPanel.Children.Add(websiteButton);
             buttonPanel.Children.Add(closeButton);
