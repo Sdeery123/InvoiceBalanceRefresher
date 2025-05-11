@@ -9,13 +9,15 @@ namespace InvoiceBalanceRefresher
     {
         private List<CredentialManager.CredentialSet> _credentialSets;
         private bool _isEditing = false;
-        
+
         public CredentialManagementWindow()
         {
             InitializeComponent();
+            _credentialSets = new List<CredentialManager.CredentialSet>(); // Initialize the field
             LoadCredentialSets();
         }
-        
+
+
         private void LoadCredentialSets()
         {
             _credentialSets = CredentialManager.GetAllCredentialSets();

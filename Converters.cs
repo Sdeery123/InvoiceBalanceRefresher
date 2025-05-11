@@ -103,12 +103,14 @@ namespace InvoiceBalanceRefresher.Converters
                 }
 
                 // Handle named colors
+                // Handle named colors
                 var colorProperty = typeof(Colors).GetProperty(colorString);
-                if (colorProperty != null)
+                if (colorProperty != null && colorProperty.GetValue(null) is Color validColor)
                 {
-                    color = (Color)colorProperty.GetValue(null);
+                    color = validColor;
                     return true;
                 }
+
 
                 return false;
             }
