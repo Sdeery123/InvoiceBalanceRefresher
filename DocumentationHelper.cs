@@ -148,9 +148,10 @@ namespace InvoiceBalanceRefresher
             contentScrollViewer.Content = contentStackPanel;
 
             // Define TOC sections - FIXED to match content sections
+            // Added Rate Limiting section between API Format and FAQ
             string[][] tocSections = new string[][]
             {
-                new string[] { "1", "Overview", "#18B4E9", "ℹ️" },
+                new string[] { "1", "Overview", "#18B4E9", "��️" },
                 new string[] { "2", "Credential Management", "#F0A030", "🔐" },
                 new string[] { "3", "Single Invoice Processing", "#5BFF64", "📄" },
                 new string[] { "4", "Batch Processing", "#5BFF64", "📚" },
@@ -159,7 +160,7 @@ namespace InvoiceBalanceRefresher
                 new string[] { "7", "API Format", "#E55555", "🔌" },
                 new string[] { "8", "Rate Limiting", "#E55555", "⏱️" },
                 new string[] { "9", "Frequently Asked Questions (FAQ)", "#18B4E9", "❓" },
-                new string[] { "10", "Keyboard Shortcuts", "#F0A030", "��️" },
+                new string[] { "10", "Keyboard Shortcuts", "#F0A030", "⌨️" },
                 new string[] { "11", "Troubleshooting", "#E55555", "🔧" },
                 new string[] { "12", "System Requirements", "#18B4E9", "💻" }
             };
@@ -254,7 +255,7 @@ namespace InvoiceBalanceRefresher
 
             var timestampText = new TextBlock
             {
-                Text = $"Documentation generated: 2025-05-11 03:43:31 UTC | User: Sdeery123",
+                Text = $"Documentation generated: 2025-05-11 03:58:28 UTC | User: Sdeery123",
                 Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#B2F0FF")),
                 FontFamily = new FontFamily("Consolas"),
                 FontSize = 10,
@@ -331,7 +332,7 @@ namespace InvoiceBalanceRefresher
                 "   • Select a credential set to view or edit its details",
                 "   • Click [New] to create a new credential set",
                 "   • Click [Delete] to remove a selected credential set",
-                "   ­­• Edit the details and click [Save] to update a credential set",
+                "   �� Edit the details and click [Save] to update a credential set",
                 "   • Click [Close] when finished to return to the main window"
             });
 
@@ -418,6 +419,31 @@ namespace InvoiceBalanceRefresher
                 "Scheduled tasks will appear in the Schedule Manager window, where you can edit, delete, or run them manually using the [RUN NOW] button. " +
                 "The application will automatically execute enabled tasks at their scheduled times. If 'Add to Windows Task Scheduler' is checked, the task will be registered with Windows and can run even when the application is closed.");
 
+            // New: Windows Task Scheduler Options
+            DocumentFormatHelper.AddSubheading(section4, "Windows Task Scheduler Options");
+
+            DocumentFormatHelper.AddParagraph(section4,
+                "When scheduling tasks to run via Windows Task Scheduler, you have several additional configuration options:");
+
+            DocumentFormatHelper.AddBulletPoint(section4, "Run with elevated privileges: Task will request administrator rights when needed");
+            DocumentFormatHelper.AddBulletPoint(section4, "Run only when user is logged in: Task will only execute when the user who created it is logged in");
+            DocumentFormatHelper.AddBulletPoint(section4, "Wake computer to run task: System will wake from sleep/hibernation to execute the task");
+            DocumentFormatHelper.AddBulletPoint(section4, "Start task only if idle for: Task will wait for system idle time before starting");
+            DocumentFormatHelper.AddBulletPoint(section4, "Stop if running longer than: Set a maximum runtime to prevent hung tasks");
+            DocumentFormatHelper.AddBulletPoint(section4, "Restart on failure: Automatically retry if the task fails to complete successfully");
+
+            DocumentFormatHelper.AddSteps(section4, "To configure Windows Task Scheduler options:", new[]
+            {
+                "When creating or editing a scheduled task, click the [Advanced] button",
+                "In the Advanced Task Options dialog, select the desired Windows Task Scheduler settings",
+                "Configure security options, power management, and failure handling settings",
+                "Click [OK] to save the advanced options",
+                "Continue with saving the scheduled task as normal"
+            });
+
+            DocumentFormatHelper.AddNote(section4,
+                "Windows Task Scheduler integration requires appropriate permissions on your system. Some options may require administrator privileges to configure.");
+
             DocumentFormatHelper.AddNote(section4,
                 "You can manage all scheduled tasks from the Schedule Manager, including enabling/disabling, editing, or removing them. " +
                 "Task results, last run time, and status are displayed in the manager for easy tracking.");
@@ -502,16 +528,15 @@ namespace InvoiceBalanceRefresher
             var section8 = sections["8"];
 
             DocumentFormatHelper.AddParagraph(section8,
-                "The Invoice Balance Refresher includes built-in rate limiting functionality to manage API request frequency " +
-                "and ensure reliable performance when interacting with the Invoice Cloud API. This helps prevent throttling " +
-                "or temporary blocks due to excessive request rates.",
+                "The Invoice Balance Refresher includes built-in rate limiting functionality to prevent API throttling and ensure " +
+                "reliable operation when processing large batches of invoices. Rate limiting controls how quickly the application " +
+                "sends requests to the Invoice Cloud API service.",
                 isIntro: true);
 
-            DocumentFormatHelper.AddSubheading(section8, "Rate Limiting Settings");
+            DocumentFormatHelper.AddSubheading(section8, "Rate Limiting Configuration");
 
             DocumentFormatHelper.AddParagraph(section8,
-                "The application provides configurable rate limiting settings to help you optimize API interactions based on " +
-                "your specific needs and account limits:");
+                "The application's rate limiting system has several configurable settings that determine how API requests are managed:");
 
             // Create a grid for rate limiting settings
             var rateLimitGrid = new Grid();
@@ -528,7 +553,7 @@ namespace InvoiceBalanceRefresher
             string[][] rateSettings = new string[][]
             {
                 new string[] { "Request Interval:", "500ms (Default)" },
-                new string[] { "Request Count Threshold:", "50 (Default)" },
+                new string[] { "Request Count Threshold:", "50 requests (Default)" },
                 new string[] { "Threshold Cooldown:", "5000ms (Default)" },
                 new string[] { "Rate Limit Retry Delay:", "5000ms (Default)" },
                 new string[] { "Rate Limiting Enabled:", "Yes (Default)" }
@@ -567,59 +592,48 @@ namespace InvoiceBalanceRefresher
             DocumentFormatHelper.AddSubheading(section8, "Understanding Rate Limiting Settings");
 
             DocumentFormatHelper.AddParagraph(section8,
-                "Each rate limiting setting controls a specific aspect of how the application manages API request frequency:");
+                "Each rate limiting setting controls a specific aspect of the application's API request behavior:");
 
             DocumentFormatHelper.AddBulletPoint(section8,
-                "Request Interval: The minimum time (in milliseconds) between consecutive API requests. " +
-                "This setting helps distribute requests evenly over time to prevent sudden bursts of traffic.");
+                "Request Interval: The minimum time in milliseconds between consecutive API requests. " +
+                "This setting spreads out requests to avoid overwhelming the API service with sudden bursts of traffic.");
 
             DocumentFormatHelper.AddBulletPoint(section8,
-                "Request Count Threshold: The maximum number of requests that can be made before the system " +
-                "enforces a cooldown period. This prevents sending too many requests in a short time frame.");
+                "Request Count Threshold: The maximum number of requests that will be sent before enforcing a cooldown period. " +
+                "This prevents the application from sending too many requests in a short timeframe.");
 
             DocumentFormatHelper.AddBulletPoint(section8,
-                "Threshold Cooldown: The duration (in milliseconds) the application will pause when the request " +
-                "count threshold is reached before resuming API requests.");
+                "Threshold Cooldown: The duration in milliseconds that the application will pause after reaching the request count threshold. " +
+                "This gives the API service time to process existing requests before sending more.");
 
             DocumentFormatHelper.AddBulletPoint(section8,
-                "Rate Limit Retry Delay: The waiting period (in milliseconds) before retrying a request that " +
-                "received a rate limiting response (HTTP 429) from the API server.");
+                "Rate Limit Retry Delay: The time in milliseconds the application will wait before retrying a request that received a " +
+                "rate limit response (HTTP 429) from the API server.");
 
             DocumentFormatHelper.AddBulletPoint(section8,
-                "Rate Limiting Enabled: A master switch to enable or disable the rate limiting functionality. " +
-                "It's recommended to keep this enabled to prevent API throttling.");
+                "Rate Limiting Enabled: Master toggle that enables or disables all rate limiting functionality. It's recommended to " +
+                "keep this enabled to ensure reliable API communication.");
 
             DocumentFormatHelper.AddSubheading(section8, "Configuring Rate Limiting");
 
-            DocumentFormatHelper.AddSteps(section8, "To configure rate limiting settings:", new[]
+            DocumentFormatHelper.AddSteps(section8, "To adjust rate limiting settings:", new[]
             {
                 "Open the application menu and select [Settings] > [Rate Limiting]",
                 "The Rate Limiting Settings dialog will appear",
-                "Adjust the settings based on your requirements and API limits",
-                "Click [Save] to apply the new settings",
-                "Click [Reset] to restore default values if needed",
+                "Enable or disable rate limiting using the checkbox at the top",
+                "Adjust each setting according to your needs",
+                "Click [Save] to apply your changes, or [Reset] to restore default values",
                 "Click [Cancel] to close without saving changes"
             });
 
             DocumentFormatHelper.AddParagraph(section8,
-                "When processing large batches of invoices, the application automatically manages request rates according to " +
-                "these settings. This ensures reliable processing even for substantial batches without triggering API rate limits.");
+                "For large batch processing operations, the application displays rate limiting status in the progress information. " +
+                "If requests are being limited, the application will automatically adjust its behavior according to these settings.");
 
             DocumentFormatHelper.AddNote(section8,
-                "If you experience API throttling or 'Too Many Requests' errors, try increasing the request interval " +
-                "and/or decreasing the request count threshold. The default settings work well for most standard " +
-                "Invoice Cloud accounts, but your specific account may have different rate limits.");
-
-            DocumentFormatHelper.AddSubheading(section8, "Rate Limiting in Batch Processing");
-
-            DocumentFormatHelper.AddParagraph(section8,
-                "During batch processing, the application displays the current rate limiting status in the progress " +
-                "information. If a rate limit response is received from the server, the application will automatically " +
-                "apply the configured retry delay and continue processing without user intervention.");
-
-            DocumentFormatHelper.AddParagraph(section8,
-                "For scheduled tasks, the rate limiting settings in effect at the time the task runs will be used. " +
-                "If you update your rate limiting configuration, all subsequent scheduled tasks will use the new settings.");
+                "If you experience frequent 'Rate Limit Exceeded' or '429 Too Many Requests' errors, try increasing the Request Interval " +
+                "or reducing the Request Count Threshold. The default settings work well for most accounts, but some may require adjustment " +
+                "based on specific API limits assigned to your Invoice Cloud account.");
 
             // SECTION 9: FAQ
             var section9 = sections["9"];
@@ -663,6 +677,27 @@ namespace InvoiceBalanceRefresher
                 "Each session creates a new log file with a timestamp in the filename.",
                 owner);
 
+            // FAQ items for rate limiting
+            DocumentFormatHelper.AddFAQItem(section9,
+                "What happens if I disable rate limiting?",
+                "Disabling rate limiting removes all restrictions on API request frequency from the application side. This may lead to " +
+                "faster processing initially, but could trigger API throttling or temporary blocks from the Invoice Cloud API if requests " +
+                "exceed their service limits. It's generally recommended to keep rate limiting enabled.",
+                owner);
+
+            DocumentFormatHelper.AddFAQItem(section9,
+                "How do rate limiting settings affect batch processing time?",
+                "More restrictive rate limiting settings (higher interval, lower threshold) will increase the total time needed to " +
+                "process large batches, but will ensure more reliable processing without API throttling. For example, with the default " +
+                "500ms interval, the application can process approximately 120 requests per minute at maximum throughput.",
+                owner);
+
+            DocumentFormatHelper.AddFAQItem(section9,
+                "Does rate limiting apply to scheduled tasks?",
+                "Yes. Scheduled tasks use the rate limiting settings that are active when the task runs. If you modify your rate limiting " +
+                "settings, all future scheduled task executions will use the updated settings without requiring any changes to the schedule.",
+                owner);
+
             // New FAQ items for credential management
             DocumentFormatHelper.AddFAQItem(section9,
                 "How secure are my saved credentials?",
@@ -675,34 +710,6 @@ namespace InvoiceBalanceRefresher
                 "Can I use this application with multiple Biller GUIDs?",
                 "Yes. The credential management system allows you to save multiple credential sets with different names. " +
                 "You can easily switch between different Biller GUIDs by selecting a different credential set from the dropdown.",
-                owner);
-
-            // New FAQ items for rate limiting
-            DocumentFormatHelper.AddFAQItem(section9,
-                "What are the recommended rate limiting settings?",
-                "The default settings (500ms request interval, 50 request threshold, 5000ms cooldown) work well for most standard accounts. " +
-                "If you're experiencing rate limit errors, try increasing the request interval or reducing the request threshold. " +
-                "Consult with your Invoice Cloud account manager if you need specific guidance for your account tier.",
-                owner);
-
-            DocumentFormatHelper.AddFAQItem(section9,
-                "How do rate limiting settings affect batch processing time?",
-                "More restrictive rate limiting settings (higher interval, lower threshold) will increase the total time needed to " +
-                "process large batches, but will ensure more reliable processing without API throttling. For example, with the default " +
-                "500ms interval, the application can process approximately 120 requests per minute at maximum throughput.",
-                owner);
-
-            DocumentFormatHelper.AddFAQItem(section9,
-                "Does rate limiting affect scheduled tasks?",
-                "Yes. Scheduled tasks use the rate limiting settings that are active when the task runs. If you modify your rate limiting " +
-                "settings, all future scheduled task executions will use the updated settings without requiring any changes to the schedule.",
-                owner);
-
-            DocumentFormatHelper.AddFAQItem(section9,
-                "What happens if I disable rate limiting?",
-                "Disabling rate limiting removes all restrictions on API request frequency from the application side. This may lead to " +
-                "faster processing initially, but could trigger API throttling or temporary blocks from the Invoice Cloud API if requests " +
-                "exceed their service limits. Generally, it's recommended to keep rate limiting enabled.",
                 owner);
 
             DocumentFormatHelper.AddFAQItem(section9,
@@ -852,8 +859,8 @@ namespace InvoiceBalanceRefresher
                 owner);
 
             DocumentFormatHelper.AddFAQItem(section11,
-                "Rate limit exceeded errors",
-                "If you receive rate limit errors, the API is indicating you're sending requests too quickly. Try adjusting your rate limiting settings by increasing the request interval or threshold cooldown period. For large batches, consider processing them in smaller chunks.",
+                "Rate limit errors during batch processing",
+                "If you receive 'Rate Limit Exceeded' errors, adjust your rate limiting settings by increasing the Request Interval and/or Threshold Cooldown values. For very large batches, consider breaking them into smaller files to process sequentially. The application's rate limiting functionality is designed to prevent these errors, but may need adjustment for your specific account limits.",
                 owner);
 
             DocumentFormatHelper.AddFAQItem(section11,
@@ -863,12 +870,17 @@ namespace InvoiceBalanceRefresher
 
             DocumentFormatHelper.AddFAQItem(section11,
                 "Batch processing is very slow",
-                "Large batches may take significant time, especially with rate limiting enabled. Consider splitting your batch into smaller files. Check your rate limiting settings and adjust if necessary. Close other applications to free up system resources.",
+                "Large batches may take significant time. Consider splitting your batch into smaller files. Close other applications to free up system resources. Ensure your network connection is stable. Check your rate limiting settings - they may be unnecessarily restrictive for your account type.",
                 owner);
 
             DocumentFormatHelper.AddFAQItem(section11,
                 "CSV file format errors",
                 "Ensure your CSV file is properly formatted according to the selected option (Invoice Only or Account,Invoice format). Verify there are no extra spaces, quotes, or special characters. Try opening and resaving the file in a text editor to ensure proper encoding.",
+                owner);
+
+            DocumentFormatHelper.AddFAQItem(section11,
+                "Scheduled tasks not running",
+                "Check that Windows Task Scheduler is running on your system. Verify that the task is enabled in both the application's Schedule Manager and Windows Task Scheduler. Ensure the credentials used have not expired and the CSV file path is still valid. Check the Windows Task Scheduler logs for any error messages.",
                 owner);
 
             DocumentFormatHelper.AddSubheading(section11, "Error Logs and Diagnostics:");
@@ -879,7 +891,7 @@ namespace InvoiceBalanceRefresher
             DocumentFormatHelper.AddBulletPoint(section11, "Application version (displayed in About window)");
             DocumentFormatHelper.AddBulletPoint(section11, "Full error message text");
             DocumentFormatHelper.AddBulletPoint(section11, "Log files from the Logs directory");
-            DocumentFormatHelper.AddBulletPoint(section11, "Your current rate limiting settings");
+            DocumentFormatHelper.AddBulletPoint(section11, "Current rate limiting settings");
             DocumentFormatHelper.AddBulletPoint(section11, "Steps to reproduce the issue");
             DocumentFormatHelper.AddBulletPoint(section11, "Operating system version");
 
