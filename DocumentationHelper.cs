@@ -80,9 +80,10 @@ namespace InvoiceBalanceRefresher
                 VerticalAlignment = VerticalAlignment.Center
             };
 
+            // Update the docHeaderText to include version
             var docHeaderText = new TextBlock
             {
-                Text = "INVOICE BALANCE REFRESHER DOCUMENTATION",
+                Text = "INVOICE BALANCE REFRESHER DOCUMENTATION - V1.4.0",
                 Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#B2F0FF")),
                 FontWeight = FontWeights.Bold,
                 FontSize = 16,
@@ -147,11 +148,10 @@ namespace InvoiceBalanceRefresher
             var contentStackPanel = new StackPanel();
             contentScrollViewer.Content = contentStackPanel;
 
-            // Define TOC sections - FIXED to match content sections
-            // Added Rate Limiting section between API Format and FAQ
+            // Update TOC sections to add Maintenance Information section
             string[][] tocSections = new string[][]
             {
-                new string[] { "1", "Overview", "#18B4E9", "��️" },
+                new string[] { "1", "Overview", "#18B4E9", "📝" },
                 new string[] { "2", "Credential Management", "#F0A030", "🔐" },
                 new string[] { "3", "Single Invoice Processing", "#5BFF64", "📄" },
                 new string[] { "4", "Batch Processing", "#5BFF64", "📚" },
@@ -162,7 +162,8 @@ namespace InvoiceBalanceRefresher
                 new string[] { "9", "Frequently Asked Questions (FAQ)", "#18B4E9", "❓" },
                 new string[] { "10", "Keyboard Shortcuts", "#F0A030", "⌨️" },
                 new string[] { "11", "Troubleshooting", "#E55555", "🔧" },
-                new string[] { "12", "System Requirements", "#18B4E9", "💻" }
+                new string[] { "12", "System Requirements", "#18B4E9", "💻" },
+                new string[] { "13", "Maintenance Information", "#18B4E9", "🛠️" }
             };
 
             // Document sections
@@ -775,6 +776,21 @@ namespace InvoiceBalanceRefresher
                 "The Schedule Manager allows you to add, edit, delete, enable/disable, and manually run scheduled tasks.",
                 owner);
 
+            // FAQ items for maintenance
+            DocumentFormatHelper.AddFAQItem(section9,
+                "What happens during maintenance?",
+                "During maintenance, the application performs several cleanup tasks: it removes log files older than the configured retention period, " +
+                "limits the number of session files per day to prevent disk space issues, and removes orphaned scheduled tasks that may no longer be valid. " +
+                "These operations help keep the application running efficiently without manual intervention.",
+                owner);
+
+            DocumentFormatHelper.AddFAQItem(section9,
+                "How often should I run maintenance?",
+                "For most users, running maintenance on every startup (the default setting) is recommended. If you use the application very frequently, " +
+                "you might prefer a less frequent schedule like weekly or monthly. The maintenance tasks are lightweight and quick to execute, " +
+                "so they shouldn't impact normal application usage.",
+                owner);
+
             // SECTION 10: KEYBOARD SHORTCUTS
             var section10 = sections["10"];
 
@@ -933,6 +949,96 @@ namespace InvoiceBalanceRefresher
             DocumentFormatHelper.AddNote(section12,
                 "Microsoft Excel or compatible spreadsheet software is recommended for editing CSV files, " +
                 "but not required for application functionality.");
+
+            // SECTION 13: MAINTENANCE INFORMATION
+            var section13 = sections["13"];
+
+            DocumentFormatHelper.AddParagraph(section13,
+                "The Invoice Balance Refresher includes built-in maintenance features to help keep the application running smoothly. " +
+                "These features handle cleanup of old log files, management of session files, and removal of orphaned scheduled tasks.",
+                isIntro: true);
+
+            DocumentFormatHelper.AddSubheading(section13, "Maintenance Features");
+
+            DocumentFormatHelper.AddBulletPoint(section13, "Log Cleanup: Automatically removes log files older than the configured retention period");
+            DocumentFormatHelper.AddBulletPoint(section13, "Session File Management: Limits the number of session files created per day");
+            DocumentFormatHelper.AddBulletPoint(section13, "Orphaned Task Cleanup: Identifies and removes scheduled tasks that are no longer valid");
+
+            DocumentFormatHelper.AddSubheading(section13, "Maintenance Frequency Options");
+
+            // Create a grid for maintenance frequency options
+            var maintenanceFreqGrid = new Grid();
+            maintenanceFreqGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            maintenanceFreqGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            maintenanceFreqGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            maintenanceFreqGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            maintenanceFreqGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            maintenanceFreqGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+            // Setting labels and descriptions
+            string[][] freqSettings = new string[][]
+            {
+                new string[] { "Every Startup:", "Run maintenance tasks each time the application starts" },
+                new string[] { "Daily:", "Run maintenance tasks once per day" },
+                new string[] { "Weekly:", "Run maintenance tasks once per week" },
+                new string[] { "Monthly:", "Run maintenance tasks once per month" }
+            };
+
+            for (int i = 0; i < freqSettings.Length; i++)
+            {
+                var freqLabel = new TextBlock
+                {
+                    Text = freqSettings[i][0],
+                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9")),
+                    FontFamily = new FontFamily("Consolas"),
+                    FontWeight = FontWeights.Bold,
+                    Margin = new Thickness(15, 5, 15, 5)
+                };
+
+                var freqDesc = new TextBlock
+                {
+                    Text = freqSettings[i][1],
+                    Foreground = (SolidColorBrush)owner.FindResource("ForegroundBrush"),
+                    TextWrapping = TextWrapping.Wrap,
+                    Margin = new Thickness(0, 5, 0, 5)
+                };
+
+                Grid.SetRow(freqLabel, i);
+                Grid.SetColumn(freqLabel, 0);
+                Grid.SetRow(freqDesc, i);
+                Grid.SetColumn(freqDesc, 1);
+
+                maintenanceFreqGrid.Children.Add(freqLabel);
+                maintenanceFreqGrid.Children.Add(freqDesc);
+            }
+
+            section13.Children.Add(maintenanceFreqGrid);
+
+            DocumentFormatHelper.AddSubheading(section13, "Configuration Options");
+
+            DocumentFormatHelper.AddParagraph(section13,
+                "The maintenance system provides several configuration options that you can adjust according to your needs:");
+
+            DocumentFormatHelper.AddBulletPoint(section13, "Log Retention Days: Number of days to keep log files before deletion (default: 30 days)");
+            DocumentFormatHelper.AddBulletPoint(section13, "Max Session Files Per Day: Maximum number of session log files to keep per day (default: 10 files)");
+            DocumentFormatHelper.AddBulletPoint(section13, "Enable Log Cleanup: Toggle log file cleanup feature (default: enabled)");
+            DocumentFormatHelper.AddBulletPoint(section13, "Enable Orphaned Task Cleanup: Toggle scheduled task cleanup feature (default: enabled)");
+            DocumentFormatHelper.AddBulletPoint(section13, "Enable Periodic Maintenance: Automatically run maintenance according to schedule (default: disabled)");
+            DocumentFormatHelper.AddBulletPoint(section13, "Maintenance Frequency: How often maintenance should run (default: Every Startup)");
+
+            DocumentFormatHelper.AddSteps(section13, "To configure maintenance settings:", new[]
+            {
+                "Open the application menu and select [Settings] > [Maintenance Settings]",
+                "The Maintenance Settings dialog will appear",
+                "Adjust settings according to your needs",
+                "Enable or disable specific maintenance tasks",
+                "Set the maintenance frequency",
+                "Click [Save] to apply your changes, or [Cancel] to close without saving"
+            });
+
+            DocumentFormatHelper.AddNote(section13,
+                "You can also manually trigger maintenance at any time by clicking the [Run Maintenance] button in the main window.");
         }
     }
 }

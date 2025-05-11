@@ -28,6 +28,9 @@ namespace InvoiceBalanceRefresher
         private readonly BatchProcessingHelper _batchProcessingHelper;
         private readonly ScheduleManager _scheduleManager;
 
+        private MaintenanceConfig _maintenanceConfig = null!;
+
+
         // Command properties for keyboard shortcuts
         // Command properties for keyboard shortcuts
         public ICommand SaveCredentialsCommand => new RelayCommand(param => SaveCredentials_Click(this, new RoutedEventArgs()));
@@ -55,6 +58,34 @@ namespace InvoiceBalanceRefresher
                 ConsoleLog.Document.Blocks.Add(paragraph);
                 ConsoleLog.ScrollToEnd();
             });
+
+            // Load maintenance settings
+            _maintenanceConfig = MaintenanceConfig.Load() ?? new MaintenanceConfig
+            {
+                EnablePeriodicMaintenance = true, // Default values
+                EnableLogCleanup = true,
+                EnableOrphanedTaskCleanup = true,
+                LogDirectory = "Logs",
+                LogRetentionDays = 30,
+                MaxSessionFilesPerDay = 10 // Add default for MaxSessionFilesPerDay
+            };
+
+
+            // Ensure the configuration is saved if it was newly created
+            if (_maintenanceConfig != null && !_maintenanceConfig.Save())
+            {
+                Log(LogLevel.Warning, "Failed to save default maintenance configuration.");
+            }
+
+            // Run maintenance tasks
+            try
+            {
+                RunMaintenanceTasks();
+            }
+            catch (Exception ex)
+            {
+                Log(LogLevel.Error, $"Error during maintenance tasks: {ex.Message}");
+            }
 
             _apiService = new InvoiceCloudApiService((level, message) =>
                 Log((LogLevel)(int)level, message));
@@ -95,10 +126,159 @@ namespace InvoiceBalanceRefresher
 
             // Log startup
             Log(LogLevel.Info, $"Invoice Balance Refresher v{APP_VERSION} started");
-            
-            // Log keyboard shortcuts availability
             Log(LogLevel.Info, "Keyboard shortcuts initialized");
         }
+
+
+
+        // Add this method to MainWindow.xaml.cs
+        private void RunMaintenanceButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                Log(LogLevel.Info, "Manual maintenance task execution requested");
+
+                // Make sure we have the latest configuration from file
+                _maintenanceConfig = MaintenanceConfig.Load();
+
+                // Check if configuration is null
+                if (_maintenanceConfig == null)
+                {
+                    _maintenanceConfig = new MaintenanceConfig
+                    {
+                        EnablePeriodicMaintenance = true,
+                        EnableLogCleanup = true,
+                        EnableOrphanedTaskCleanup = true,
+                        LogDirectory = "Logs",
+                        LogRetentionDays = 30,
+                        MaxSessionFilesPerDay = 10,
+                        MaintenanceFrequency = MaintenanceFrequency.EveryStartup
+                    };
+                    Log(LogLevel.Warning, "Created default maintenance configuration as none was found.");
+                }
+
+                // Ensure the configuration is saved before running maintenance
+                if (!_maintenanceConfig.Save())
+                {
+                    Log(LogLevel.Warning, "Failed to save maintenance configuration before running tasks.");
+                }
+
+                // Create and run maintenance helper
+                var maintenanceHelper = new MaintenanceHelper(
+                    _maintenanceConfig.LogDirectory,
+                    _maintenanceConfig.LogRetentionDays,
+                    _maintenanceConfig.MaxSessionFilesPerDay,
+                    _maintenanceConfig.EnableLogCleanup,
+                    _maintenanceConfig.EnableOrphanedTaskCleanup,
+                    _maintenanceConfig.MaintenanceFrequency,
+                    _maintenanceConfig.LastMaintenanceRun,
+                    (level, message) => Log(level, message));
+
+                // Run maintenance regardless of frequency since this is manual
+                bool tasksRan = maintenanceHelper.RunMaintenance(_maintenanceConfig);
+
+                if (tasksRan)
+                {
+                    MessageBox.Show("Maintenance tasks completed successfully.",
+                        "Maintenance Complete", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                else
+                {
+                    MessageBox.Show("No maintenance tasks were enabled to run.",
+                        "Maintenance Complete", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log(LogLevel.Error, $"Error running maintenance tasks: {ex.Message}");
+                MessageBox.Show($"Error running maintenance tasks: {ex.Message}",
+                    "Maintenance Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+
+
+
+        // Update the RunMaintenanceTasks method to use the MaintenanceHelper class correctly
+        private void RunMaintenanceTasks()
+        {
+            try
+            {
+                if (_maintenanceConfig.EnablePeriodicMaintenance)
+                {
+                    // Create maintenance helper with the new parameters
+                    var maintenanceHelper = new MaintenanceHelper(
+                        _maintenanceConfig.LogDirectory,
+                        _maintenanceConfig.LogRetentionDays,
+                        _maintenanceConfig.MaxSessionFilesPerDay,
+                        _maintenanceConfig.EnableLogCleanup,
+                        _maintenanceConfig.EnableOrphanedTaskCleanup,
+                        _maintenanceConfig.MaintenanceFrequency,
+                        _maintenanceConfig.LastMaintenanceRun,
+                        (level, message) => Log(level, message));
+
+                    // Only run maintenance if it should run based on frequency
+                    if (maintenanceHelper.ShouldRunMaintenance())
+                    {
+                        Log(LogLevel.Info, $"Running maintenance (Frequency: {_maintenanceConfig.MaintenanceFrequency})");
+                        maintenanceHelper.RunMaintenance(_maintenanceConfig);
+                    }
+                    else
+                    {
+                        Log(LogLevel.Info, $"Skipping maintenance based on frequency setting ({_maintenanceConfig.MaintenanceFrequency})");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log(LogLevel.Error, $"Error while running maintenance tasks: {ex.Message}");
+            }
+        }
+
+
+
+
+        private void OpenMaintenanceSettings_Click(object sender, RoutedEventArgs e)
+        {
+            // Load maintenance config
+            if (_maintenanceConfig == null)
+            {
+                _maintenanceConfig = MaintenanceConfig.Load();
+            }
+
+            // Create and show the settings dialog
+            var settingsWindow = new MaintenanceSettings(_maintenanceConfig, (level, message) => Log(level, message));
+
+            // If user clicked Save, apply the settings
+            if (settingsWindow.ShowDialog() == true)
+            {
+                // Create and run the maintenance helper with the updated settings
+                var maintenanceHelper = new MaintenanceHelper(
+                    _maintenanceConfig.LogDirectory,
+                    _maintenanceConfig.LogRetentionDays,
+                    _maintenanceConfig.MaxSessionFilesPerDay,
+                    _maintenanceConfig.EnableLogCleanup,
+                    _maintenanceConfig.EnableOrphanedTaskCleanup,
+                    _maintenanceConfig.MaintenanceFrequency,
+                    _maintenanceConfig.LastMaintenanceRun,
+                    (level, message) => Log(level, message)
+                );
+
+                // Run maintenance tasks if enabled, but respect the frequency setting
+                if ((_maintenanceConfig.EnableLogCleanup || _maintenanceConfig.EnableOrphanedTaskCleanup) &&
+                    maintenanceHelper.ShouldRunMaintenance())
+                {
+                    maintenanceHelper.RunMaintenance(_maintenanceConfig);
+                    Log(LogLevel.Info, "Maintenance tasks executed according to settings.");
+                }
+                else
+                {
+                    Log(LogLevel.Info, "Maintenance settings saved but no tasks executed at this time.");
+                }
+            }
+        }
+
+
 
         // Method to cycle through credential sets
         private void CycleCredentialSets()
@@ -129,6 +309,11 @@ namespace InvoiceBalanceRefresher
                 Log(LogLevel.Warning, $"Failed to load saved credentials: {ex.Message}");
             }
         }
+
+        
+
+
+
 
         private void InitializeLogging()
         {

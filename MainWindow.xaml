@@ -242,8 +242,9 @@
             </MenuItem>
 
             <MenuItem Header="Settings">
-                <MenuItem Header="Rate Limiting Configuration" Click="RateLimitSettings_Click"/>
                 <MenuItem Header="Manage Credential Sets" Click="ManageCredentials_Click"/>
+                <MenuItem Header="Rate Limiting Configuration" Click="RateLimitSettings_Click"/>
+                <MenuItem Header="Maintenance Settings" Click="OpenMaintenanceSettings_Click" />
                 <Separator/>
                 <MenuItem Header="Theme">
                     <MenuItem x:Name="LightModeMenuItem" Header="Light Mode" IsChecked="True" Click="LightMode_Click"/>
@@ -530,22 +531,29 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock Grid.Column="0" Text="SEARCH:" Style="{StaticResource SubHeadline2}"
-                          VerticalAlignment="Center" Margin="5,0,5,0"/>
+                  VerticalAlignment="Center" Margin="5,0,5,0"/>
                 <TextBox Grid.Column="1" x:Name="SearchBox" Height="30" VerticalAlignment="Center" 
-                        Margin="0,0,5,0"
-                        TextChanged="SearchBox_TextChanged"/>
+                Margin="0,0,5,0"
+                TextChanged="SearchBox_TextChanged"/>
                 <Button Grid.Column="2" Content="X" Width="30" Height="30" 
-                       Click="ClearSearch_Click" ToolTip="Clear Search"/>
+               Click="ClearSearch_Click" ToolTip="Clear Search"/>
             </Grid>
 
             <TextBlock Grid.Column="2" x:Name="SearchResultsCount" Style="{StaticResource Caption}"
-                      VerticalAlignment="Center" Margin="5,0,10,0"/>
+              VerticalAlignment="Center" Margin="5,0,10,0"/>
 
             <StackPanel Grid.Column="3" Orientation="Horizontal">
+                <Button x:Name="RunMaintenanceButton" 
+                Content="Run Maintenance Tasks" 
+                Click="RunMaintenanceButton_Click"
+                Margin="0,0,5,0" 
+                Padding="10,5,10,5"
+                Width="150" Height="30"/>
                 <Button Content="Clear" Width="80" Height="30" Margin="0,0,5,0" Click="ClearLog_Click"/>
                 <Button Content="Save Logs" Width="100" Height="30" Click="SaveLogs_Click"/>
             </StackPanel>
         </Grid>
+
 
         <!-- Console Area with Search Highlighting -->
         <Border Grid.Row="3" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" 
