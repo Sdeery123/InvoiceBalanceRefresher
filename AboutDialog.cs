@@ -32,7 +32,7 @@ namespace InvoiceBalanceRefresher
             {
                 Title = "About Invoice Balance Refresher",
                 Width = 700,
-                Height = 650, // Increased height for schedule info
+                Height = 700, // Increased height for credential manager info
                 Background = (SolidColorBrush)_ownerWindow.FindResource("BackgroundBrush"),
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 Owner = _ownerWindow,
@@ -93,6 +93,17 @@ namespace InvoiceBalanceRefresher
                 VerticalAlignment = VerticalAlignment.Center,
                 FontFamily = new FontFamily("Consolas"),
                 FontWeight = FontWeights.Bold
+            });
+
+            // Add version and user info
+            statusPanel.Children.Add(new TextBlock
+            {
+                Text = $" • TIME: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC • USER: {Environment.UserName}",
+                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#B2F0FF")),
+                Margin = new Thickness(10, 0, 0, 0),
+                VerticalAlignment = VerticalAlignment.Center,
+                FontFamily = new FontFamily("Consolas"),
+                FontSize = 10
             });
 
             // Add a "terminal" blinking cursor effect
@@ -327,6 +338,7 @@ namespace InvoiceBalanceRefresher
             {
                 "Single invoice processing with real-time balance updates",
                 "Batch processing of multiple invoices via CSV with account number support",
+                "Secure credential management with multiple credential set support",
                 "Comprehensive logging system with session history and search",
                 "Terminal-inspired UI with light/dark mode support",
                 "Secure invoice balance checking via SOAP API integration",
@@ -383,11 +395,94 @@ namespace InvoiceBalanceRefresher
                 featureBlock.Inlines.Add(textRun);
 
                 // Add to appropriate column
-                if (i < features.Length / 2)
+                if (i < features.Length / 2 + (features.Length % 2))
                     leftPanel.Children.Add(featureBlock);
                 else
                     rightPanel.Children.Add(featureBlock);
             }
+
+            // CREDENTIAL MANAGER SECTION (NEW)
+            var credentialBorder = new Border
+            {
+                BorderBrush = (SolidColorBrush)_ownerWindow.FindResource("BorderBrush"),
+                BorderThickness = new Thickness(1),
+                Background = new SolidColorBrush(Color.FromArgb(30, 24, 180, 233)),
+                CornerRadius = new CornerRadius(4),
+                Padding = new Thickness(15),
+                Margin = new Thickness(10, 0, 10, 15)
+            };
+            contentPanel.Children.Add(credentialBorder);
+
+            var credentialPanel = new StackPanel();
+            credentialBorder.Child = credentialPanel;
+
+            var credentialHeader = new TextBlock
+            {
+                Text = "[ CREDENTIAL MANAGER ]",
+                Foreground = (SolidColorBrush)_ownerWindow.FindResource("AccentBrush"),
+                FontWeight = FontWeights.Bold,
+                FontFamily = new FontFamily("Consolas"),
+                Margin = new Thickness(0, 0, 0, 10)
+            };
+            credentialPanel.Children.Add(credentialHeader);
+
+            var credentialDesc = new TextBlock
+            {
+                Text = "The Credential Manager provides secure storage and management of multiple API credential sets. Save and switch between different billers or environments (test/production) without re-entering credentials. All credential sets are encrypted using Windows Data Protection API (DPAPI) for maximum security.",
+                Foreground = (SolidColorBrush)_ownerWindow.FindResource("ForegroundBrush"),
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 0, 0, 8)
+            };
+            credentialPanel.Children.Add(credentialDesc);
+
+            var credentialFeatures = new string[]
+            {
+                "Store multiple named credential sets securely",
+                "Switch between environments with a single click",
+                "DPAPI encryption tied to Windows user account",
+                "Dedicated credential management interface",
+                "Integration with batch processing and scheduling",
+                "Save, edit, delete credential sets with user-friendly UI"
+            };
+
+            foreach (var feat in credentialFeatures)
+            {
+                var featPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(10, 0, 0, 2) };
+                featPanel.Children.Add(new TextBlock
+                {
+                    Text = "•",
+                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9")),
+                    Margin = new Thickness(0, 0, 5, 0),
+                    FontWeight = FontWeights.Bold
+                });
+                featPanel.Children.Add(new TextBlock
+                {
+                    Text = feat,
+                    Foreground = (SolidColorBrush)_ownerWindow.FindResource("ForegroundBrush"),
+                    TextWrapping = TextWrapping.Wrap
+                });
+                credentialPanel.Children.Add(featPanel);
+            }
+
+            // Security status indicator
+            var securityStatusBorder = new Border
+            {
+                Background = new SolidColorBrush(Color.FromArgb(40, 91, 255, 100)),
+                CornerRadius = new CornerRadius(2),
+                Padding = new Thickness(8),
+                Margin = new Thickness(10, 10, 10, 0)
+            };
+
+            var securityStatus = new TextBlock
+            {
+                Text = "SECURITY STATUS: CREDENTIALS ENCRYPTED",
+                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#5BFF64")),
+                FontFamily = new FontFamily("Consolas"),
+                TextAlignment = TextAlignment.Center,
+                FontSize = 11
+            };
+            securityStatusBorder.Child = securityStatus;
+            credentialPanel.Children.Add(securityStatusBorder);
 
             // SCHEDULE INFO SECTION
             var scheduleBorder = new Border
@@ -427,6 +522,7 @@ namespace InvoiceBalanceRefresher
             {
                 "Add, edit, delete, enable/disable scheduled batch jobs",
                 "Flexible scheduling: Once, Daily, Weekly, Monthly",
+                "Select saved credential set for each scheduled task",
                 "Manual [RUN NOW] option for any scheduled task",
                 "Track last run time, result, and status for each task",
                 "Windows Task Scheduler integration for background execution",
@@ -489,6 +585,7 @@ namespace InvoiceBalanceRefresher
             techGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             techGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             techGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            techGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
             string[][] techSpecs = new string[][]
             {
@@ -496,6 +593,7 @@ namespace InvoiceBalanceRefresher
                 new string[] { "Language:", "C# 12.0" },
                 new string[] { "UI Framework:", "WPF" },
                 new string[] { "API:", "SOAP XML" },
+                new string[] { "Encryption:", "Windows DPAPI" },
                 new string[] { "Created:", "May 2025" },
                 new string[] { "Build:", $"{_appVersion}.0" }
             };
@@ -609,6 +707,113 @@ namespace InvoiceBalanceRefresher
                     MessageBox.Show($"Unable to open website: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             };
+
+            // Add a "Powered by" section under the feature section
+            var poweredByBorder = new Border
+            {
+                BorderBrush = (SolidColorBrush)_ownerWindow.FindResource("BorderBrush"),
+                BorderThickness = new Thickness(1),
+                Background = new SolidColorBrush(Color.FromArgb(30, 24, 180, 233)),
+                CornerRadius = new CornerRadius(4),
+                Padding = new Thickness(10),
+                Margin = new Thickness(10, 0, 10, 15)
+            };
+            contentPanel.Children.Add(poweredByBorder);
+
+            var poweredByPanel = new StackPanel();
+            poweredByBorder.Child = poweredByPanel;
+
+            var poweredByHeader = new TextBlock
+            {
+                Text = "[ POWERED BY ]",
+                Foreground = (SolidColorBrush)_ownerWindow.FindResource("AccentBrush"),
+                FontWeight = FontWeights.Bold,
+                FontFamily = new FontFamily("Consolas"),
+                Margin = new Thickness(0, 0, 0, 10)
+            };
+            poweredByPanel.Children.Add(poweredByHeader);
+
+            // Create a grid for technology icons
+            var techStackGrid = new Grid();
+            for (int i = 0; i < 6; i++)
+            {
+                techStackGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            }
+            poweredByPanel.Children.Add(techStackGrid);
+
+            // Add technology icons/labels
+            string[] technologies = { ".NET 8", "C# 12", "WPF", "XAML", "XML", "DPAPI" };
+            for (int i = 0; i < technologies.Length; i++)
+            {
+                var techPanel = new StackPanel { Margin = new Thickness(5) };
+                var techLabel = new TextBlock
+                {
+                    Text = technologies[i],
+                    Foreground = (SolidColorBrush)_ownerWindow.FindResource("ForegroundBrush"),
+                    TextAlignment = TextAlignment.Center,
+                    FontFamily = new FontFamily("Consolas"),
+                    FontSize = 12,
+                    Margin = new Thickness(0, 5, 0, 0)
+                };
+                techPanel.Children.Add(techLabel);
+
+                Grid.SetColumn(techPanel, i);
+                techStackGrid.Children.Add(techPanel);
+            }
+
+            // Add current system info
+            techGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            techGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+            var osLabel = new TextBlock
+            {
+                Text = "OS:",
+                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9")),
+                FontFamily = new FontFamily("Consolas"),
+                Margin = new Thickness(10, 2, 5, 2),
+                FontWeight = FontWeights.Bold
+            };
+
+            var osValue = new TextBlock
+            {
+                Text = Environment.OSVersion.ToString(),
+                Foreground = (SolidColorBrush)_ownerWindow.FindResource("ForegroundBrush"),
+                FontFamily = new FontFamily("Consolas"),
+                Margin = new Thickness(0, 2, 0, 2)
+            };
+
+            Grid.SetRow(osLabel, techSpecs.Length);
+            Grid.SetColumn(osLabel, 0);
+            Grid.SetRow(osValue, techSpecs.Length);
+            Grid.SetColumn(osValue, 1);
+
+            techGrid.Children.Add(osLabel);
+            techGrid.Children.Add(osValue);
+
+            var userLabel = new TextBlock
+            {
+                Text = "Current User:",
+                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9")),
+                FontFamily = new FontFamily("Consolas"),
+                Margin = new Thickness(10, 2, 5, 2),
+                FontWeight = FontWeights.Bold
+            };
+
+            var userValue = new TextBlock
+            {
+                Text = Environment.UserName,
+                Foreground = (SolidColorBrush)_ownerWindow.FindResource("ForegroundBrush"),
+                FontFamily = new FontFamily("Consolas"),
+                Margin = new Thickness(0, 2, 0, 2)
+            };
+
+            Grid.SetRow(userLabel, techSpecs.Length + 1);
+            Grid.SetColumn(userLabel, 0);
+            Grid.SetRow(userValue, techSpecs.Length + 1);
+            Grid.SetColumn(userValue, 1);
+
+            techGrid.Children.Add(userLabel);
+            techGrid.Children.Add(userValue);
 
             buttonPanel.Children.Add(websiteButton);
             buttonPanel.Children.Add(closeButton);
