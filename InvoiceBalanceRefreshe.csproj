@@ -18,6 +18,13 @@
   <ItemGroup>
     <Content Include="balrefresh.ico" />
   </ItemGroup>
+  
+  <!-- Add these references to your project file (.csproj) -->
+  <ItemGroup>
+    <Reference Include="System.Drawing.common" />
+    <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
+
 
   <ItemGroup>
     <PackageReference Include="TaskScheduler" Version="2.12.1" />

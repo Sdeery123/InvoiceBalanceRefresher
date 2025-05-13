@@ -74,13 +74,13 @@ namespace InvoiceBalanceRefresher
             var selectedCredentialSet = CredentialSetListBox.SelectedItem as CredentialManager.CredentialSet;
             if (selectedCredentialSet == null)
             {
-                MessageBox.Show("Please select a credential set to delete.", "Information",
+                System.Windows.MessageBox.Show("Please select a credential set to delete.", "Information",
                     MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
             // Confirm deletion
-            var result = MessageBox.Show($"Are you sure you want to delete the credential set '{selectedCredentialSet.Name}'?",
+            var result = System.Windows.MessageBox.Show($"Are you sure you want to delete the credential set '{selectedCredentialSet.Name}'?",
                 "Confirm Deletion", MessageBoxButton.YesNo, MessageBoxImage.Question);
                 
             if (result == MessageBoxResult.Yes)
@@ -102,21 +102,21 @@ namespace InvoiceBalanceRefresher
             // Validate inputs
             if (string.IsNullOrWhiteSpace(name))
             {
-                MessageBox.Show("Please enter a name for this credential set.", "Validation Error",
+                System.Windows.MessageBox.Show("Please enter a name for this credential set.", "Validation Error",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
             
             if (!ValidationHelper.ValidateGUID(billerGUID))
             {
-                MessageBox.Show("Please enter a valid Biller GUID.", "Validation Error",
+                System.Windows.MessageBox.Show("Please enter a valid Biller GUID.", "Validation Error",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
             
             if (!ValidationHelper.ValidateGUID(webServiceKey))
             {
-                MessageBox.Show("Please enter a valid Web Service Key.", "Validation Error",
+                System.Windows.MessageBox.Show("Please enter a valid Web Service Key.", "Validation Error",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
@@ -127,7 +127,7 @@ namespace InvoiceBalanceRefresher
                 bool nameExists = _credentialSets.Exists(c => c.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
                 if (nameExists)
                 {
-                    MessageBox.Show($"A credential set with the name '{name}' already exists. Please choose a different name.",
+                    System.Windows.MessageBox.Show($"A credential set with the name '{name}' already exists. Please choose a different name.",
                         "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
@@ -138,8 +138,8 @@ namespace InvoiceBalanceRefresher
             
             // Refresh the list
             LoadCredentialSets();
-            
-            MessageBox.Show("Credential set saved successfully.", "Success",
+
+            System.Windows.MessageBox.Show("Credential set saved successfully.", "Success",
                 MessageBoxButton.OK, MessageBoxImage.Information);
         }
         

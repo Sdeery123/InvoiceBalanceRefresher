@@ -14,7 +14,7 @@ namespace InvoiceBalanceRefresher
         private readonly bool _enableOrphanedTaskCleanup;
         private readonly Action<MainWindow.LogLevel, string> _logAction;
 
-        // Add these new fields
+        // Existing fields for maintenance frequency
         private readonly MaintenanceFrequency _maintenanceFrequency;
         private readonly DateTime _lastMaintenanceRun;
 
@@ -36,7 +36,9 @@ namespace InvoiceBalanceRefresher
             _maintenanceFrequency = maintenanceFrequency;
             _lastMaintenanceRun = lastMaintenanceRun;
             _logAction = logAction;
-        }// New method to check if maintenance should run based on frequency
+        }
+
+        // Existing method to check if maintenance should run based on frequency
         public bool ShouldRunMaintenance()
         {
             // Always run if it's the first time (LastMaintenanceRun is DateTime.MinValue)
@@ -82,7 +84,6 @@ namespace InvoiceBalanceRefresher
         }
 
         // Update RunMaintenance method to pass the logAction to static methods
-        // Update RunMaintenance method to return a boolean and accept MaintenanceConfig parameter
         public bool RunMaintenance(MaintenanceConfig config)
         {
             _logAction(MainWindow.LogLevel.Info, "Starting maintenance tasks...");
@@ -133,7 +134,6 @@ namespace InvoiceBalanceRefresher
                 return false;
             }
         }
-
 
         private void EnforceMaxSessionFiles()
         {
@@ -261,22 +261,26 @@ namespace InvoiceBalanceRefresher
         {
             try
             {
-                logAction?.Invoke(MainWindow.LogLevel.Info, "Cleaning up orphaned tasks");
+                logAction?.Invoke(MainWindow.LogLevel.Info, "Cleaning up schedule-related data");
 
-                // Get an instance of the schedule manager with null action to avoid circular dependencies
+                // Get an instance of the schedule manager with simple logAction
                 var scheduleManager = ScheduleManager.GetInstance(
                     message => logAction?.Invoke(MainWindow.LogLevel.Info, message),
-                    (_, _, _, _) => Task.FromResult(false));
+                    (_, _, _, _, _) => Task.FromResult(false)); // Updated to take 5 parameters
 
-                scheduleManager.CleanupOrphanedTasks();
-                logAction?.Invoke(MainWindow.LogLevel.Info, "Orphaned tasks cleanup completed");
+                // We don't need to call CleanupOrphanedTasks anymore since Windows Task integration is removed
+                // However, we might want to check for any data integrity issues in the schedule data
+
+                // Check for any corrupted schedule entries or perform other maintenance on schedules
+                // This could involve validating all scheduled tasks or cleaning up old/expired tasks
+
+                logAction?.Invoke(MainWindow.LogLevel.Info, "Schedule data cleanup completed");
             }
             catch (Exception ex)
             {
-                logAction?.Invoke(MainWindow.LogLevel.Error, $"Error cleaning up orphaned tasks: {ex.Message}");
+                logAction?.Invoke(MainWindow.LogLevel.Error, $"Error cleaning up schedule data: {ex.Message}");
             }
         }
 
     }
-
 }

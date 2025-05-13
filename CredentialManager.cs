@@ -53,7 +53,7 @@ namespace InvoiceBalanceRefresher
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to save credential set: {ex.Message}",
+                System.Windows.MessageBox.Show($"Failed to save credential set: {ex.Message}",
                     "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -71,7 +71,7 @@ namespace InvoiceBalanceRefresher
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to load credential set: {ex.Message}",
+                System.Windows.MessageBox.Show($"Failed to load credential set: {ex.Message}",
                     "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 return null;
             }
@@ -110,7 +110,7 @@ namespace InvoiceBalanceRefresher
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to load credential sets: {ex.Message}",
+                System.Windows.MessageBox.Show($"Failed to load credential sets: {ex.Message}",
                     "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 return new List<CredentialSet>();
             }
@@ -136,7 +136,7 @@ namespace InvoiceBalanceRefresher
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to delete credential set: {ex.Message}",
+                System.Windows.MessageBox.Show($"Failed to delete credential set: {ex.Message}",
                     "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 return false;
             }

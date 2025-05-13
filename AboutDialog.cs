@@ -46,7 +46,7 @@ namespace InvoiceBalanceRefresher
 
             // Add scanlines overlay (same as main window but a bit more visible)
             var scanlinesGrid = new Grid();
-            scanlinesGrid.SetValue(Panel.ZIndexProperty, -1);
+            scanlinesGrid.SetValue(System.Windows.Controls.Panel.ZIndexProperty, -1);
             scanlinesGrid.Background = new DrawingBrush
             {
                 TileMode = TileMode.Tile,
@@ -59,12 +59,12 @@ namespace InvoiceBalanceRefresher
                     {
                         new GeometryDrawing
                         {
-                            Brush = Brushes.Transparent,
+                            Brush = System.Windows.Media.Brushes.Transparent,
                             Geometry = new RectangleGeometry(new Rect(0, 0, 2, 2))
                         },
                         new GeometryDrawing
                         {
-                            Brush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#00FF00")),
+                            Brush = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#00FF00")),
                             Geometry = new RectangleGeometry(new Rect(0, 0, 2, 1))
                         }
                     }
@@ -76,22 +76,22 @@ namespace InvoiceBalanceRefresher
             var statusBar = new Border
             {
                 Height = 25,
-                Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18536A")),
+                Background = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#18536A")),
                 VerticalAlignment = VerticalAlignment.Top,
                 BorderThickness = new Thickness(0, 0, 0, 1),
-                BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#124050"))
+                BorderBrush = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#124050"))
             };
 
-            var statusPanel = new StackPanel { Orientation = Orientation.Horizontal };
+            var statusPanel = new StackPanel { Orientation = System.Windows.Controls.Orientation.Horizontal };
             statusBar.Child = statusPanel;
 
             statusPanel.Children.Add(new TextBlock
             {
                 Text = "SYSTEM: ONLINE",
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#B2F0FF")),
+                Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#B2F0FF")),
                 Margin = new Thickness(10, 0, 0, 0),
                 VerticalAlignment = VerticalAlignment.Center,
-                FontFamily = new FontFamily("Consolas"),
+                FontFamily = new System.Windows.Media.FontFamily("Consolas"),
                 FontWeight = FontWeights.Bold
             });
 
@@ -99,10 +99,10 @@ namespace InvoiceBalanceRefresher
             statusPanel.Children.Add(new TextBlock
             {
                 Text = $" • TIME: 2025-05-11 03:53:14 UTC • USER: Sdeery123",
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#B2F0FF")),
+                Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#B2F0FF")),
                 Margin = new Thickness(10, 0, 0, 0),
                 VerticalAlignment = VerticalAlignment.Center,
-                FontFamily = new FontFamily("Consolas"),
+                FontFamily = new System.Windows.Media.FontFamily("Consolas"),
                 FontSize = 10
             });
 
@@ -111,10 +111,10 @@ namespace InvoiceBalanceRefresher
             {
                 Width = 8,
                 Height = 15,
-                Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9")),
+                Background = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#18B4E9")),
                 Margin = new Thickness(10, 0, 0, 0),
                 VerticalAlignment = VerticalAlignment.Center,
-                HorizontalAlignment = HorizontalAlignment.Left
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Left
             };
 
             // Add animation for blinking cursor
@@ -157,8 +157,8 @@ namespace InvoiceBalanceRefresher
             {
                 Text = "// SYSTEM INFORMATION READOUT //",
                 FontSize = 10,
-                FontFamily = new FontFamily("Consolas"),
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9")),
+                FontFamily = new System.Windows.Media.FontFamily("Consolas"),
+                Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#18B4E9")),
                 TextAlignment = TextAlignment.Center,
                 Margin = new Thickness(0, 5, 0, 5)
             };
@@ -195,22 +195,22 @@ namespace InvoiceBalanceRefresher
             contentPanel.Children.Add(versionBlock);
 
             // Add divider with slightly more visual appeal
-            var divider1 = new Rectangle
+            var divider1 = new System.Windows.Shapes.Rectangle
             {
                 Height = 2,
                 Fill = new LinearGradientBrush
                 {
-                    StartPoint = new Point(0, 0),
-                    EndPoint = new Point(1, 0),
+                    StartPoint = new System.Windows.Point(0, 0),
+                    EndPoint = new System.Windows.Point(1, 0),
                     GradientStops = new GradientStopCollection
                     {
-                        new GradientStop((Color)ColorConverter.ConvertFromString("#105062"), 0.0),
-                        new GradientStop((Color)ColorConverter.ConvertFromString("#18B4E9"), 0.5),
-                        new GradientStop((Color)ColorConverter.ConvertFromString("#105062"), 1.0)
+                        new GradientStop((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#105062"), 0.0),
+                        new GradientStop((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#18B4E9"), 0.5),
+                        new GradientStop((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#105062"), 1.0)
                     }
                 },
                 Margin = new Thickness(50, 0, 50, 15),
-                HorizontalAlignment = HorizontalAlignment.Stretch
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch
             };
             contentPanel.Children.Add(divider1);
 
@@ -219,7 +219,7 @@ namespace InvoiceBalanceRefresher
             {
                 BorderBrush = (SolidColorBrush)_ownerWindow.FindResource("BorderBrush"),
                 BorderThickness = new Thickness(1),
-                Background = new SolidColorBrush(Color.FromArgb(40, 18, 180, 233)),
+                Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(40, 18, 180, 233)),
                 CornerRadius = new CornerRadius(4),
                 Padding = new Thickness(15),
                 Margin = new Thickness(10, 0, 10, 15)
@@ -238,7 +238,7 @@ namespace InvoiceBalanceRefresher
                 Text = "[ SYSTEM INFORMATION ]",
                 Foreground = (SolidColorBrush)_ownerWindow.FindResource("AccentBrush"),
                 FontWeight = FontWeights.Bold,
-                FontFamily = new FontFamily("Consolas"),
+                FontFamily = new System.Windows.Media.FontFamily("Consolas"),
                 Margin = new Thickness(0, 0, 0, 10)
             };
             infoPanel.Children.Add(descriptionBlock);
@@ -246,7 +246,7 @@ namespace InvoiceBalanceRefresher
             // Application description with typewriter-style text - Updated to mention new features
             var appDescriptionBlock = new TextBlock
             {
-                Text = "A terminal-style application built for Invoice Cloud clients to efficiently refresh and validate invoice balances through the secure SOAP API service. Features include single invoice processing, batch processing via CSV files, secure credential management, enhanced RTDR options, automated maintenance, and configurable rate limiting to ensure optimal API interactions.",
+                Text = "A terminal-style application built for Invoice Cloud clients to efficiently refresh and validate invoice balances through the secure SOAP API service. Features include single invoice processing, batch processing via CSV files, secure credential management, enhanced RTDR options, automated maintenance, comprehensive scheduling options, and configurable rate limiting to ensure optimal API interactions.",
                 Foreground = (SolidColorBrush)_ownerWindow.FindResource("ForegroundBrush"),
                 TextWrapping = TextWrapping.Wrap,
                 Margin = new Thickness(10, 0, 10, 10)
@@ -257,22 +257,22 @@ namespace InvoiceBalanceRefresher
             var systemCheck = new TextBlock
             {
                 Text = "SYSTEM CHECK: ALL COMPONENTS OPERATIONAL",
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#5BFF64")),
-                FontFamily = new FontFamily("Consolas"),
+                Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#5BFF64")),
+                FontFamily = new System.Windows.Media.FontFamily("Consolas"),
                 FontSize = 12,
                 Margin = new Thickness(10, 5, 10, 5),
-                HorizontalAlignment = HorizontalAlignment.Center
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center
             };
             infoPanel.Children.Add(systemCheck);
 
             // Add copyright info with enhanced styling
             var copyrightBorder = new Border
             {
-                Background = new SolidColorBrush(Color.FromArgb(60, 24, 180, 233)),
+                Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(60, 24, 180, 233)),
                 CornerRadius = new CornerRadius(2),
                 Padding = new Thickness(5),
                 Margin = new Thickness(60, 10, 60, 10),
-                HorizontalAlignment = HorizontalAlignment.Stretch
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch
             };
 
             var copyrightBlock = new TextBlock
@@ -280,29 +280,29 @@ namespace InvoiceBalanceRefresher
                 Text = $"© {DateTime.Now.Year} Invoice Cloud, Inc. All Rights Reserved.",
                 Foreground = (SolidColorBrush)_ownerWindow.FindResource("ForegroundBrush"),
                 TextAlignment = TextAlignment.Center,
-                FontFamily = new FontFamily("Consolas"),
+                FontFamily = new System.Windows.Media.FontFamily("Consolas"),
                 FontSize = 11
             };
             copyrightBorder.Child = copyrightBlock;
             infoPanel.Children.Add(copyrightBorder);
 
             // Add second divider with improved visual appeal
-            var divider2 = new Rectangle
+            var divider2 = new System.Windows.Shapes.Rectangle
             {
                 Height = 2,
                 Fill = new LinearGradientBrush
                 {
-                    StartPoint = new Point(0, 0),
-                    EndPoint = new Point(1, 0),
+                    StartPoint = new System.Windows.Point(0, 0),
+                    EndPoint = new System.Windows.Point(1, 0),
                     GradientStops = new GradientStopCollection
                     {
-                        new GradientStop((Color)ColorConverter.ConvertFromString("#105062"), 0.0),
-                        new GradientStop((Color)ColorConverter.ConvertFromString("#18B4E9"), 0.5),
-                        new GradientStop((Color)ColorConverter.ConvertFromString("#105062"), 1.0)
+                        new GradientStop((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#105062"), 0.0),
+                        new GradientStop((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#18B4E9"), 0.5),
+                        new GradientStop((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#105062"), 1.0)
                     }
                 },
                 Margin = new Thickness(50, 5, 50, 15),
-                HorizontalAlignment = HorizontalAlignment.Stretch
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch
             };
             contentPanel.Children.Add(divider2);
 
@@ -328,12 +328,12 @@ namespace InvoiceBalanceRefresher
                 Text = "[ FEATURES ]",
                 Foreground = (SolidColorBrush)_ownerWindow.FindResource("AccentBrush"),
                 FontWeight = FontWeights.Bold,
-                FontFamily = new FontFamily("Consolas"),
+                FontFamily = new System.Windows.Media.FontFamily("Consolas"),
                 Margin = new Thickness(0, 0, 0, 10)
             };
             featuresPanel.Children.Add(featuresHeader);
 
-            // Add feature list with enhanced bullet points
+            // Add feature list with enhanced bullet points - Updated to remove Windows Task Scheduler
             string[] features = new string[]
             {
                 "Single invoice processing with real-time balance updates",
@@ -345,11 +345,11 @@ namespace InvoiceBalanceRefresher
                 "CSV sample generation for easier batch processing setup",
                 "Advanced error handling with automatic retry mechanisms",
                 "Customer record lookup and balance refresh capabilities",
-                "Automated batch scheduling with built-in Schedule Manager",
-                "Windows Task Scheduler integration for background execution",
+                "Comprehensive batch scheduling with multiple frequency options",
+                "Flexible scheduling options (minutely, hourly, daily, weekly, monthly, etc.)",
                 "Configurable API rate limiting to prevent throttling",
                 "Enhanced RTDR balance check options",
-                "Automated log and task maintenance"
+                "Automated log maintenance and data optimization"
             };
 
             // Create a two-column grid for features
@@ -373,8 +373,8 @@ namespace InvoiceBalanceRefresher
             {
                 var bulletIcon = i % 2 == 0 ? "►" : "•"; // Alternate bullet style
                 var color = i % 2 == 0 ?
-                    new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9")) :
-                    new SolidColorBrush((Color)ColorConverter.ConvertFromString("#5BFF64"));
+                    new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#18B4E9")) :
+                    new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#5BFF64"));
 
                 var featureBlock = new TextBlock
                 {
@@ -409,7 +409,7 @@ namespace InvoiceBalanceRefresher
             {
                 BorderBrush = (SolidColorBrush)_ownerWindow.FindResource("BorderBrush"),
                 BorderThickness = new Thickness(1),
-                Background = new SolidColorBrush(Color.FromArgb(30, 24, 180, 233)),
+                Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(30, 24, 180, 233)),
                 CornerRadius = new CornerRadius(4),
                 Padding = new Thickness(15),
                 Margin = new Thickness(10, 0, 10, 15)
@@ -424,7 +424,7 @@ namespace InvoiceBalanceRefresher
                 Text = "[ CREDENTIAL MANAGER ]",
                 Foreground = (SolidColorBrush)_ownerWindow.FindResource("AccentBrush"),
                 FontWeight = FontWeights.Bold,
-                FontFamily = new FontFamily("Consolas"),
+                FontFamily = new System.Windows.Media.FontFamily("Consolas"),
                 Margin = new Thickness(0, 0, 0, 10)
             };
             credentialPanel.Children.Add(credentialHeader);
@@ -450,11 +450,11 @@ namespace InvoiceBalanceRefresher
 
             foreach (var feat in credentialFeatures)
             {
-                var featPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(10, 0, 0, 2) };
+                var featPanel = new StackPanel { Orientation = System.Windows.Controls.Orientation.Horizontal, Margin = new Thickness(10, 0, 0, 2) };
                 featPanel.Children.Add(new TextBlock
                 {
                     Text = "•",
-                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9")),
+                    Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#18B4E9")),
                     Margin = new Thickness(0, 0, 5, 0),
                     FontWeight = FontWeights.Bold
                 });
@@ -470,7 +470,7 @@ namespace InvoiceBalanceRefresher
             // Security status indicator
             var securityStatusBorder = new Border
             {
-                Background = new SolidColorBrush(Color.FromArgb(40, 91, 255, 100)),
+                Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(40, 91, 255, 100)),
                 CornerRadius = new CornerRadius(2),
                 Padding = new Thickness(8),
                 Margin = new Thickness(10, 10, 10, 0)
@@ -479,8 +479,8 @@ namespace InvoiceBalanceRefresher
             var securityStatus = new TextBlock
             {
                 Text = "SECURITY STATUS: CREDENTIALS ENCRYPTED",
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#5BFF64")),
-                FontFamily = new FontFamily("Consolas"),
+                Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#5BFF64")),
+                FontFamily = new System.Windows.Media.FontFamily("Consolas"),
                 TextAlignment = TextAlignment.Center,
                 FontSize = 11
             };
@@ -492,7 +492,7 @@ namespace InvoiceBalanceRefresher
             {
                 BorderBrush = (SolidColorBrush)_ownerWindow.FindResource("BorderBrush"),
                 BorderThickness = new Thickness(1),
-                Background = new SolidColorBrush(Color.FromArgb(30, 24, 180, 233)),
+                Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(30, 24, 180, 233)),
                 CornerRadius = new CornerRadius(4),
                 Padding = new Thickness(15),
                 Margin = new Thickness(10, 0, 10, 15)
@@ -507,7 +507,7 @@ namespace InvoiceBalanceRefresher
                 Text = "[ RATE LIMITING ]",
                 Foreground = (SolidColorBrush)_ownerWindow.FindResource("AccentBrush"),
                 FontWeight = FontWeights.Bold,
-                FontFamily = new FontFamily("Consolas"),
+                FontFamily = new System.Windows.Media.FontFamily("Consolas"),
                 Margin = new Thickness(0, 0, 0, 10)
             };
             rateLimitPanel.Children.Add(rateLimitHeader);
@@ -546,8 +546,8 @@ namespace InvoiceBalanceRefresher
                 var settingLabel = new TextBlock
                 {
                     Text = rateSettings[i][0],
-                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E55555")),
-                    FontFamily = new FontFamily("Consolas"),
+                    Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#E55555")),
+                    FontFamily = new System.Windows.Media.FontFamily("Consolas"),
                     FontWeight = FontWeights.Bold,
                     Margin = new Thickness(15, 3, 15, 3)
                 };
@@ -584,7 +584,7 @@ namespace InvoiceBalanceRefresher
             {
                 Text = "Key Features:",
                 Foreground = (SolidColorBrush)_ownerWindow.FindResource("AccentBrush2"),
-                FontFamily = new FontFamily("Consolas"),
+                FontFamily = new System.Windows.Media.FontFamily("Consolas"),
                 FontWeight = FontWeights.Bold,
                 Margin = new Thickness(0, 10, 0, 5)
             };
@@ -592,11 +592,11 @@ namespace InvoiceBalanceRefresher
 
             foreach (var feat in rateLimitFeatures)
             {
-                var featPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(10, 0, 0, 2) };
+                var featPanel = new StackPanel { Orientation = System.Windows.Controls.Orientation.Horizontal, Margin = new Thickness(10, 0, 0, 2) };
                 featPanel.Children.Add(new TextBlock
                 {
                     Text = "•",
-                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E55555")),
+                    Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#E55555")),
                     Margin = new Thickness(0, 0, 5, 0),
                     FontWeight = FontWeights.Bold
                 });
@@ -614,7 +614,7 @@ namespace InvoiceBalanceRefresher
             {
                 Text = "RTDR Special Options:",
                 Foreground = (SolidColorBrush)_ownerWindow.FindResource("AccentBrush2"),
-                FontFamily = new FontFamily("Consolas"),
+                FontFamily = new System.Windows.Media.FontFamily("Consolas"),
                 FontWeight = FontWeights.Bold,
                 Margin = new Thickness(0, 15, 0, 5)
             };
@@ -630,11 +630,11 @@ namespace InvoiceBalanceRefresher
 
             foreach (var option in rtdrOptions)
             {
-                var optionPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(10, 0, 0, 2) };
+                var optionPanel = new StackPanel { Orientation = System.Windows.Controls.Orientation.Horizontal, Margin = new Thickness(10, 0, 0, 2) };
                 optionPanel.Children.Add(new TextBlock
                 {
                     Text = "•",
-                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E55555")),
+                    Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#E55555")),
                     Margin = new Thickness(0, 0, 5, 0),
                     FontWeight = FontWeights.Bold
                 });
@@ -650,7 +650,7 @@ namespace InvoiceBalanceRefresher
             // Add a note about RTDR options
             var rtdrNote = new Border
             {
-                Background = new SolidColorBrush(Color.FromArgb(20, 229, 85, 85)),
+                Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(20, 229, 85, 85)),
                 CornerRadius = new CornerRadius(2),
                 Padding = new Thickness(8),
                 Margin = new Thickness(10, 5, 10, 5)
@@ -670,7 +670,7 @@ namespace InvoiceBalanceRefresher
             // Rate limit status indicator
             var rateLimitStatusBorder = new Border
             {
-                Background = new SolidColorBrush(Color.FromArgb(40, 229, 85, 85)),
+                Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(40, 229, 85, 85)),
                 CornerRadius = new CornerRadius(2),
                 Padding = new Thickness(8),
                 Margin = new Thickness(10, 10, 10, 0)
@@ -679,20 +679,20 @@ namespace InvoiceBalanceRefresher
             var rateLimitStatus = new TextBlock
             {
                 Text = "STATUS: RATE LIMITING ACTIVE",
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E55555")),
-                FontFamily = new FontFamily("Consolas"),
+                Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#E55555")),
+                FontFamily = new System.Windows.Media.FontFamily("Consolas"),
                 TextAlignment = TextAlignment.Center,
                 FontSize = 11
             };
             rateLimitStatusBorder.Child = rateLimitStatus;
             rateLimitPanel.Children.Add(rateLimitStatusBorder);
 
-            // SCHEDULE INFO SECTION
+            // SCHEDULE INFO SECTION - UPDATED
             var scheduleBorder = new Border
             {
                 BorderBrush = (SolidColorBrush)_ownerWindow.FindResource("BorderBrush"),
                 BorderThickness = new Thickness(1),
-                Background = new SolidColorBrush(Color.FromArgb(30, 24, 180, 233)),
+                Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(30, 24, 180, 233)),
                 CornerRadius = new CornerRadius(4),
                 Padding = new Thickness(15),
                 Margin = new Thickness(10, 0, 10, 15)
@@ -707,38 +707,101 @@ namespace InvoiceBalanceRefresher
                 Text = "[ SCHEDULE MANAGER & AUTOMATION ]",
                 Foreground = (SolidColorBrush)_ownerWindow.FindResource("AccentBrush"),
                 FontWeight = FontWeights.Bold,
-                FontFamily = new FontFamily("Consolas"),
+                FontFamily = new System.Windows.Media.FontFamily("Consolas"),
                 Margin = new Thickness(0, 0, 0, 10)
             };
             schedulePanel.Children.Add(scheduleHeader);
 
             var scheduleDesc = new TextBlock
             {
-                Text = "Automate batch invoice processing with the built-in Schedule Manager. Create, edit, and manage scheduled tasks to run batch jobs at specific times (once, daily, weekly, or monthly). Tasks can run even when the application is closed via Windows Task Scheduler integration.",
+                Text = "Automate batch invoice processing with the built-in Schedule Manager. Create, edit, and manage scheduled tasks using a comprehensive set of scheduling options, from minute-by-minute execution to quarterly scheduling.",
                 Foreground = (SolidColorBrush)_ownerWindow.FindResource("ForegroundBrush"),
                 TextWrapping = TextWrapping.Wrap,
                 Margin = new Thickness(0, 0, 0, 8)
             };
             schedulePanel.Children.Add(scheduleDesc);
 
+            // Add a grid for frequency options
+            var scheduleFreqGrid = new Grid();
+            scheduleFreqGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            scheduleFreqGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            scheduleFreqGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            scheduleFreqGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            scheduleFreqGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            scheduleFreqGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            scheduleFreqGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+            string[][] freqOptions = new string[][]
+            {
+                new string[] { "Minutes:", "Run every X minutes (e.g., every 15, 30, or 45 minutes)" },
+                new string[] { "Hourly:", "Run every X hours (e.g., every 1, 2, or 4 hours)" },
+                new string[] { "Daily:", "Run every X days at specific time" },
+                new string[] { "Weekly:", "Run on specific days of week at specific time" },
+                new string[] { "Monthly:", "Run on specific days of selected months" }
+            };
+
+            for (int i = 0; i < freqOptions.Length; i++)
+            {
+                var freqLabel = new TextBlock
+                {
+                    Text = freqOptions[i][0],
+                    Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#18B4E9")),
+                    FontFamily = new System.Windows.Media.FontFamily("Consolas"),
+                    FontWeight = FontWeights.Bold,
+                    Margin = new Thickness(15, 3, 15, 3)
+                };
+
+                var freqDesc = new TextBlock
+                {
+                    Text = freqOptions[i][1],
+                    Foreground = (SolidColorBrush)_ownerWindow.FindResource("ForegroundBrush"),
+                    TextWrapping = TextWrapping.Wrap,
+                    Margin = new Thickness(0, 3, 0, 3)
+                };
+
+                Grid.SetRow(freqLabel, i);
+                Grid.SetColumn(freqLabel, 0);
+                Grid.SetRow(freqDesc, i);
+                Grid.SetColumn(freqDesc, 1);
+
+                scheduleFreqGrid.Children.Add(freqLabel);
+                scheduleFreqGrid.Children.Add(freqDesc);
+            }
+
+            schedulePanel.Children.Add(scheduleFreqGrid);
+
+            var scheduleText = new TextBlock
+            {
+                Text = "Advanced scheduling options:",
+                Foreground = (SolidColorBrush)_ownerWindow.FindResource("AccentBrush2"),
+                FontFamily = new System.Windows.Media.FontFamily("Consolas"),
+                FontWeight = FontWeights.Bold,
+                Margin = new Thickness(0, 10, 0, 5)
+            };
+            schedulePanel.Children.Add(scheduleText);
+
             var scheduleFeatures = new string[]
             {
+                "BiWeekly: Run on specific days, alternating between even and odd weeks",
+                "Quarterly: Run on specific days in selected months of each quarter",
+                "WorkDays: Run on weekdays only (Monday-Friday)",
+                "Once: Run a single time at specified date/time",
+                "Multiple Times Daily: Configure multiple specific times throughout the day",
                 "Add, edit, delete, enable/disable scheduled batch jobs",
-                "Flexible scheduling: Once, Daily, Weekly, Monthly",
                 "Select saved credential set for each scheduled task",
-                "Manual [RUN NOW] option for any scheduled task",
-                "Track last run time, result, and status for each task",
-                "Windows Task Scheduler integration for background execution",
+                "Manual [RUN NOW] option for immediate execution of any task",
+                "Track last run time, result, and status for each scheduled task",
                 "All schedule activity is logged for audit and troubleshooting"
             };
 
             foreach (var feat in scheduleFeatures)
             {
-                var featPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(10, 0, 0, 2) };
+                var featPanel = new StackPanel { Orientation = System.Windows.Controls.Orientation.Horizontal, Margin = new Thickness(10, 0, 0, 2) };
                 featPanel.Children.Add(new TextBlock
                 {
                     Text = "•",
-                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9")),
+                    Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#18B4E9")),
                     Margin = new Thickness(0, 0, 5, 0),
                     FontWeight = FontWeights.Bold
                 });
@@ -751,12 +814,32 @@ namespace InvoiceBalanceRefresher
                 schedulePanel.Children.Add(featPanel);
             }
 
+            // Add a note about application required for execution
+            var scheduleNote = new Border
+            {
+                Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(20, 24, 180, 233)),
+                CornerRadius = new CornerRadius(2),
+                Padding = new Thickness(8),
+                Margin = new Thickness(10, 10, 10, 0)
+            };
+
+            var scheduleNoteText = new TextBlock
+            {
+                Text = "Note: The application must be running for scheduled tasks to execute. Consider using auto-start options for unattended execution.",
+                Foreground = (SolidColorBrush)_ownerWindow.FindResource("ForegroundBrush"),
+                TextWrapping = TextWrapping.Wrap,
+                FontStyle = FontStyles.Italic,
+                FontSize = 11
+            };
+            scheduleNote.Child = scheduleNoteText;
+            schedulePanel.Children.Add(scheduleNote);
+
             // MAINTENANCE SYSTEM SECTION (NEW)
             var maintenanceBorder = new Border
             {
                 BorderBrush = (SolidColorBrush)_ownerWindow.FindResource("BorderBrush"),
                 BorderThickness = new Thickness(1),
-                Background = new SolidColorBrush(Color.FromArgb(30, 24, 180, 233)),
+                Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(30, 24, 180, 233)),
                 CornerRadius = new CornerRadius(4),
                 Padding = new Thickness(15),
                 Margin = new Thickness(10, 0, 10, 15)
@@ -771,14 +854,14 @@ namespace InvoiceBalanceRefresher
                 Text = "[ MAINTENANCE SYSTEM ]",
                 Foreground = (SolidColorBrush)_ownerWindow.FindResource("AccentBrush"),
                 FontWeight = FontWeights.Bold,
-                FontFamily = new FontFamily("Consolas"),
+                FontFamily = new System.Windows.Media.FontFamily("Consolas"),
                 Margin = new Thickness(0, 0, 0, 10)
             };
             maintenancePanel.Children.Add(maintenanceHeader);
 
             var maintenanceDesc = new TextBlock
             {
-                Text = "The application includes an automated maintenance system that helps keep the application running smoothly by managing log files and scheduled tasks.",
+                Text = "The application includes an automated maintenance system that helps keep the application running smoothly by managing log files and performing data optimization tasks.",
                 Foreground = (SolidColorBrush)_ownerWindow.FindResource("ForegroundBrush"),
                 TextWrapping = TextWrapping.Wrap,
                 Margin = new Thickness(0, 0, 0, 8)
@@ -789,7 +872,7 @@ namespace InvoiceBalanceRefresher
             {
                 "Automatic log cleanup with configurable retention period",
                 "Session file management to prevent disk space issues",
-                "Orphaned task cleanup for Windows Task Scheduler integration",
+                "Data optimization for improved application performance",
                 "Configurable maintenance frequency (Every Startup, Daily, Weekly, Monthly)",
                 "Manual maintenance option with detailed logging",
                 "Comprehensive maintenance settings interface"
@@ -797,11 +880,11 @@ namespace InvoiceBalanceRefresher
 
             foreach (var feat in maintenanceFeatures)
             {
-                var featPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(10, 0, 0, 2) };
+                var featPanel = new StackPanel { Orientation = System.Windows.Controls.Orientation.Horizontal, Margin = new Thickness(10, 0, 0, 2) };
                 featPanel.Children.Add(new TextBlock
                 {
                     Text = "•",
-                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#5BFF64")),
+                    Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#5BFF64")),
                     Margin = new Thickness(0, 0, 5, 0),
                     FontWeight = FontWeights.Bold
                 });
@@ -817,7 +900,7 @@ namespace InvoiceBalanceRefresher
             // Add maintenance status indicator
             var maintenanceStatusBorder = new Border
             {
-                Background = new SolidColorBrush(Color.FromArgb(40, 91, 255, 100)),
+                Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(40, 91, 255, 100)),
                 CornerRadius = new CornerRadius(2),
                 Padding = new Thickness(8),
                 Margin = new Thickness(10, 10, 10, 0)
@@ -826,8 +909,8 @@ namespace InvoiceBalanceRefresher
             var maintenanceStatus = new TextBlock
             {
                 Text = "STATUS: MAINTENANCE SYSTEM ACTIVE",
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#5BFF64")),
-                FontFamily = new FontFamily("Consolas"),
+                Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#5BFF64")),
+                FontFamily = new System.Windows.Media.FontFamily("Consolas"),
                 TextAlignment = TextAlignment.Center,
                 FontSize = 11
             };
@@ -856,7 +939,7 @@ namespace InvoiceBalanceRefresher
                 Text = "[ TECHNICAL SPECIFICATIONS ]",
                 Foreground = (SolidColorBrush)_ownerWindow.FindResource("AccentBrush"),
                 FontWeight = FontWeights.Bold,
-                FontFamily = new FontFamily("Consolas"),
+                FontFamily = new System.Windows.Media.FontFamily("Consolas"),
                 Margin = new Thickness(0, 0, 0, 10)
             };
             techInfoPanel.Children.Add(techInfoHeader);
@@ -889,8 +972,8 @@ namespace InvoiceBalanceRefresher
                 var label = new TextBlock
                 {
                     Text = techSpecs[i][0],
-                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9")),
-                    FontFamily = new FontFamily("Consolas"),
+                    Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#18B4E9")),
+                    FontFamily = new System.Windows.Media.FontFamily("Consolas"),
                     Margin = new Thickness(10, 2, 5, 2),
                     FontWeight = FontWeights.Bold
                 };
@@ -899,7 +982,7 @@ namespace InvoiceBalanceRefresher
                 {
                     Text = techSpecs[i][1],
                     Foreground = (SolidColorBrush)_ownerWindow.FindResource("ForegroundBrush"),
-                    FontFamily = new FontFamily("Consolas"),
+                    FontFamily = new System.Windows.Media.FontFamily("Consolas"),
                     Margin = new Thickness(0, 2, 0, 2)
                 };
 
@@ -917,7 +1000,7 @@ namespace InvoiceBalanceRefresher
             // Add version check info
             var versionCheckBorder = new Border
             {
-                Background = new SolidColorBrush(Color.FromArgb(40, 24, 180, 233)),
+                Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(40, 24, 180, 233)),
                 CornerRadius = new CornerRadius(2),
                 Padding = new Thickness(8),
                 Margin = new Thickness(10, 10, 10, 0)
@@ -929,8 +1012,8 @@ namespace InvoiceBalanceRefresher
             var versionCheckText = new TextBlock
             {
                 Text = "VERSION STATUS: CURRENT",
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#5BFF64")),
-                FontFamily = new FontFamily("Consolas"),
+                Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#5BFF64")),
+                FontFamily = new System.Windows.Media.FontFamily("Consolas"),
                 TextAlignment = TextAlignment.Center,
                 FontSize = 11
             };
@@ -945,8 +1028,8 @@ namespace InvoiceBalanceRefresher
             var osLabel = new TextBlock
             {
                 Text = "OS:",
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9")),
-                FontFamily = new FontFamily("Consolas"),
+                Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#18B4E9")),
+                FontFamily = new System.Windows.Media.FontFamily("Consolas"),
                 Margin = new Thickness(10, 2, 5, 2),
                 FontWeight = FontWeights.Bold
             };
@@ -955,7 +1038,7 @@ namespace InvoiceBalanceRefresher
             {
                 Text = Environment.OSVersion.ToString(),
                 Foreground = (SolidColorBrush)_ownerWindow.FindResource("ForegroundBrush"),
-                FontFamily = new FontFamily("Consolas"),
+                FontFamily = new System.Windows.Media.FontFamily("Consolas"),
                 Margin = new Thickness(0, 2, 0, 2)
             };
 
@@ -970,8 +1053,8 @@ namespace InvoiceBalanceRefresher
             var userLabel = new TextBlock
             {
                 Text = "Current User:",
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9")),
-                FontFamily = new FontFamily("Consolas"),
+                Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#18B4E9")),
+                FontFamily = new System.Windows.Media.FontFamily("Consolas"),
                 Margin = new Thickness(10, 2, 5, 2),
                 FontWeight = FontWeights.Bold
             };
@@ -980,7 +1063,7 @@ namespace InvoiceBalanceRefresher
             {
                 Text = Environment.UserName,
                 Foreground = (SolidColorBrush)_ownerWindow.FindResource("ForegroundBrush"),
-                FontFamily = new FontFamily("Consolas"),
+                FontFamily = new System.Windows.Media.FontFamily("Consolas"),
                 Margin = new Thickness(0, 2, 0, 2)
             };
 
@@ -997,7 +1080,7 @@ namespace InvoiceBalanceRefresher
             {
                 BorderBrush = (SolidColorBrush)_ownerWindow.FindResource("BorderBrush"),
                 BorderThickness = new Thickness(1),
-                Background = new SolidColorBrush(Color.FromArgb(30, 24, 180, 233)),
+                Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(30, 24, 180, 233)),
                 CornerRadius = new CornerRadius(4),
                 Padding = new Thickness(10),
                 Margin = new Thickness(10, 0, 10, 15)
@@ -1012,7 +1095,7 @@ namespace InvoiceBalanceRefresher
                 Text = "[ POWERED BY ]",
                 Foreground = (SolidColorBrush)_ownerWindow.FindResource("AccentBrush"),
                 FontWeight = FontWeights.Bold,
-                FontFamily = new FontFamily("Consolas"),
+                FontFamily = new System.Windows.Media.FontFamily("Consolas"),
                 Margin = new Thickness(0, 0, 0, 10)
             };
             poweredByPanel.Children.Add(poweredByHeader);
@@ -1035,7 +1118,7 @@ namespace InvoiceBalanceRefresher
                     Text = technologies[i],
                     Foreground = (SolidColorBrush)_ownerWindow.FindResource("ForegroundBrush"),
                     TextAlignment = TextAlignment.Center,
-                    FontFamily = new FontFamily("Consolas"),
+                    FontFamily = new System.Windows.Media.FontFamily("Consolas"),
                     FontSize = 12,
                     Margin = new Thickness(0, 5, 0, 0)
                 };
@@ -1048,29 +1131,29 @@ namespace InvoiceBalanceRefresher
             // Add bottom buttons with enhanced styling
             var buttonPanel = new StackPanel
             {
-                Orientation = Orientation.Horizontal,
-                HorizontalAlignment = HorizontalAlignment.Center,
+                Orientation = System.Windows.Controls.Orientation.Horizontal,
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
                 Margin = new Thickness(0, 15, 0, 0)
             };
 
-            var buttonStyle = new Style(typeof(Button));
-            buttonStyle.Setters.Add(new Setter(Button.BackgroundProperty, new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18536A"))));
-            buttonStyle.Setters.Add(new Setter(Button.ForegroundProperty, Brushes.White));
-            buttonStyle.Setters.Add(new Setter(Button.PaddingProperty, new Thickness(15, 8, 15, 8)));
-            buttonStyle.Setters.Add(new Setter(Button.BorderBrushProperty, new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9"))));
-            buttonStyle.Setters.Add(new Setter(Button.BorderThicknessProperty, new Thickness(1)));
-            buttonStyle.Setters.Add(new Setter(Button.FontFamilyProperty, new FontFamily("Consolas")));
-            buttonStyle.Setters.Add(new Setter(Button.MarginProperty, new Thickness(5)));
-            buttonStyle.Setters.Add(new Setter(Button.FontWeightProperty, FontWeights.Bold));
-            buttonStyle.Setters.Add(new Setter(Button.EffectProperty, new DropShadowEffect
+            var buttonStyle = new Style(typeof(System.Windows.Controls.Button));
+            buttonStyle.Setters.Add(new Setter(System.Windows.Controls.Button.BackgroundProperty, new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#18536A"))));
+            buttonStyle.Setters.Add(new Setter(System.Windows.Controls.Button.ForegroundProperty, System.Windows.Media.Brushes.White));
+            buttonStyle.Setters.Add(new Setter(System.Windows.Controls.Button.PaddingProperty, new Thickness(15, 8, 15, 8)));
+            buttonStyle.Setters.Add(new Setter(System.Windows.Controls.Button.BorderBrushProperty, new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#18B4E9"))));
+            buttonStyle.Setters.Add(new Setter(System.Windows.Controls.Button.BorderThicknessProperty, new Thickness(1)));
+            buttonStyle.Setters.Add(new Setter(System.Windows.Controls.Button.FontFamilyProperty, new System.Windows.Media.FontFamily("Consolas")));
+            buttonStyle.Setters.Add(new Setter(System.Windows.Controls.Button.MarginProperty, new Thickness(5)));
+            buttonStyle.Setters.Add(new Setter(System.Windows.Controls.Button.FontWeightProperty, FontWeights.Bold));
+            buttonStyle.Setters.Add(new Setter(System.Windows.Controls.Button.EffectProperty, new DropShadowEffect
             {
-                Color = (Color)ColorConverter.ConvertFromString("#18B4E9"),
+                Color = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#18B4E9"),
                 ShadowDepth = 0,
                 BlurRadius = 10,
                 Opacity = 0.6
             }));
 
-            var closeButton = new Button
+            var closeButton = new System.Windows.Controls.Button
             {
                 Content = "[ CLOSE ]",
                 Width = 150,
@@ -1078,7 +1161,7 @@ namespace InvoiceBalanceRefresher
             };
             closeButton.Click += (s, e) => aboutWindow.Close();
 
-            var websiteButton = new Button
+            var websiteButton = new System.Windows.Controls.Button
             {
                 Content = "[ VISIT WEBSITE ]",
                 Width = 150,
@@ -1097,7 +1180,7 @@ namespace InvoiceBalanceRefresher
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Unable to open website: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    System.Windows.MessageBox.Show($"Unable to open website: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             };
 

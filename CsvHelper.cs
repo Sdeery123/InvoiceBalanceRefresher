@@ -85,7 +85,7 @@ namespace InvoiceBalanceRefresher
 
                     logAction(LogLevel.Info, $"Sample CSV file generated: {saveFileDialog.FileName}");
 
-                    MessageBox.Show(
+                    System.Windows.MessageBox.Show(
                         $"Sample CSV file created at:\n{saveFileDialog.FileName}\n\nFormat:\nOne invoice number per line\n\nThe Biller GUID and Web Service Key from the Single Invoice section will be used for processing.",
                         "Sample File Created",
                         MessageBoxButton.OK,
@@ -99,7 +99,7 @@ namespace InvoiceBalanceRefresher
             catch (Exception ex)
             {
                 logAction(LogLevel.Error, $"Failed to create sample file: {ex.Message}");
-                MessageBox.Show($"Error creating sample file: {ex.Message}");
+                System.Windows.MessageBox.Show($"Error creating sample file: {ex.Message}");
                 return false;
             }
         }

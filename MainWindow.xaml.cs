@@ -101,28 +101,82 @@ namespace InvoiceBalanceRefresher
 
             // Initialize scheduler
             _scheduleManager = ScheduleManager.GetInstance(
-                (message) => Log(LogLevel.Info, message),
-                async (billerGUID, webServiceKey, csvFilePath, hasAccountNumbers) =>
-                {
-                    try
-                    {
-                        return await ProcessBatchInternal(billerGUID, webServiceKey, csvFilePath, hasAccountNumbers);
-                    }
-                    catch (Exception ex)
-                    {
-                        Log(LogLevel.Error, $"Scheduled batch processing failed: {ex.Message}");
-                        return false;
-                    }
-                });
+    (message) => Log(LogLevel.Info, message),
+    async (billerGUID, webServiceKey, csvFilePath, hasAccountNumbers, defaultAccountNumber) =>
+    {
+        try
+        {
+            Log(LogLevel.Debug, $"Starting batch processing with: BillerGUID={billerGUID}, WebServiceKey={webServiceKey}, CSV={csvFilePath}");
+            Log(LogLevel.Debug, $"HasAccountNumbers={hasAccountNumbers}, DefaultAccountNumber={defaultAccountNumber}");
+
+            // Verify credentials before processing
+            if (string.IsNullOrEmpty(billerGUID) || string.IsNullOrEmpty(webServiceKey))
+            {
+                Log(LogLevel.Error, "Invalid BillerGUID or WebServiceKey (empty or null)");
+                return false;
+            }
+
+            // Check file exists and has content
+            if (!File.Exists(csvFilePath))
+            {
+                Log(LogLevel.Error, $"CSV file not found: {csvFilePath}");
+                return false;
+            }
+
+            var fileInfo = new FileInfo(csvFilePath);
+            if (fileInfo.Length == 0)
+            {
+                Log(LogLevel.Error, "CSV file is empty");
+                return false;
+            }
+
+            // Process the batch with detailed error handling
+            bool result = await ProcessBatchInternal(billerGUID, webServiceKey, csvFilePath, hasAccountNumbers, defaultAccountNumber);
+            Log(LogLevel.Debug, $"Batch processing completed with result: {result}");
+            return result;
+        }
+        catch (Exception ex)
+        {
+            Log(LogLevel.Error, $"Scheduled batch processing failed: {ex.Message}");
+            if (ex.InnerException != null)
+            {
+                Log(LogLevel.Error, $"Inner exception: {ex.InnerException.Message}");
+            }
+            Log(LogLevel.Debug, $"Stack trace: {ex.StackTrace}");
+            return false;
+        }
+    });
+
+            // Initialize the scheduler grid
+            ScheduledTasksGrid.ItemsSource = _scheduleManager.ScheduledTasks;
+
+            // Handle selection change to enable/disable buttons
+            ScheduledTasksGrid.SelectionChanged += (s, e) =>
+            {
+                bool hasSelection = ScheduledTasksGrid.SelectedItem != null;
+                EditButton.IsEnabled = hasSelection;
+                DeleteButton.IsEnabled = hasSelection;
+                RunNowButton.IsEnabled = hasSelection;
+            };
+
+            // Initially disable buttons
+            EditButton.IsEnabled = false;
+            DeleteButton.IsEnabled = false;
+            RunNowButton.IsEnabled = false;
+
+            _scheduleManager.TasksChanged += ScheduleManager_TasksChanged;
 
             // Set up initial UI state
             InitializeLogging();
-            AddSchedulerMenuItem();
 
             InitializeCredentialManager();
 
             // Try to load saved credentials
             LoadSavedCredentials();
+
+            // Add this call at the end of your MainWindow constructor
+            RefreshSchedulerTab();
+
 
             // Log startup
             Log(LogLevel.Info, $"Invoice Balance Refresher v{APP_VERSION} started");
@@ -236,6 +290,16 @@ namespace InvoiceBalanceRefresher
         }
 
 
+        private void RefreshSchedulerTab()
+        {
+            // Refresh the data grid by forcibly resetting its ItemsSource
+            ScheduledTasksGrid.ItemsSource = null;
+            ScheduledTasksGrid.ItemsSource = _scheduleManager.ScheduledTasks;
+
+            // Log the refresh
+            Log(LogLevel.Debug, $"Scheduler tab refreshed with {_scheduleManager.ScheduledTasks.Count} tasks");
+        }
+
 
 
         private void OpenMaintenanceSettings_Click(object sender, RoutedEventArgs e)
@@ -278,6 +342,15 @@ namespace InvoiceBalanceRefresher
             }
         }
 
+        private void ScheduleManager_TasksChanged(object? sender, EventArgs e)
+        {
+            // Refresh the UI on the UI thread
+            Dispatcher.Invoke(() =>
+            {
+                RefreshSchedulerTab();
+                Log(LogLevel.Debug, "UI refreshed due to schedule changes");
+            });
+        }
 
 
         // Method to cycle through credential sets
@@ -329,11 +402,12 @@ namespace InvoiceBalanceRefresher
             Log(LogLevel.Info, $"Log file: {_loggingHelper.SessionLogPath}");
         }
 
-        private async Task<bool> ProcessBatchInternal(string billerGUID, string webServiceKey, string filePath, bool hasAccountNumbers)
+        private async Task<bool> ProcessBatchInternal(string billerGUID, string webServiceKey, string filePath, bool hasAccountNumbers, string defaultAccountNumber = "")
         {
             // This is a facade method that delegates to the BatchProcessingHelper
-            return await _batchProcessingHelper.ProcessBatchFile(billerGUID, webServiceKey, filePath, hasAccountNumbers);
+            return await _batchProcessingHelper.ProcessBatchFile(billerGUID, webServiceKey, filePath, hasAccountNumbers, defaultAccountNumber);
         }
+
 
         private async void RunScheduledTask(ScheduledTask task)
         {
@@ -433,85 +507,7 @@ namespace InvoiceBalanceRefresher
 
         #region Scheduler Menu and UI
 
-        private void AddSchedulerMenuItem()
-        {
-            // Get the first Menu control in the window
-            var menu = LogicalTreeHelper.FindLogicalNode(this, "MainMenu") as Menu;
 
-            if (menu == null)
-            {
-                // If not found by name, get the first Menu in the window
-                menu = UIHelper.FindVisualChildren<Menu>(this).FirstOrDefault();
-            }
-
-            if (menu != null)
-            {
-                // Find the File menu
-                var fileMenu = menu.Items.OfType<MenuItem>().FirstOrDefault(m =>
-                    m.Header != null && m.Header.ToString()?.Contains("File") == true);
-
-                if (fileMenu != null)
-                {
-                    // Find the Exit menu item
-                    int exitIndex = -1;
-                    for (int i = 0; i < fileMenu.Items.Count; i++)
-                    {
-                        if (fileMenu.Items[i] is MenuItem menuItem &&
-                            menuItem.Header != null &&
-                            menuItem.Header.ToString()?.Contains("Exit") == true)
-                        {
-                            exitIndex = i;
-                            break;
-                        }
-                    }
-
-                    // Find the separator before Exit
-                    int separatorIndex = -1;
-                    if (exitIndex > 0 && fileMenu.Items[exitIndex - 1] is Separator)
-                    {
-                        separatorIndex = exitIndex - 1;
-                    }
-
-                    // Create the Scheduler menu item
-                    var scheduleMenuItem = new MenuItem { Header = "_Scheduler" };
-                    scheduleMenuItem.Click += Scheduler_Click;
-
-                    // If we found the Exit menu item position
-                    if (exitIndex >= 0)
-                    {
-                        // Add the Scheduler item before the separator (if exists) or before Exit
-                        int insertPosition = (separatorIndex >= 0) ? separatorIndex : exitIndex;
-                        fileMenu.Items.Insert(insertPosition, scheduleMenuItem);
-
-                        // If there was no separator before Exit, add one now between Scheduler and Exit
-                        if (separatorIndex < 0)
-                        {
-                            fileMenu.Items.Insert(insertPosition + 1, new Separator());
-                        }
-
-                        Log(LogLevel.Info, "Scheduler menu item added successfully");
-                    }
-                    else
-                    {
-                        // If we couldn't find Exit, just add Scheduler to the end with a separator
-                        if (fileMenu.Items.Count > 0 && !(fileMenu.Items[fileMenu.Items.Count - 1] is Separator))
-                        {
-                            fileMenu.Items.Add(new Separator());
-                        }
-                        fileMenu.Items.Add(scheduleMenuItem);
-                        Log(LogLevel.Info, "Scheduler menu item added successfully at the end of File menu");
-                    }
-                }
-                else
-                {
-                    Log(LogLevel.Warning, "Could not find File menu to add scheduler menu item");
-                }
-            }
-            else
-            {
-                Log(LogLevel.Warning, "Could not find main menu to add scheduler menu item");
-            }
-        }
 
         private void Scheduler_Click(object sender, RoutedEventArgs e)
         {
@@ -735,6 +731,56 @@ namespace InvoiceBalanceRefresher
             };
         }
 
+        // Add these event handlers to your MainWindow.xaml.cs file
+        private void AddSchedule(object sender, RoutedEventArgs e)
+        {
+            // Call your existing AddSchedule method
+            AddSchedule();
+        }
+
+        private void EditSchedule(object sender, RoutedEventArgs e)
+        {
+            if (ScheduledTasksGrid.SelectedItem is ScheduledTask task)
+            {
+                EditSchedule(task);
+            }
+            else
+            {
+                MessageBox.Show("Please select a scheduled task to edit.", "No Selection",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
+        private void DeleteSchedule(object sender, RoutedEventArgs e)
+        {
+            if (ScheduledTasksGrid.SelectedItem is ScheduledTask task)
+            {
+                DeleteSchedule(task);
+                // Refresh the data grid
+                ScheduledTasksGrid.ItemsSource = null;
+                ScheduledTasksGrid.ItemsSource = _scheduleManager.ScheduledTasks;
+            }
+            else
+            {
+                MessageBox.Show("Please select a scheduled task to delete.", "No Selection",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
+        private void RunNowScheduledTask(object sender, RoutedEventArgs e)
+        {
+            if (ScheduledTasksGrid.SelectedItem is ScheduledTask task)
+            {
+                RunScheduledTask(task);
+            }
+            else
+            {
+                MessageBox.Show("Please select a scheduled task to run.", "No Selection",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
+
         private void AddSchedule()
         {
             // Create a new task
@@ -774,7 +820,7 @@ namespace InvoiceBalanceRefresher
                 LastRunSuccessful = task.LastRunSuccessful,
                 LastRunResult = task.LastRunResult,
                 CustomOption = task.CustomOption,
-                AddToWindowsTaskScheduler = task.AddToWindowsTaskScheduler
+
             };
 
             // Open the edit dialog
@@ -806,7 +852,7 @@ namespace InvoiceBalanceRefresher
             {
                 Title = isNew ? "Add New Schedule" : "Edit Schedule",
                 Width = 700,
-                Height = 750, // Increased height to accommodate new options
+                Height = 700, // Increased height for additional options
                 Background = (SolidColorBrush)FindResource("BackgroundBrush"),
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 Owner = this,
@@ -827,7 +873,7 @@ namespace InvoiceBalanceRefresher
             mainGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Header
             mainGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Basic settings
             mainGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Separator
-            mainGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Windows Task Group
+            mainGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Frequency options
             mainGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // CSV Group
             mainGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto }); // Buttons
 
@@ -852,8 +898,8 @@ namespace InvoiceBalanceRefresher
             settingsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             settingsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
-            // Add enough rows for all settings including new Windows Task Scheduler option
-            for (int i = 0; i < 6; i++)
+            // Add enough rows for all settings
+            for (int i = 0; i < 5; i++)
             {
                 settingsGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             }
@@ -877,27 +923,33 @@ namespace InvoiceBalanceRefresher
                 HorizontalAlignment = HorizontalAlignment.Left
             };
 
-            // Add frequency options
-            freqCombo.Items.Add(ScheduleFrequency.Once);
-            freqCombo.Items.Add(ScheduleFrequency.Daily);
-            freqCombo.Items.Add(ScheduleFrequency.Weekly);
-            freqCombo.Items.Add(ScheduleFrequency.Monthly);
+            // Add all frequency options from the enum
+            foreach (ScheduleFrequency freq in Enum.GetValues(typeof(ScheduleFrequency)))
+            {
+                freqCombo.Items.Add(freq);
+            }
+
             freqCombo.SelectedItem = task.Frequency;
 
             Grid.SetRow(freqCombo, 2);
             Grid.SetColumn(freqCombo, 1);
 
-            // Run time
+            // Run time - only shown for appropriate frequencies
             var timeLabel = CreateLabel("Run Time:", 3, 0);
-
-            // Create time picker panel
-            var timePanel = new StackPanel
+            var timeControlsPanel = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
                 Margin = new Thickness(0, 5, 0, 5)
             };
 
-            // Time components - Fixed step parameter for hours from 60 to 1
+            // Time picker panel
+            var timePanel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Margin = new Thickness(0, 0, 10, 0)
+            };
+
+            // Time components
             var hoursCombo = CreateTimeCombo(1, 12, 1, task.RunTime.Hours % 12 == 0 ? 12 : task.RunTime.Hours % 12);
             var minsCombo = CreateTimeCombo(0, 55, 5, task.RunTime.Minutes - (task.RunTime.Minutes % 5));
 
@@ -919,8 +971,52 @@ namespace InvoiceBalanceRefresher
             timePanel.Children.Add(minsCombo);
             timePanel.Children.Add(ampmCombo);
 
-            Grid.SetRow(timePanel, 3);
-            Grid.SetColumn(timePanel, 1);
+            // Add the time panel to the main time controls panel
+            timeControlsPanel.Children.Add(timePanel);
+
+            // For schedules with multiple time ranges, add UI for managing them
+            var addTimeButton = new Button
+            {
+                Content = "+ Add Time",
+                Padding = new Thickness(8, 2, 8, 2),
+                Margin = new Thickness(10, 0, 0, 0),
+                Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#064557")),
+                Foreground = Brushes.White,
+                BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9")),
+                Visibility = Visibility.Collapsed // Initially hidden
+            };
+            timeControlsPanel.Children.Add(addTimeButton);
+
+            Grid.SetRow(timeLabel, 3);
+            Grid.SetColumn(timeLabel, 0);
+            Grid.SetRow(timeControlsPanel, 3);
+            Grid.SetColumn(timeControlsPanel, 1);
+
+            // Time ranges panel for MultipleTimesDaily frequency
+            var timeRangesPanel = new StackPanel
+            {
+                Margin = new Thickness(0, 5, 0, 0),
+                Visibility = Visibility.Collapsed // Initially hidden
+            };
+            Grid.SetRow(timeRangesPanel, 4);
+            Grid.SetColumn(timeRangesPanel, 1);
+
+            // If we have time ranges, add them
+            if (task.TimeRanges != null && task.TimeRanges.Count > 0)
+            {
+                foreach (var timeRange in task.TimeRanges)
+                {
+                    AddTimeRangeControls(timeRangesPanel, timeRange);
+                }
+            }
+
+            // Add Time button click handler
+            addTimeButton.Click += (s, e) =>
+            {
+                var newTimeRange = new TimeRange(DateTime.Now.Hour, DateTime.Now.Minute);
+                AddTimeRangeControls(timeRangesPanel, newTimeRange);
+                timeRangesPanel.Visibility = Visibility.Visible;
+            };
 
             // Enabled checkbox
             var enabledCheck = new CheckBox
@@ -934,20 +1030,6 @@ namespace InvoiceBalanceRefresher
             Grid.SetRow(enabledCheck, 4);
             Grid.SetColumn(enabledCheck, 1);
 
-            // Add Windows Task Scheduler checkbox
-            var winTaskLabel = CreateLabel("Windows Task Scheduler:", 5, 0);
-            var winTaskCheck = new CheckBox
-            {
-                Content = "Add to Windows Task Scheduler",
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(0, 5, 0, 5),
-                IsChecked = task.AddToWindowsTaskScheduler,
-                Foreground = (SolidColorBrush)FindResource("ForegroundBrush"),
-                ToolTip = "When checked, this task will be added to Windows Task Scheduler to run even when the application is closed"
-            };
-            Grid.SetRow(winTaskCheck, 5);
-            Grid.SetColumn(winTaskCheck, 1);
-
             // Add all controls to settings grid
             settingsGrid.Children.Add(nameLabel);
             settingsGrid.Children.Add(nameBox);
@@ -956,10 +1038,9 @@ namespace InvoiceBalanceRefresher
             settingsGrid.Children.Add(freqLabel);
             settingsGrid.Children.Add(freqCombo);
             settingsGrid.Children.Add(timeLabel);
-            settingsGrid.Children.Add(timePanel);
+            settingsGrid.Children.Add(timeControlsPanel);
             settingsGrid.Children.Add(enabledCheck);
-            settingsGrid.Children.Add(winTaskLabel);
-            settingsGrid.Children.Add(winTaskCheck);
+            settingsGrid.Children.Add(timeRangesPanel);
 
             Grid.SetRow(settingsGrid, 1);
             mainGrid.Children.Add(settingsGrid);
@@ -974,60 +1055,107 @@ namespace InvoiceBalanceRefresher
             Grid.SetRow(separator, 2);
             mainGrid.Children.Add(separator);
 
-            // Windows Task Scheduler settings group
-            var winTaskGroup = new GroupBox
+            // Frequency-specific options panel
+            var frequencyOptionsPanel = new GroupBox
             {
-                Header = "Windows Task Scheduler Options",
+                Header = "Schedule Options",
                 Margin = new Thickness(0, 0, 0, 15),
                 Padding = new Thickness(10),
                 BorderBrush = (SolidColorBrush)FindResource("BorderBrush"),
-                Background = new SolidColorBrush(Color.FromArgb(20, 24, 180, 233)),
-                IsEnabled = task.AddToWindowsTaskScheduler
+                Background = new SolidColorBrush(Color.FromArgb(20, 24, 180, 233))
             };
 
-            // Create Windows Task options grid
-            var winTaskGrid = new Grid();
-            winTaskGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            winTaskGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-
-            // Add rows for all Windows Task options
-            for (int i = 0; i < 9; i++)
-            {
-                winTaskGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            }
-
-            // Frequency-specific options - using a content control to swap based on frequency
+            // Content control for frequency-specific options
             var frequencyOptionsContentControl = new ContentControl();
-            Grid.SetRow(frequencyOptionsContentControl, 0);
-            Grid.SetColumn(frequencyOptionsContentControl, 0);
-            Grid.SetColumnSpan(frequencyOptionsContentControl, 2);
 
             // Create panels for each frequency type
             var dailyPanel = CreateDailyOptionsPanel(task);
+            var workdaysPanel = CreateWorkdaysPanel(task);
             var weeklyPanel = CreateWeeklyOptionsPanel(task);
+            var biweeklyPanel = CreateBiWeeklyOptionsPanel(task);
             var monthlyPanel = CreateMonthlyOptionsPanel(task);
+            var quarterlyPanel = CreateQuarterlyOptionsPanel(task);
+            var hourlyPanel = CreateHourlyOptionsPanel(task);
+            var customMinutesPanel = CreateCustomMinutesPanel(task);
+            var multipleTimesPanel = CreateMultipleTimesPanel(task);
 
             // Switch panel based on selected frequency
-            // Explicitly specify the namespace for Action to resolve ambiguity
             System.Action updateFrequencyOptionsPanel = () =>
             {
                 switch (freqCombo.SelectedItem)
                 {
                     case ScheduleFrequency.Daily:
                         frequencyOptionsContentControl.Content = dailyPanel;
+                        timeLabel.Visibility = Visibility.Visible;
+                        timeControlsPanel.Visibility = Visibility.Visible;
+                        timeRangesPanel.Visibility = Visibility.Collapsed;
+                        addTimeButton.Visibility = Visibility.Collapsed;
+                        break;
+                    case ScheduleFrequency.WorkDays:
+                        frequencyOptionsContentControl.Content = workdaysPanel;
+                        timeLabel.Visibility = Visibility.Visible;
+                        timeControlsPanel.Visibility = Visibility.Visible;
+                        timeRangesPanel.Visibility = Visibility.Collapsed;
+                        addTimeButton.Visibility = Visibility.Collapsed;
                         break;
                     case ScheduleFrequency.Weekly:
                         frequencyOptionsContentControl.Content = weeklyPanel;
+                        timeLabel.Visibility = Visibility.Visible;
+                        timeControlsPanel.Visibility = Visibility.Visible;
+                        timeRangesPanel.Visibility = Visibility.Collapsed;
+                        addTimeButton.Visibility = Visibility.Collapsed;
+                        break;
+                    case ScheduleFrequency.BiWeekly:
+                        frequencyOptionsContentControl.Content = biweeklyPanel;
+                        timeLabel.Visibility = Visibility.Visible;
+                        timeControlsPanel.Visibility = Visibility.Visible;
+                        timeRangesPanel.Visibility = Visibility.Collapsed;
+                        addTimeButton.Visibility = Visibility.Collapsed;
                         break;
                     case ScheduleFrequency.Monthly:
                         frequencyOptionsContentControl.Content = monthlyPanel;
+                        timeLabel.Visibility = Visibility.Visible;
+                        timeControlsPanel.Visibility = Visibility.Visible;
+                        timeRangesPanel.Visibility = Visibility.Collapsed;
+                        addTimeButton.Visibility = Visibility.Collapsed;
+                        break;
+                    case ScheduleFrequency.Quarterly:
+                        frequencyOptionsContentControl.Content = quarterlyPanel;
+                        timeLabel.Visibility = Visibility.Visible;
+                        timeControlsPanel.Visibility = Visibility.Visible;
+                        timeRangesPanel.Visibility = Visibility.Collapsed;
+                        addTimeButton.Visibility = Visibility.Collapsed;
+                        break;
+                    case ScheduleFrequency.Hourly:
+                        frequencyOptionsContentControl.Content = hourlyPanel;
+                        timeLabel.Visibility = Visibility.Collapsed;
+                        timeControlsPanel.Visibility = Visibility.Collapsed;
+                        timeRangesPanel.Visibility = Visibility.Collapsed;
+                        addTimeButton.Visibility = Visibility.Collapsed;
+                        break;
+                    case ScheduleFrequency.Custom:
+                        frequencyOptionsContentControl.Content = customMinutesPanel;
+                        timeLabel.Visibility = Visibility.Collapsed;
+                        timeControlsPanel.Visibility = Visibility.Collapsed;
+                        timeRangesPanel.Visibility = Visibility.Collapsed;
+                        addTimeButton.Visibility = Visibility.Collapsed;
+                        break;
+                    case ScheduleFrequency.MultipleTimesDaily:
+                        frequencyOptionsContentControl.Content = multipleTimesPanel;
+                        timeLabel.Visibility = Visibility.Visible;
+                        timeControlsPanel.Visibility = Visibility.Visible;
+                        timeRangesPanel.Visibility = Visibility.Visible;
+                        addTimeButton.Visibility = Visibility.Visible;
                         break;
                     default:
                         frequencyOptionsContentControl.Content = null;
+                        timeLabel.Visibility = Visibility.Visible;
+                        timeControlsPanel.Visibility = Visibility.Visible;
+                        timeRangesPanel.Visibility = Visibility.Collapsed;
+                        addTimeButton.Visibility = Visibility.Collapsed;
                         break;
                 }
             };
-
 
             // Update panel when frequency changes
             freqCombo.SelectionChanged += (s, e) => updateFrequencyOptionsPanel();
@@ -1035,229 +1163,9 @@ namespace InvoiceBalanceRefresher
             // Call once to initialize
             updateFrequencyOptionsPanel();
 
-            winTaskGrid.Children.Add(frequencyOptionsContentControl);
-
-            // Run with highest privileges
-            var privilegesCheck = new CheckBox
-            {
-                Content = "Run with highest privileges",
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(0, 5, 0, 5),
-                IsChecked = task.RunWithHighestPrivileges,
-                Foreground = (SolidColorBrush)FindResource("ForegroundBrush")
-            };
-            Grid.SetRow(privilegesCheck, 1);
-            Grid.SetColumn(privilegesCheck, 0);
-            Grid.SetColumnSpan(privilegesCheck, 2);
-            winTaskGrid.Children.Add(privilegesCheck);
-
-            // Power options
-            var batteryCheck = new CheckBox
-            {
-                Content = "Allow run on battery power",
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(0, 5, 0, 5),
-                IsChecked = task.AllowRunOnBattery,
-                Foreground = (SolidColorBrush)FindResource("ForegroundBrush")
-            };
-            Grid.SetRow(batteryCheck, 2);
-            Grid.SetColumn(batteryCheck, 0);
-            winTaskGrid.Children.Add(batteryCheck);
-
-            var wakeCheck = new CheckBox
-            {
-                Content = "Wake computer to run task",
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(0, 5, 0, 5),
-                IsChecked = task.WakeToRun,
-                Foreground = (SolidColorBrush)FindResource("ForegroundBrush")
-            };
-            Grid.SetRow(wakeCheck, 2);
-            Grid.SetColumn(wakeCheck, 1);
-            winTaskGrid.Children.Add(wakeCheck);
-
-            // Network condition
-            var networkCheck = new CheckBox
-            {
-                Content = "Run only if network is available",
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(0, 5, 0, 5),
-                IsChecked = task.RunOnlyIfNetworkAvailable,
-                Foreground = (SolidColorBrush)FindResource("ForegroundBrush")
-            };
-            Grid.SetRow(networkCheck, 3);
-            Grid.SetColumn(networkCheck, 0);
-            Grid.SetColumnSpan(networkCheck, 2);
-            winTaskGrid.Children.Add(networkCheck);
-
-            // Execution time limit
-            var timeLimitLabel = CreateLabel("Execution time limit (minutes):", 4, 0);
-            Grid.SetRow(timeLimitLabel, 4);
-            Grid.SetColumn(timeLimitLabel, 0);
-            winTaskGrid.Children.Add(timeLimitLabel);
-
-            var timeLimitBox = new TextBox
-            {
-                Text = task.ExecutionTimeLimitMinutes.ToString(),
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(0, 5, 0, 5),
-                Padding = new Thickness(5, 3, 5, 3),
-                Width = 100,
-                HorizontalAlignment = HorizontalAlignment.Left,
-                ToolTip = "Set to 0 for no time limit"
-            };
-            Grid.SetRow(timeLimitBox, 4);
-            Grid.SetColumn(timeLimitBox, 1);
-            winTaskGrid.Children.Add(timeLimitBox);
-
-            // Retry settings
-            var retryPanel = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Margin = new Thickness(0, 5, 0, 5)
-            };
-
-            var retryCountLabel = new TextBlock
-            {
-                Text = "Retry count:",
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(0, 0, 5, 0),
-                Foreground = (SolidColorBrush)FindResource("ForegroundBrush")
-            };
-
-            var retryCountBox = new TextBox
-            {
-                Text = task.MaxRetryCount.ToString(),
-                VerticalAlignment = VerticalAlignment.Center,
-                Padding = new Thickness(5, 3, 5, 3),
-                Width = 50
-            };
-
-            var retryIntervalLabel = new TextBlock
-            {
-                Text = "Retry interval (minutes):",
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(15, 0, 5, 0),
-                Foreground = (SolidColorBrush)FindResource("ForegroundBrush")
-            };
-
-            var retryIntervalBox = new TextBox
-            {
-                Text = task.RetryIntervalMinutes.ToString(),
-                VerticalAlignment = VerticalAlignment.Center,
-                Padding = new Thickness(5, 3, 5, 3),
-                Width = 50
-            };
-
-            retryPanel.Children.Add(retryCountLabel);
-            retryPanel.Children.Add(retryCountBox);
-            retryPanel.Children.Add(retryIntervalLabel);
-            retryPanel.Children.Add(retryIntervalBox);
-
-            Grid.SetRow(retryPanel, 5);
-            Grid.SetColumn(retryPanel, 0);
-            Grid.SetColumnSpan(retryPanel, 2);
-            winTaskGrid.Children.Add(retryPanel);
-
-            // Custom command line option
-            var customOptionLabel = CreateLabel("Custom command line option:", 6, 0);
-            Grid.SetRow(customOptionLabel, 6);
-            Grid.SetColumn(customOptionLabel, 0);
-            winTaskGrid.Children.Add(customOptionLabel);
-
-            var customOptionBox = new TextBox
-            {
-                Text = task.CustomOption,
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(0, 5, 0, 5),
-                Padding = new Thickness(5, 3, 5, 3)
-            };
-            Grid.SetRow(customOptionBox, 6);
-            Grid.SetColumn(customOptionBox, 1);
-            winTaskGrid.Children.Add(customOptionBox);
-
-            // Credentials
-            var credentialsLabel = new TextBlock
-            {
-                Text = "Task Credentials:",
-                FontWeight = FontWeights.Bold,
-                Margin = new Thickness(0, 10, 0, 5),
-                Foreground = (SolidColorBrush)FindResource("ForegroundBrush")
-            };
-            Grid.SetRow(credentialsLabel, 7);
-            Grid.SetColumn(credentialsLabel, 0);
-            Grid.SetColumnSpan(credentialsLabel, 2);
-            winTaskGrid.Children.Add(credentialsLabel);
-
-            var credentialsPanel = new Grid();
-            credentialsPanel.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            credentialsPanel.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            credentialsPanel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            credentialsPanel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-
-            var usernameLabel = new TextBlock
-            {
-                Text = "Username:",
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(0, 5, 5, 5),
-                Foreground = (SolidColorBrush)FindResource("ForegroundBrush")
-            };
-            Grid.SetRow(usernameLabel, 0);
-            Grid.SetColumn(usernameLabel, 0);
-            credentialsPanel.Children.Add(usernameLabel);
-
-            var usernameBox = new TextBox
-            {
-                Text = task.WindowsTaskUsername,
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(0, 5, 0, 5),
-                Padding = new Thickness(5, 3, 5, 3),
-                ToolTip = "Leave empty to use current user (recommended)"
-            };
-            Grid.SetRow(usernameBox, 0);
-            Grid.SetColumn(usernameBox, 1);
-            credentialsPanel.Children.Add(usernameBox);
-
-            var passwordLabel = new TextBlock
-            {
-                Text = "Password:",
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(0, 5, 5, 5),
-                Foreground = (SolidColorBrush)FindResource("ForegroundBrush")
-            };
-            Grid.SetRow(passwordLabel, 1);
-            Grid.SetColumn(passwordLabel, 0);
-            credentialsPanel.Children.Add(passwordLabel);
-
-            var passwordBox = new PasswordBox
-            {
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(0, 5, 0, 5),
-                Padding = new Thickness(5, 3, 5, 3)
-            };
-
-            // Set password if exists
-            if (!string.IsNullOrEmpty(task.WindowsTaskPassword))
-            {
-                passwordBox.Password = task.WindowsTaskPassword;
-            }
-
-            Grid.SetRow(passwordBox, 1);
-            Grid.SetColumn(passwordBox, 1);
-            credentialsPanel.Children.Add(passwordBox);
-
-            Grid.SetRow(credentialsPanel, 8);
-            Grid.SetColumn(credentialsPanel, 0);
-            Grid.SetColumnSpan(credentialsPanel, 2);
-            winTaskGrid.Children.Add(credentialsPanel);
-
-            winTaskGroup.Content = winTaskGrid;
-            Grid.SetRow(winTaskGroup, 3);
-            mainGrid.Children.Add(winTaskGroup);
-
-            // Toggle Windows Task Scheduler options when checkbox changes
-            winTaskCheck.Checked += (s, e) => winTaskGroup.IsEnabled = true;
-            winTaskCheck.Unchecked += (s, e) => winTaskGroup.IsEnabled = false;
+            frequencyOptionsPanel.Content = frequencyOptionsContentControl;
+            Grid.SetRow(frequencyOptionsPanel, 3);
+            mainGrid.Children.Add(frequencyOptionsPanel);
 
             // Add CSV settings group
             var csvGroup = new GroupBox
@@ -1388,101 +1296,233 @@ namespace InvoiceBalanceRefresher
                 task.HasAccountNumbers = hasAccountsCheck.IsChecked ?? false;
                 task.Frequency = (ScheduleFrequency)freqCombo.SelectedItem;
                 task.IsEnabled = enabledCheck.IsChecked ?? true;
-                task.AddToWindowsTaskScheduler = winTaskCheck.IsChecked.GetValueOrDefault(false);
 
-                // Calculate run time from the time picker controls
-                int selectedHour = (int)hoursCombo.SelectedItem;
-                int selectedMinute = Convert.ToInt32(minsCombo.SelectedItem.ToString());
-                string ampm = (string)ampmCombo.SelectedItem;
+                // Only set time for frequencies that use it
+                if (task.Frequency != ScheduleFrequency.Hourly && task.Frequency != ScheduleFrequency.Custom)
+                {
+                    // Calculate run time from the time picker controls
+                    int selectedHour = (int)hoursCombo.SelectedItem;
+                    int selectedMinute = Convert.ToInt32(minsCombo.SelectedItem.ToString());
+                    string ampm = (string)ampmCombo.SelectedItem;
 
-                // Convert to 24-hour format
-                if (ampm == "PM" && selectedHour < 12) selectedHour += 12;
-                else if (ampm == "AM" && selectedHour == 12) selectedHour = 0;
+                    // Convert to 24-hour format
+                    if (ampm == "PM" && selectedHour < 12) selectedHour += 12;
+                    else if (ampm == "AM" && selectedHour == 12) selectedHour = 0;
 
-                task.RunTime = new TimeSpan(selectedHour, selectedMinute, 0);
+                    task.RunTime = new TimeSpan(selectedHour, selectedMinute, 0);
+                }
 
-                // Windows Task Scheduler options
-                task.RunWithHighestPrivileges = privilegesCheck.IsChecked ?? false;
-                task.AllowRunOnBattery = batteryCheck.IsChecked ?? false;
-                task.WakeToRun = wakeCheck.IsChecked ?? false;
-                task.RunOnlyIfNetworkAvailable = networkCheck.IsChecked ?? false;
+                // Clear TimeRanges for non-multiple frequencies to prevent stale data
+                // Ensure `task.TimeRanges` is not null before calling `Clear()`
+                if (task.TimeRanges != null)
+                {
+                    task.TimeRanges.Clear();
+                }
 
-                // Parse numeric values with validation
-                if (int.TryParse(timeLimitBox.Text, out int timeLimit))
-                    task.ExecutionTimeLimitMinutes = timeLimit;
-
-                if (int.TryParse(retryCountBox.Text, out int retryCount))
-                    task.MaxRetryCount = (short)retryCount;
-
-                if (int.TryParse(retryIntervalBox.Text, out int retryInterval))
-                    task.RetryIntervalMinutes = retryInterval;
-
-
-                task.CustomOption = customOptionBox.Text;
-                task.WindowsTaskUsername = usernameBox.Text;
-                task.WindowsTaskPassword = passwordBox.Password;
 
                 // Update frequency-specific options
-                if (task.Frequency == ScheduleFrequency.Daily)
+                switch (task.Frequency)
                 {
-                    // Update daily options
-                    var daysIntervalTextBox = dailyPanel.Children.OfType<StackPanel>().FirstOrDefault()?.Children.OfType<TextBox>().FirstOrDefault();
-                    if (daysIntervalTextBox != null && int.TryParse(daysIntervalTextBox.Text, out int daysInterval))
-                        task.DaysInterval = (short)(daysInterval > 0 ? daysInterval : 1);
+                    case ScheduleFrequency.Daily:
+                        // Update daily options
+                        var daysIntervalTextBox = dailyPanel.Children.OfType<StackPanel>().FirstOrDefault()?.Children.OfType<TextBox>().FirstOrDefault();
+                        if (daysIntervalTextBox != null && int.TryParse(daysIntervalTextBox.Text, out int daysInterval))
+                            task.DaysInterval = (short)(daysInterval > 0 ? daysInterval : 1);
 
-                }
-                else if (task.Frequency == ScheduleFrequency.Weekly)
-                {
-                    // Update weekly options (selected days of week)
-                    var dayCheckBoxes = weeklyPanel.Children.OfType<StackPanel>().FirstOrDefault()?.Children.OfType<CheckBox>();
-                    if (dayCheckBoxes != null)
-                    {
-                        var selectedDays = new System.Collections.Specialized.BitVector32(0);
-                        foreach (var dayCheck in dayCheckBoxes)
+                        // Make sure WorkdaysOnly is disabled for Daily
+                        task.WorkdaysOnly = false;
+                        break;
+
+                    case ScheduleFrequency.WorkDays:
+                        // Daily with WorkdaysOnly set to true
+                        task.DaysInterval = 1;
+                        task.WorkdaysOnly = true;
+                        break;
+
+                    case ScheduleFrequency.Weekly:
+                        // Update weekly options (selected days of week)
+                        var dayCheckBoxes = weeklyPanel.Children.OfType<StackPanel>().FirstOrDefault()?.Children.OfType<CheckBox>();
+                        if (dayCheckBoxes != null)
                         {
-                            if (dayCheck.IsChecked == true && dayCheck.Tag is DayOfWeek dayOfWeek)
+                            var selectedDays = new System.Collections.Specialized.BitVector32(0);
+                            foreach (var dayCheck in dayCheckBoxes)
                             {
-                                selectedDays[(int)Math.Pow(2, (int)dayOfWeek)] = true;
+                                if (dayCheck.IsChecked == true && dayCheck.Tag is DayOfWeek dayOfWeek)
+                                {
+                                    selectedDays[(int)Math.Pow(2, (int)dayOfWeek)] = true;
+                                }
+                            }
+                            task.SelectedDaysOfWeek = (DaysOfTheWeek)selectedDays.Data;
+                        }
+                        break;
+
+                    case ScheduleFrequency.BiWeekly:
+                        // Update biweekly options
+                        var weekSelection = biweeklyPanel.Children.OfType<RadioButton>().FirstOrDefault(rb => rb.IsChecked == true);
+                        if (weekSelection != null && weekSelection.Tag is int weekValue)
+                        {
+                            task.BiweeklyWeek = weekValue;
+                        }
+
+                        // Also update weekly days 
+                        var biWeeklyDayCheckBoxes = biweeklyPanel.Children.OfType<StackPanel>().FirstOrDefault(sp => sp.Name == "BiWeeklyDaysPanel")?.Children.OfType<CheckBox>();
+                        if (biWeeklyDayCheckBoxes != null)
+                        {
+                            var selectedBiWeeklyDays = new System.Collections.Specialized.BitVector32(0);
+                            foreach (var dayCheck in biWeeklyDayCheckBoxes)
+                            {
+                                if (dayCheck.IsChecked == true && dayCheck.Tag is DayOfWeek dayOfWeek)
+                                {
+                                    selectedBiWeeklyDays[(int)Math.Pow(2, (int)dayOfWeek)] = true;
+                                }
+                            }
+                            task.SelectedDaysOfWeek = (DaysOfTheWeek)selectedBiWeeklyDays.Data;
+                        }
+                        break;
+
+                    case ScheduleFrequency.Monthly:
+                        // Update monthly options (selected days and months)
+                        var monthlyDayCheckBoxes = monthlyPanel.Children.OfType<StackPanel>().FirstOrDefault(sp => sp.Name == "DaysPanel")?.Children.OfType<CheckBox>();
+                        if (monthlyDayCheckBoxes != null)
+                        {
+                            // Build selected days array
+                            var selectedDays = new List<int>();
+                            foreach (var dayCheck in monthlyDayCheckBoxes)
+                            {
+                                if (dayCheck.IsChecked == true && dayCheck.Tag is int day)
+                                {
+                                    selectedDays.Add(day);
+                                }
+                            }
+                            task.SelectedDaysOfMonth = selectedDays.ToArray();
+                        }
+
+                        var monthCheckBoxes = monthlyPanel.Children.OfType<StackPanel>().FirstOrDefault(sp => sp.Name == "MonthsPanel")?.Children.OfType<CheckBox>();
+                        if (monthCheckBoxes != null)
+                        {
+                            task.SelectedMonths = 0;
+                            foreach (var monthCheck in monthCheckBoxes)
+                            {
+                                if (monthCheck.IsChecked == true && monthCheck.Tag is int month)
+                                {
+                                    task.SelectedMonths |= (MonthsOfTheYear)(1 << (month - 1));
+                                }
                             }
                         }
-                        task.SelectedDaysOfWeek = (DaysOfTheWeek)selectedDays.Data;
-                    }
-                }
-                else if (task.Frequency == ScheduleFrequency.Monthly)
-                {
-                    // Update monthly options (selected days and months)
-                    var dayCheckBoxes = monthlyPanel.Children.OfType<StackPanel>().FirstOrDefault(sp => sp.Name == "DaysPanel")?.Children.OfType<CheckBox>();
-                    if (dayCheckBoxes != null)
-                    {
-                        // Initialize SelectedDaysOfMonth as an empty array instead of an integer
-                        task.SelectedDaysOfMonth = new int[0];
+                        break;
 
-                        // Add selected days to the array
-                        var selectedDays = new List<int>();
-                        foreach (var dayCheck in dayCheckBoxes)
+                    case ScheduleFrequency.Quarterly:
+                        // Update quarterly options
+                        var quarterlyMonthsPanel = quarterlyPanel.Children.OfType<StackPanel>().FirstOrDefault(sp => sp.Name == "QuarterlyMonthsPanel");
+                        if (quarterlyMonthsPanel != null)
                         {
-                            if (dayCheck.IsChecked == true && dayCheck.Tag is int day)
+                            var quarterlyMonths = new List<int>();
+                            var monthCheckboxes = quarterlyMonthsPanel.Children.OfType<CheckBox>();
+                            foreach (var checkbox in monthCheckboxes)
                             {
-                                selectedDays.Add(day);
+                                if (checkbox.IsChecked == true && checkbox.Tag is int monthInQuarter)
+                                {
+                                    quarterlyMonths.Add(monthInQuarter);
+                                }
+                            }
+                            task.QuarterlyMonths = quarterlyMonths.ToArray();
+                        }
+
+                        // Update selected days
+                        var quarterlyDaysPanel = quarterlyPanel.Children.OfType<StackPanel>().FirstOrDefault(sp => sp.Name == "QuarterlyDaysPanel");
+                        if (quarterlyDaysPanel != null)
+                        {
+                            var daysTextBox = quarterlyDaysPanel.Children.OfType<TextBox>().FirstOrDefault();
+                            if (daysTextBox != null)
+                            {
+                                if (int.TryParse(daysTextBox.Text, out int day) && day >= 1 && day <= 31)
+                                {
+                                    task.SelectedDaysOfMonth = new int[] { day };
+                                }
                             }
                         }
-                        task.SelectedDaysOfMonth = selectedDays.ToArray();
+                        break;
 
-                    }
-
-                    var monthCheckBoxes = monthlyPanel.Children.OfType<StackPanel>().FirstOrDefault(sp => sp.Name == "MonthsPanel")?.Children.OfType<CheckBox>();
-                    if (monthCheckBoxes != null)
-                    {
-                        task.SelectedMonths = 0;
-                        foreach (var monthCheck in monthCheckBoxes)
+                    case ScheduleFrequency.Hourly:
+                        // Update hourly interval
+                        var hoursTextBox = hourlyPanel.Children.OfType<TextBox>().FirstOrDefault();
+                        if (hoursTextBox != null && int.TryParse(hoursTextBox.Text, out int hours))
                         {
-                            if (monthCheck.IsChecked == true && monthCheck.Tag is int month)
-                            {
-                                task.SelectedMonths |= (MonthsOfTheYear)(1 << (month - 1));
-
-                            }
+                            task.HoursInterval = Math.Max(1, hours); // Ensure at least 1 hour
                         }
-                    }
+                        break;
+
+                    case ScheduleFrequency.Custom:
+                        // Update minutes interval
+                        var minutesTextBox = customMinutesPanel.Children.OfType<TextBox>().FirstOrDefault();
+                        if (minutesTextBox != null && int.TryParse(minutesTextBox.Text, out int minutes))
+                        {
+                            task.MinutesInterval = Math.Max(1, minutes); // Ensure at least 1 minute
+                        }
+                        break;
+
+                    case ScheduleFrequency.MultipleTimesDaily:
+                        // Clear existing times, then extract all times from UI
+                        if (task.TimeRanges != null)
+                        {
+                            task.TimeRanges.Clear();
+                        }
+
+
+                        // Get all time ranges from UI
+                        foreach (Grid timeRangeGrid in timeRangesPanel.Children)
+                        {
+                            int hour = 0, minute = 0;
+
+                            // Find hour and minute combos
+                            var combos = timeRangeGrid.Children.OfType<ComboBox>().ToList();
+                            if (combos.Count >= 3)
+                            {
+                                var hrCombo = combos[0];
+                                var minCombo = combos[1];
+                                var ampmCombo = combos[2];
+
+                                int hr = (int)hrCombo.SelectedItem;
+                                int min = Convert.ToInt32(minCombo.SelectedItem.ToString());
+                                string ampm = (string)ampmCombo.SelectedItem;
+
+                                // Convert to 24-hour format
+                                if (ampm == "PM" && hr < 12) hr += 12;
+                                else if (ampm == "AM" && hr == 12) hr = 0;
+
+                                hour = hr;
+                                minute = min;
+                            }
+
+                            // Add to task's time ranges
+                            // Ensure `task.TimeRanges` is not null before calling `Add()`
+                            if (task.TimeRanges == null)
+                            {
+                                task.TimeRanges = new List<TimeRange>();
+                            }
+                            task.TimeRanges.Add(new TimeRange(hour, minute));
+
+                        }
+
+                        // If no time ranges were added, add the current time
+                        // Ensure `task.TimeRanges` is not null before accessing its Count property
+                        if (task.TimeRanges == null || task.TimeRanges.Count == 0)
+                        {
+                            int selectedHr = (int)hoursCombo.SelectedItem;
+                            int selectedMin = Convert.ToInt32(minsCombo.SelectedItem.ToString());
+                            string selectedAmPm = (string)ampmCombo.SelectedItem;
+
+                            // Convert to 24-hour format
+                            if (selectedAmPm == "PM" && selectedHr < 12) selectedHr += 12;
+                            else if (selectedAmPm == "AM" && selectedHr == 12) selectedHr = 0;
+
+                            task.TimeRanges = new List<TimeRange>
+    {
+        new TimeRange(selectedHr, selectedMin)
+    };
+                        }
+
+                        break;
                 }
 
                 // Update NextRunTime based on frequency and run time
@@ -1512,6 +1552,82 @@ namespace InvoiceBalanceRefresher
             editWindow.ShowDialog();
 
             return dialogResult;
+        }
+
+        // Helper method to add time range controls for MultipleTimesDaily
+        private void AddTimeRangeControls(StackPanel timeRangesPanel, TimeRange timeRange)
+        {
+            var timeRangeGrid = new Grid
+            {
+                Margin = new Thickness(0, 0, 0, 5)
+            };
+
+            // Create columns for time components and delete button
+            timeRangeGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            timeRangeGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            timeRangeGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            timeRangeGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            timeRangeGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            // Create hour, minute, and ampm combos
+            int hour12Format = timeRange.Hour % 12 == 0 ? 12 : timeRange.Hour % 12;
+            var hourCombo = CreateTimeCombo(1, 12, 1, hour12Format);
+            Grid.SetColumn(hourCombo, 0);
+
+            // Colon separator
+            var separator = new TextBlock
+            {
+                Text = ":",
+                VerticalAlignment = VerticalAlignment.Center,
+                Foreground = (SolidColorBrush)FindResource("ForegroundBrush"),
+                Margin = new Thickness(0, 0, 5, 0)
+            };
+            Grid.SetColumn(separator, 1);
+
+            // Minute combo
+            var minuteCombo = CreateTimeCombo(0, 55, 5, timeRange.Minute - (timeRange.Minute % 5));
+            Grid.SetColumn(minuteCombo, 2);
+
+            // AM/PM combo
+            var ampmCombo = new ComboBox { MinWidth = 60 };
+            ampmCombo.Items.Add("AM");
+            ampmCombo.Items.Add("PM");
+            ampmCombo.SelectedItem = timeRange.Hour >= 12 ? "PM" : "AM";
+            Grid.SetColumn(ampmCombo, 3);
+
+            // Delete button
+            var deleteButton = new Button
+            {
+                Content = "X",
+                Padding = new Thickness(5, 0, 5, 0),
+                Margin = new Thickness(5, 0, 0, 0),
+                Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E74C3C")),
+                Foreground = Brushes.White,
+                BorderBrush = Brushes.Transparent,
+                HorizontalAlignment = HorizontalAlignment.Left
+            };
+            Grid.SetColumn(deleteButton, 4);
+
+            // Delete button handler
+            deleteButton.Click += (s, e) =>
+            {
+                timeRangesPanel.Children.Remove(timeRangeGrid);
+                if (timeRangesPanel.Children.Count == 0)
+                {
+                    timeRangesPanel.Visibility = Visibility.Collapsed;
+                }
+            };
+
+            // Add all controls to grid
+            timeRangeGrid.Children.Add(hourCombo);
+            timeRangeGrid.Children.Add(separator);
+            timeRangeGrid.Children.Add(minuteCombo);
+            timeRangeGrid.Children.Add(ampmCombo);
+            timeRangeGrid.Children.Add(deleteButton);
+
+            // Add to panel
+            timeRangesPanel.Children.Add(timeRangeGrid);
+            timeRangesPanel.Visibility = Visibility.Visible;
         }
 
         // Helper method to create day options panel for daily frequency
@@ -1551,6 +1667,353 @@ namespace InvoiceBalanceRefresher
             panel.Children.Add(label);
             panel.Children.Add(daysTextBox);
             panel.Children.Add(daysLabel);
+
+            return panel;
+        }
+
+        // Helper method to create panel for workdays option (weekday-only daily schedule)
+        private StackPanel CreateWorkdaysPanel(ScheduledTask task)
+        {
+            var panel = new StackPanel
+            {
+                Margin = new Thickness(0, 10, 0, 10)
+            };
+
+            var infoText = new TextBlock
+            {
+                Text = "Run every workday (Monday through Friday)",
+                VerticalAlignment = VerticalAlignment.Center,
+                Foreground = (SolidColorBrush)FindResource("ForegroundBrush"),
+                Margin = new Thickness(0, 0, 0, 10),
+                TextWrapping = TextWrapping.Wrap
+            };
+            panel.Children.Add(infoText);
+
+            return panel;
+        }
+
+        // Helper method to create panel for hourly frequency
+        private StackPanel CreateHourlyOptionsPanel(ScheduledTask task)
+        {
+            var panel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Margin = new Thickness(0, 10, 0, 10)
+            };
+
+            var label = new TextBlock
+            {
+                Text = "Run every",
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 0, 5, 0),
+                Foreground = (SolidColorBrush)FindResource("ForegroundBrush")
+            };
+
+            var hoursTextBox = new TextBox
+            {
+                Text = task.HoursInterval.ToString(),
+                VerticalAlignment = VerticalAlignment.Center,
+                Width = 40,
+                TextAlignment = TextAlignment.Center,
+                Padding = new Thickness(5, 3, 5, 3)
+            };
+
+            var hoursLabel = new TextBlock
+            {
+                Text = "hour(s)",
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(5, 0, 0, 0),
+                Foreground = (SolidColorBrush)FindResource("ForegroundBrush")
+            };
+
+            panel.Children.Add(label);
+            panel.Children.Add(hoursTextBox);
+            panel.Children.Add(hoursLabel);
+
+            return panel;
+        }
+
+        // Helper method to create panel for custom minutes frequency
+        private StackPanel CreateCustomMinutesPanel(ScheduledTask task)
+        {
+            var panel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Margin = new Thickness(0, 10, 0, 10)
+            };
+
+            var label = new TextBlock
+            {
+                Text = "Run every",
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 0, 5, 0),
+                Foreground = (SolidColorBrush)FindResource("ForegroundBrush")
+            };
+
+            var minutesTextBox = new TextBox
+            {
+                Text = task.MinutesInterval.ToString(),
+                VerticalAlignment = VerticalAlignment.Center,
+                Width = 40,
+                TextAlignment = TextAlignment.Center,
+                Padding = new Thickness(5, 3, 5, 3)
+            };
+
+            var minutesLabel = new TextBlock
+            {
+                Text = "minute(s)",
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(5, 0, 0, 0),
+                Foreground = (SolidColorBrush)FindResource("ForegroundBrush")
+            };
+
+            panel.Children.Add(label);
+            panel.Children.Add(minutesTextBox);
+            panel.Children.Add(minutesLabel);
+
+            return panel;
+        }
+
+        // Helper method to create panel for multiple times daily frequency
+        private StackPanel CreateMultipleTimesPanel(ScheduledTask task)
+        {
+            var panel = new StackPanel
+            {
+                Margin = new Thickness(0, 10, 0, 10)
+            };
+
+            var infoText = new TextBlock
+            {
+                Text = "Run at multiple specified times throughout the day",
+                Foreground = (SolidColorBrush)FindResource("ForegroundBrush"),
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 0, 0, 10)
+            };
+            panel.Children.Add(infoText);
+
+            var instructionsText = new TextBlock
+            {
+                Text = "Use the '+ Add Time' button to add additional times",
+                Foreground = (SolidColorBrush)FindResource("ForegroundBrush"),
+                TextWrapping = TextWrapping.Wrap,
+                FontStyle = FontStyles.Italic
+            };
+            panel.Children.Add(instructionsText);
+
+            return panel;
+        }
+
+        // Helper method to create panel for biweekly options
+        private StackPanel CreateBiWeeklyOptionsPanel(ScheduledTask task)
+        {
+            var panel = new StackPanel
+            {
+                Margin = new Thickness(0, 10, 0, 10)
+            };
+
+            // Add week selection (even/odd weeks)
+            var weekPanel = new StackPanel
+            {
+                Margin = new Thickness(0, 0, 0, 10)
+            };
+
+            var weekTitle = new TextBlock
+            {
+                Text = "Run during:",
+                FontWeight = FontWeights.SemiBold,
+                Margin = new Thickness(0, 0, 0, 5),
+                Foreground = (SolidColorBrush)FindResource("ForegroundBrush")
+            };
+            weekPanel.Children.Add(weekTitle);
+
+            // Even week option
+            var evenWeekRadio = new RadioButton
+            {
+                Content = "Even weeks",
+                Margin = new Thickness(0, 0, 0, 5),
+                IsChecked = task.BiweeklyWeek == 0,
+                Tag = 0,
+                Foreground = (SolidColorBrush)FindResource("ForegroundBrush")
+            };
+            weekPanel.Children.Add(evenWeekRadio);
+
+            // Odd week option
+            var oddWeekRadio = new RadioButton
+            {
+                Content = "Odd weeks",
+                IsChecked = task.BiweeklyWeek == 1,
+                Tag = 1,
+                Foreground = (SolidColorBrush)FindResource("ForegroundBrush")
+            };
+            weekPanel.Children.Add(oddWeekRadio);
+
+            panel.Children.Add(weekPanel);
+
+            // Add days selection
+            var daysTitle = new TextBlock
+            {
+                Text = "Run on these days:",
+                FontWeight = FontWeights.SemiBold,
+                Margin = new Thickness(0, 5, 0, 5),
+                Foreground = (SolidColorBrush)FindResource("ForegroundBrush")
+            };
+            panel.Children.Add(daysTitle);
+
+            var daysPanel = new StackPanel
+            {
+                Name = "BiWeeklyDaysPanel",
+                Orientation = Orientation.Horizontal,
+                Margin = new Thickness(0, 5, 0, 5)
+            };
+
+            // Get the current selected days
+            DaysOfTheWeek selectedDays = task.SelectedDaysOfWeek;
+
+            // Create checkboxes for each day of the week
+            foreach (DayOfWeek day in Enum.GetValues(typeof(DayOfWeek)))
+            {
+                bool isChecked = ((int)selectedDays & (1 << (int)day)) != 0;
+
+                var dayCheck = new CheckBox
+                {
+                    Content = day.ToString(),
+                    IsChecked = isChecked,
+                    Margin = new Thickness(5, 0, 5, 0),
+                    Tag = day,
+                    Foreground = (SolidColorBrush)FindResource("ForegroundBrush")
+                };
+
+                daysPanel.Children.Add(dayCheck);
+            }
+
+            panel.Children.Add(daysPanel);
+
+            return panel;
+        }
+
+        // Helper method for creating quarterly options
+        private StackPanel CreateQuarterlyOptionsPanel(ScheduledTask task)
+        {
+            var panel = new StackPanel
+            {
+                Margin = new Thickness(0, 10, 0, 10)
+            };
+
+            // Months in quarter selection
+            var monthsTitle = new TextBlock
+            {
+                Text = "Run during these months of each quarter:",
+                FontWeight = FontWeights.SemiBold,
+                Margin = new Thickness(0, 0, 0, 5),
+                Foreground = (SolidColorBrush)FindResource("ForegroundBrush")
+            };
+            panel.Children.Add(monthsTitle);
+
+            var monthsPanel = new StackPanel
+            {
+                Name = "QuarterlyMonthsPanel",
+                Orientation = Orientation.Horizontal,
+                Margin = new Thickness(0, 0, 0, 10)
+            };
+
+            // Quarter descriptions
+            var quarterInfo = new TextBlock
+            {
+                Text = "Quarter 1: Jan, Feb, Mar | Quarter 2: Apr, May, Jun | Quarter 3: Jul, Aug, Sep | Quarter 4: Oct, Nov, Dec",
+                FontStyle = FontStyles.Italic,
+                Foreground = (SolidColorBrush)FindResource("ForegroundBrush"),
+                Margin = new Thickness(0, 0, 0, 5),
+                TextWrapping = TextWrapping.Wrap
+            };
+            panel.Children.Add(quarterInfo);
+
+            // Get the selected months within quarters
+            int[] selectedMonths = task.QuarterlyMonths ?? new int[] { 1 };
+
+            // First month of quarter option
+            var firstMonthCheck = new CheckBox
+            {
+                Content = "First month (Jan, Apr, Jul, Oct)",
+                IsChecked = selectedMonths.Contains(1),
+                Tag = 1,
+                Margin = new Thickness(0, 0, 10, 0),
+                Foreground = (SolidColorBrush)FindResource("ForegroundBrush")
+            };
+            monthsPanel.Children.Add(firstMonthCheck);
+
+            // Second month of quarter option
+            var secondMonthCheck = new CheckBox
+            {
+                Content = "Second month (Feb, May, Aug, Nov)",
+                IsChecked = selectedMonths.Contains(2),
+                Tag = 2,
+                Margin = new Thickness(0, 0, 10, 0),
+                Foreground = (SolidColorBrush)FindResource("ForegroundBrush")
+            };
+            monthsPanel.Children.Add(secondMonthCheck);
+
+            // Third month of quarter option
+            var thirdMonthCheck = new CheckBox
+            {
+                Content = "Third month (Mar, Jun, Sep, Dec)",
+                IsChecked = selectedMonths.Contains(3),
+                Tag = 3,
+                Foreground = (SolidColorBrush)FindResource("ForegroundBrush")
+            };
+            monthsPanel.Children.Add(thirdMonthCheck);
+
+            panel.Children.Add(monthsPanel);
+
+            // Day of month selection
+            var daysTitle = new TextBlock
+            {
+                Text = "Run on day of month:",
+                FontWeight = FontWeights.SemiBold,
+                Margin = new Thickness(0, 10, 0, 5),
+                Foreground = (SolidColorBrush)FindResource("ForegroundBrush")
+            };
+            panel.Children.Add(daysTitle);
+
+            var daysPanel = new StackPanel
+            {
+                Name = "QuarterlyDaysPanel",
+                Orientation = Orientation.Horizontal
+            };
+
+            var dayLabel = new TextBlock
+            {
+                Text = "Day:",
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 0, 5, 0),
+                Foreground = (SolidColorBrush)FindResource("ForegroundBrush")
+            };
+            daysPanel.Children.Add(dayLabel);
+
+            // Get the current day value
+            int selectedDay = task.SelectedDaysOfMonth?.FirstOrDefault() ?? 1;
+
+            var dayTextBox = new TextBox
+            {
+                Text = selectedDay.ToString(),
+                Width = 40,
+                TextAlignment = TextAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                Padding = new Thickness(5, 3, 5, 3)
+            };
+            daysPanel.Children.Add(dayTextBox);
+
+            // Add a note about valid days
+            var dayNote = new TextBlock
+            {
+                Text = "(1-31, will use last day of month if day exceeds month length)",
+                FontStyle = FontStyles.Italic,
+                Margin = new Thickness(10, 0, 0, 0),
+                VerticalAlignment = VerticalAlignment.Center,
+                Foreground = (SolidColorBrush)FindResource("ForegroundBrush")
+            };
+            daysPanel.Children.Add(dayNote);
+
+            panel.Children.Add(daysPanel);
 
             return panel;
         }
@@ -1713,7 +2176,6 @@ namespace InvoiceBalanceRefresher
 
                 bool isChecked = ((int)task.SelectedMonths & (1 << (month - 1))) != 0;
 
-
                 var monthCheck = new CheckBox
                 {
                     Content = monthNames[month - 1],
@@ -1734,6 +2196,7 @@ namespace InvoiceBalanceRefresher
 
             return mainPanel;
         }
+
 
         private bool ValidateScheduleInputs(string name, string csvPath, string billerGuid, string webServiceKey)
         {
@@ -1855,15 +2318,13 @@ namespace InvoiceBalanceRefresher
         private void LightMode_Click(object sender, RoutedEventArgs e)
         {
             _themeManager.SetLightMode();
-            LightModeMenuItem.IsChecked = true;
-            DarkModeMenuItem.IsChecked = false;
+            // Remove references to non-existent menu items
         }
 
         private void DarkMode_Click(object sender, RoutedEventArgs e)
         {
             _themeManager.SetDarkMode();
-            LightModeMenuItem.IsChecked = false;
-            DarkModeMenuItem.IsChecked = true;
+            // Use Button property rather than ToggleButton property and remove non-existent menu items
         }
 
         private async void ProcessSingleInvoice_Click(object sender, RoutedEventArgs e)
@@ -2064,12 +2525,7 @@ namespace InvoiceBalanceRefresher
                 // Setup credential set combo box
                 RefreshCredentialSetComboBox();
 
-                // If there are no credential sets, add an instruction
-                if (CredentialManager.GetAllCredentialSets().Count == 0)
-                {
-                    CredentialSetNameTextBox.Text = "Enter a name for your first credential set";
-                }
-
+                // No need to set text on a non-existent control
                 Log(LogLevel.Info, "Credential manager initialized");
             }
             catch (Exception ex)
@@ -2129,7 +2585,7 @@ namespace InvoiceBalanceRefresher
                     // Update the UI with the selected credential set
                     BillerGUID.Text = selectedCredentialSet.BillerGUID;
                     WebServiceKey.Text = selectedCredentialSet.WebServiceKey;
-                    CredentialSetNameTextBox.Text = selectedCredentialSet.Name;
+                    // Don't update non-existent text box
 
                     Log(LogLevel.Info, $"Loaded credential set: {selectedCredentialSet.Name}");
                 }
@@ -2167,6 +2623,145 @@ namespace InvoiceBalanceRefresher
         }
 
         /// <summary>
+        /// Simple input dialog for collecting text input from the user
+        /// </summary>
+        public class InputDialog : Window
+        {
+            public string ResponseText { get; private set; } = string.Empty;
+
+            public InputDialog(string title, string promptText)
+            {
+                this.Title = title;
+                this.Width = 400;
+                this.Height = 175;
+                this.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+                this.ResizeMode = ResizeMode.NoResize;
+
+                Grid grid = new Grid();
+                grid.Margin = new Thickness(15);
+                grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+                grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+                grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+                TextBlock prompt = new TextBlock
+                {
+                    Text = promptText,
+                    Margin = new Thickness(0, 0, 0, 10),
+                    TextWrapping = TextWrapping.Wrap
+                };
+                Grid.SetRow(prompt, 0);
+                grid.Children.Add(prompt);
+
+                TextBox input = new TextBox
+                {
+                    Margin = new Thickness(0, 0, 0, 20),
+                    Padding = new Thickness(5),
+                    Height = 35
+                };
+                Grid.SetRow(input, 1);
+                grid.Children.Add(input);
+
+                StackPanel buttons = new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    HorizontalAlignment = HorizontalAlignment.Right
+                };
+
+                Button okButton = new Button
+                {
+                    Content = "OK",
+                    Width = 80,
+                    Height = 30,
+                    Margin = new Thickness(0, 0, 10, 0),
+                    IsDefault = true
+                };
+                okButton.Click += (s, e) =>
+                {
+                    ResponseText = input.Text;
+                    DialogResult = true;
+                    Close();
+                };
+
+                Button cancelButton = new Button
+                {
+                    Content = "Cancel",
+                    Width = 80,
+                    Height = 30,
+                    IsCancel = true
+                };
+                cancelButton.Click += (s, e) =>
+                {
+                    DialogResult = false;
+                    Close();
+                };
+
+                buttons.Children.Add(okButton);
+                buttons.Children.Add(cancelButton);
+                Grid.SetRow(buttons, 2);
+                grid.Children.Add(buttons);
+
+                this.Content = grid;
+
+                input.Focus();
+            }
+        }
+
+
+
+        /// <summary>
+        /// Handles the title bar drag to move the window
+        /// </summary>
+        private void TitleBar_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (e.ClickCount == 2)
+            {
+                // Double-click toggles maximize/restore
+                MaximizeButton_Click(sender, e);
+            }
+            else
+            {
+                // Single click starts dragging
+                this.DragMove();
+            }
+        }
+
+
+        /// <summary>
+        /// Minimizes the window
+        /// </summary>
+        private void MinimizeButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.WindowState = WindowState.Minimized;
+        }
+
+        /// <summary>
+        /// Toggles maximize/restore window state
+        /// </summary>
+        private void MaximizeButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (this.WindowState == WindowState.Maximized)
+            {
+                this.WindowState = WindowState.Normal;
+                MaximizeButton.Content = "☐"; // Square symbol for maximize
+            }
+            else
+            {
+                this.WindowState = WindowState.Maximized;
+                MaximizeButton.Content = "❐"; // Different square symbol for restore
+            }
+        }
+
+        /// <summary>
+        /// Closes the application
+        /// </summary>
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            Log(LogLevel.Info, "Application closing");
+            Application.Current.Shutdown();
+        }
+
+
+        /// <summary>
         /// Saves the current credentials with the specified name
         /// </summary>
         private void SaveCredentials_Click(object sender, RoutedEventArgs e)
@@ -2175,14 +2770,25 @@ namespace InvoiceBalanceRefresher
             {
                 string billerGUID = BillerGUID.Text.Trim();
                 string webServiceKey = WebServiceKey.Text.Trim();
-                string credentialSetName = CredentialSetNameTextBox.Text.Trim();
+                // Use a prompt dialog to get the credential set name instead of non-existent TextBox
+                string credentialSetName = "";
+
+                // Show an input dialog to get credential set name
+                var inputDialog = new InputDialog("Save Credentials", "Enter a name for this credential set:");
+                if (inputDialog.ShowDialog() == true)
+                {
+                    credentialSetName = inputDialog.ResponseText.Trim();
+                }
+                else
+                {
+                    return; // User cancelled
+                }
 
                 // Validate inputs
                 if (string.IsNullOrWhiteSpace(credentialSetName))
                 {
                     MessageBox.Show("Please enter a name for this credential set.", "Validation Error",
                         MessageBoxButton.OK, MessageBoxImage.Warning);
-                    CredentialSetNameTextBox.Focus();
                     return;
                 }
 

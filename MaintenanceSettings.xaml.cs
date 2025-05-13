@@ -118,7 +118,7 @@ namespace InvoiceBalanceRefresher
             // Since we don't want to add external dependencies, let's create our own simple folder browser
 
             // Create a new instance of SaveFileDialog - we'll use this as a workaround
-            var saveDialog = new SaveFileDialog
+            var saveDialog = new Microsoft.Win32.SaveFileDialog
             {
                 Title = "Select Log Directory",
                 FileName = "FolderSelection", // This will be ignored since we're just using it to select a folder
@@ -149,7 +149,7 @@ namespace InvoiceBalanceRefresher
             // Validate Log Retention Days
             if (!int.TryParse(LogRetentionDaysTextBox.Text, out int retentionDays) || retentionDays < 1)
             {
-                MessageBox.Show("Please enter a valid number for log retention days (minimum 1).",
+                System.Windows.MessageBox.Show("Please enter a valid number for log retention days (minimum 1).",
                     "Invalid Input", MessageBoxButton.OK, MessageBoxImage.Warning);
                 LogRetentionDaysTextBox.Focus();
                 return false;
@@ -158,7 +158,7 @@ namespace InvoiceBalanceRefresher
             // Validate Log Directory
             if (string.IsNullOrWhiteSpace(LogDirectoryTextBox.Text))
             {
-                MessageBox.Show("Please enter a valid log directory path.",
+                System.Windows.MessageBox.Show("Please enter a valid log directory path.",
                     "Invalid Input", MessageBoxButton.OK, MessageBoxImage.Warning);
                 LogDirectoryTextBox.Focus();
                 return false;
@@ -175,7 +175,7 @@ namespace InvoiceBalanceRefresher
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Could not create log directory: {ex.Message}",
+                System.Windows.MessageBox.Show($"Could not create log directory: {ex.Message}",
                     "Directory Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 LogDirectoryTextBox.Focus();
                 return false;
@@ -184,7 +184,7 @@ namespace InvoiceBalanceRefresher
             // Validate Max Session Files
             if (!int.TryParse(MaxSessionFilesTextBox.Text, out int maxFiles) || maxFiles < 1)
             {
-                MessageBox.Show("Please enter a valid number for maximum session files per day (minimum 1).",
+                System.Windows.MessageBox.Show("Please enter a valid number for maximum session files per day (minimum 1).",
                     "Invalid Input", MessageBoxButton.OK, MessageBoxImage.Warning);
                 MaxSessionFilesTextBox.Focus();
                 return false;

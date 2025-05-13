@@ -2,6 +2,7 @@ using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Linq;
 
 namespace InvoiceBalanceRefresher
 {
@@ -9,9 +10,9 @@ namespace InvoiceBalanceRefresher
     {
         private readonly Window _window;
         private readonly Action<MainWindow.LogLevel, string> _logAction;
-        private readonly TextBox? _batchResults;
-        private readonly TextBlock? _singleResult;
-        private readonly TextBlock? _customerResult;
+        private readonly System.Windows.Controls.TextBox? _batchResults;
+        private readonly System.Windows.Controls.TextBlock? _singleResult;
+        private readonly System.Windows.Controls.TextBlock? _customerResult;
 
         public ThemeManager(Window window, Action<MainWindow.LogLevel, string> logAction)
         {
@@ -21,11 +22,11 @@ namespace InvoiceBalanceRefresher
             // Find the UI elements if they're in the window
             if (_window is MainWindow mainWindow)
             {
-                _batchResults = UIHelper.FindVisualChildren<TextBox>(_window)
+                _batchResults = UIHelper.FindVisualChildren<System.Windows.Controls.TextBox>(_window)
                     .FirstOrDefault(tb => tb.Name == "BatchResults");
-                _singleResult = UIHelper.FindVisualChildren<TextBlock>(_window)
+                _singleResult = UIHelper.FindVisualChildren<System.Windows.Controls.TextBlock>(_window)
                     .FirstOrDefault(tb => tb.Name == "SingleResult");
-                _customerResult = UIHelper.FindVisualChildren<TextBlock>(_window)
+                _customerResult = UIHelper.FindVisualChildren<System.Windows.Controls.TextBlock>(_window)
                     .FirstOrDefault(tb => tb.Name == "CustomerResult");
             }
         }
@@ -33,22 +34,22 @@ namespace InvoiceBalanceRefresher
         public void SetLightMode()
         {
             // Change resources to light mode
-            Application.Current.Resources["BackgroundBrush"] = Application.Current.Resources["LightBackgroundBrush"];
-            Application.Current.Resources["ForegroundBrush"] = Application.Current.Resources["LightForegroundBrush"];
-            Application.Current.Resources["BorderBrush"] = Application.Current.Resources["LightBorderBrush"];
-            Application.Current.Resources["GroupBackgroundBrush"] = Application.Current.Resources["LightGroupBackgroundBrush"];
-            Application.Current.Resources["ConsoleBackgroundBrush"] = Application.Current.Resources["LightConsoleBackgroundBrush"];
-            Application.Current.Resources["HighlightBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E8F4F7"));
-            Application.Current.Resources["SeparatorBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E0E0E0"));
-            Application.Current.Resources["ConsoleHeaderBrush"] = Application.Current.Resources["LightConsoleHeaderBrush"];
+            System.Windows.Application.Current.Resources["BackgroundBrush"] = System.Windows.Application.Current.Resources["LightBackgroundBrush"];
+            System.Windows.Application.Current.Resources["ForegroundBrush"] = System.Windows.Application.Current.Resources["LightForegroundBrush"];
+            System.Windows.Application.Current.Resources["BorderBrush"] = System.Windows.Application.Current.Resources["LightBorderBrush"];
+            System.Windows.Application.Current.Resources["GroupBackgroundBrush"] = System.Windows.Application.Current.Resources["LightGroupBackgroundBrush"];
+            System.Windows.Application.Current.Resources["ConsoleBackgroundBrush"] = System.Windows.Application.Current.Resources["LightConsoleBackgroundBrush"];
+            System.Windows.Application.Current.Resources["HighlightBrush"] = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#E8F4F7"));
+            System.Windows.Application.Current.Resources["SeparatorBrush"] = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#E0E0E0"));
+            System.Windows.Application.Current.Resources["ConsoleHeaderBrush"] = System.Windows.Application.Current.Resources["LightConsoleHeaderBrush"];
 
             // Update button background and text color for light mode
             // Use MintGreenBrush for button backgrounds instead of hardcoded color
-            foreach (Button button in UIHelper.FindVisualChildren<Button>(_window))
+            foreach (System.Windows.Controls.Button button in UIHelper.FindVisualChildren<System.Windows.Controls.Button>(_window))
             {
-                button.Background = (SolidColorBrush)Application.Current.Resources["MintGreenBrush"];
-                button.Foreground = (SolidColorBrush)Application.Current.Resources["CharcoalBrush"];
-                button.BorderBrush = (SolidColorBrush)Application.Current.Resources["MintGreenBrush"];
+                button.Background = (SolidColorBrush)System.Windows.Application.Current.Resources["MintGreenBrush"];
+                button.Foreground = (SolidColorBrush)System.Windows.Application.Current.Resources["CharcoalBrush"];
+                button.BorderBrush = (SolidColorBrush)System.Windows.Application.Current.Resources["MintGreenBrush"];
             }
 
             // Update controls that aren't automatically updated by resource changes
@@ -58,7 +59,7 @@ namespace InvoiceBalanceRefresher
             Grid? consoleHeaderGrid = FindConsoleHeaderGrid();
             if (consoleHeaderGrid != null)
             {
-                consoleHeaderGrid.Background = Application.Current.Resources["LightConsoleHeaderBrush"] as Brush;
+                consoleHeaderGrid.Background = System.Windows.Application.Current.Resources["LightConsoleHeaderBrush"] as System.Windows.Media.Brush;
             }
 
             _logAction(MainWindow.LogLevel.Info, "Switched to light mode");
@@ -67,14 +68,14 @@ namespace InvoiceBalanceRefresher
         public void SetDarkMode()
         {
             // Change resources to dark mode
-            Application.Current.Resources["BackgroundBrush"] = Application.Current.Resources["DarkBackgroundBrush"];
-            Application.Current.Resources["ForegroundBrush"] = Application.Current.Resources["DarkForegroundBrush"];
-            Application.Current.Resources["BorderBrush"] = Application.Current.Resources["DarkBorderBrush"];
-            Application.Current.Resources["GroupBackgroundBrush"] = Application.Current.Resources["DarkGroupBackgroundBrush"];
-            Application.Current.Resources["ConsoleBackgroundBrush"] = Application.Current.Resources["DarkConsoleBackgroundBrush"];
-            Application.Current.Resources["HighlightBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2A4A56"));
-            Application.Current.Resources["SeparatorBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#444444"));
-            Application.Current.Resources["ConsoleHeaderBrush"] = Application.Current.Resources["DarkConsoleHeaderBrush"];
+            System.Windows.Application.Current.Resources["BackgroundBrush"] = System.Windows.Application.Current.Resources["DarkBackgroundBrush"];
+            System.Windows.Application.Current.Resources["ForegroundBrush"] = System.Windows.Application.Current.Resources["DarkForegroundBrush"];
+            System.Windows.Application.Current.Resources["BorderBrush"] = System.Windows.Application.Current.Resources["DarkBorderBrush"];
+            System.Windows.Application.Current.Resources["GroupBackgroundBrush"] = System.Windows.Application.Current.Resources["DarkGroupBackgroundBrush"];
+            System.Windows.Application.Current.Resources["ConsoleBackgroundBrush"] = System.Windows.Application.Current.Resources["DarkConsoleBackgroundBrush"];
+            System.Windows.Application.Current.Resources["HighlightBrush"] = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#2A4A56"));
+            System.Windows.Application.Current.Resources["SeparatorBrush"] = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#444444"));
+            System.Windows.Application.Current.Resources["ConsoleHeaderBrush"] = System.Windows.Application.Current.Resources["DarkConsoleHeaderBrush"];
 
             // Update controls that aren't automatically updated by resource changes
             UpdateControlsForDarkMode();
@@ -83,7 +84,7 @@ namespace InvoiceBalanceRefresher
             Grid? consoleHeaderGrid = FindConsoleHeaderGrid();
             if (consoleHeaderGrid != null)
             {
-                consoleHeaderGrid.Background = Application.Current.Resources["DarkConsoleHeaderBrush"] as Brush;
+                consoleHeaderGrid.Background = System.Windows.Application.Current.Resources["DarkConsoleHeaderBrush"] as System.Windows.Media.Brush;
             }
 
             _logAction(MainWindow.LogLevel.Info, "Switched to dark mode");
@@ -108,40 +109,40 @@ namespace InvoiceBalanceRefresher
         private void UpdateControlsForDarkMode()
         {
             // First update all TextBlocks to ensure they use the correct foreground color
-            foreach (TextBlock textBlock in UIHelper.FindVisualChildren<TextBlock>(_window))
+            foreach (System.Windows.Controls.TextBlock textBlock in UIHelper.FindVisualChildren<System.Windows.Controls.TextBlock>(_window))
             {
                 // Only update if not part of a style that should keep its color
-                if (!(textBlock.Parent is GroupBox) &&
-                    !(textBlock.Parent is MenuItem) &&
+                if (!(textBlock.Parent is System.Windows.Controls.GroupBox) &&
+                    !(textBlock.Parent is System.Windows.Controls.MenuItem) &&
                     !textBlock.Text.StartsWith("CONSOLE LOG") &&
                     !textBlock.Text.StartsWith("SYSTEM INFORMATION:") &&
                     !textBlock.Text.StartsWith("FEATURES:") &&
                     !textBlock.Text.StartsWith("TECHNICAL INFORMATION:"))
                 {
-                    textBlock.Foreground = Application.Current.Resources["DarkForegroundBrush"] as Brush;
+                    textBlock.Foreground = System.Windows.Application.Current.Resources["DarkForegroundBrush"] as System.Windows.Media.Brush;
                 }
             }
 
             // Apply dark mode to TextBox backgrounds (they often have hardcoded white backgrounds)
-            foreach (TextBox textBox in UIHelper.FindVisualChildren<TextBox>(_window))
+            foreach (System.Windows.Controls.TextBox textBox in UIHelper.FindVisualChildren<System.Windows.Controls.TextBox>(_window))
             {
-                textBox.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#252525"));
-                textBox.Foreground = Application.Current.Resources["DarkForegroundBrush"] as Brush;
-                textBox.CaretBrush = Application.Current.Resources["DarkForegroundBrush"] as Brush;
-                textBox.SelectionBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9"));
-                textBox.BorderBrush = Application.Current.Resources["DarkBorderBrush"] as Brush;
+                textBox.Background = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#252525"));
+                textBox.Foreground = System.Windows.Application.Current.Resources["DarkForegroundBrush"] as System.Windows.Media.Brush;
+                textBox.CaretBrush = System.Windows.Application.Current.Resources["DarkForegroundBrush"] as System.Windows.Media.Brush;
+                textBox.SelectionBrush = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#18B4E9"));
+                textBox.BorderBrush = System.Windows.Application.Current.Resources["DarkBorderBrush"] as System.Windows.Media.Brush;
             }
 
             // Apply dark mode to any RichTextBox that may have hardcoded backgrounds
-            foreach (RichTextBox richTextBox in UIHelper.FindVisualChildren<RichTextBox>(_window))
+            foreach (System.Windows.Controls.RichTextBox richTextBox in UIHelper.FindVisualChildren<System.Windows.Controls.RichTextBox>(_window))
             {
                 richTextBox.Background = new SolidColorBrush(Colors.Transparent);
-                richTextBox.Foreground = Application.Current.Resources["DarkForegroundBrush"] as Brush;
-                richTextBox.BorderBrush = Application.Current.Resources["DarkBorderBrush"] as Brush;
+                richTextBox.Foreground = System.Windows.Application.Current.Resources["DarkForegroundBrush"] as System.Windows.Media.Brush;
+                richTextBox.BorderBrush = System.Windows.Application.Current.Resources["DarkBorderBrush"] as System.Windows.Media.Brush;
 
                 // Update selection colors
-                richTextBox.SelectionBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9"));
-                richTextBox.SelectionTextBrush = Brushes.White;
+                richTextBox.SelectionBrush = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#18B4E9"));
+                richTextBox.SelectionTextBrush = System.Windows.Media.Brushes.White;
             }
 
             // Apply dark mode to Borders including those in deeply nested controls
@@ -156,83 +157,83 @@ namespace InvoiceBalanceRefresher
                          brush.Color.ToString() == "#FFF5F5F5" ||
                          brush.Color.ToString() == "#FFF0F0F0"))
                     {
-                        border.Background = Application.Current.Resources["DarkGroupBackgroundBrush"] as Brush;
+                        border.Background = System.Windows.Application.Current.Resources["DarkGroupBackgroundBrush"] as System.Windows.Media.Brush;
                     }
                 }
 
-                border.BorderBrush = Application.Current.Resources["DarkBorderBrush"] as Brush;
+                border.BorderBrush = System.Windows.Application.Current.Resources["DarkBorderBrush"] as System.Windows.Media.Brush;
             }
 
             // Apply dark mode to BatchResults TextBox (special case with formatting)
             if (_batchResults != null)
             {
                 _batchResults.Background = new SolidColorBrush(Colors.Transparent);
-                _batchResults.Foreground = Application.Current.Resources["DarkForegroundBrush"] as Brush;
+                _batchResults.Foreground = System.Windows.Application.Current.Resources["DarkForegroundBrush"] as System.Windows.Media.Brush;
             }
 
             // Update SingleResult and CustomerResult TextBlocks
             if (_singleResult != null)
-                _singleResult.Foreground = Application.Current.Resources["DarkForegroundBrush"] as Brush;
+                _singleResult.Foreground = System.Windows.Application.Current.Resources["DarkForegroundBrush"] as System.Windows.Media.Brush;
 
             if (_customerResult != null)
-                _customerResult.Foreground = Application.Current.Resources["DarkForegroundBrush"] as Brush;
+                _customerResult.Foreground = System.Windows.Application.Current.Resources["DarkForegroundBrush"] as System.Windows.Media.Brush;
 
             // Update GroupBox headers and backgrounds
-            foreach (GroupBox groupBox in UIHelper.FindVisualChildren<GroupBox>(_window))
+            foreach (System.Windows.Controls.GroupBox groupBox in UIHelper.FindVisualChildren<System.Windows.Controls.GroupBox>(_window))
             {
-                groupBox.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9"));
-                groupBox.Background = Application.Current.Resources["DarkGroupBackgroundBrush"] as Brush;
+                groupBox.Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#18B4E9"));
+                groupBox.Background = System.Windows.Application.Current.Resources["DarkGroupBackgroundBrush"] as System.Windows.Media.Brush;
             }
 
             // Update Menu and MenuItem styles
-            foreach (Menu menu in UIHelper.FindVisualChildren<Menu>(_window))
+            foreach (System.Windows.Controls.Menu menu in UIHelper.FindVisualChildren<System.Windows.Controls.Menu>(_window))
             {
-                menu.Background = Application.Current.Resources["DarkBackgroundBrush"] as Brush;
-                menu.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9"));
-                menu.BorderBrush = Application.Current.Resources["DarkBorderBrush"] as Brush;
+                menu.Background = System.Windows.Application.Current.Resources["DarkBackgroundBrush"] as System.Windows.Media.Brush;
+                menu.Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#18B4E9"));
+                menu.BorderBrush = System.Windows.Application.Current.Resources["DarkBorderBrush"] as System.Windows.Media.Brush;
             }
 
-            foreach (MenuItem menuItem in UIHelper.FindVisualChildren<MenuItem>(_window))
+            foreach (System.Windows.Controls.MenuItem menuItem in UIHelper.FindVisualChildren<System.Windows.Controls.MenuItem>(_window))
             {
-                menuItem.Background = Application.Current.Resources["DarkBackgroundBrush"] as Brush;
-                menuItem.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9"));
-                menuItem.BorderBrush = Application.Current.Resources["DarkBorderBrush"] as Brush;
+                menuItem.Background = System.Windows.Application.Current.Resources["DarkBackgroundBrush"] as System.Windows.Media.Brush;
+                menuItem.Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#18B4E9"));
+                menuItem.BorderBrush = System.Windows.Application.Current.Resources["DarkBorderBrush"] as System.Windows.Media.Brush;
             }
 
             // Update any ScrollViewer backgrounds
-            foreach (ScrollViewer scrollViewer in UIHelper.FindVisualChildren<ScrollViewer>(_window))
+            foreach (System.Windows.Controls.ScrollViewer scrollViewer in UIHelper.FindVisualChildren<System.Windows.Controls.ScrollViewer>(_window))
             {
                 scrollViewer.Background = new SolidColorBrush(Colors.Transparent);
             }
 
             // Update ProgressBar colors
-            foreach (ProgressBar progressBar in UIHelper.FindVisualChildren<ProgressBar>(_window))
+            foreach (System.Windows.Controls.ProgressBar progressBar in UIHelper.FindVisualChildren<System.Windows.Controls.ProgressBar>(_window))
             {
-                progressBar.Background = Application.Current.Resources["DarkConsoleBackgroundBrush"] as Brush;
-                progressBar.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9"));
-                progressBar.BorderBrush = Application.Current.Resources["DarkBorderBrush"] as Brush;
+                progressBar.Background = System.Windows.Application.Current.Resources["DarkConsoleBackgroundBrush"] as System.Windows.Media.Brush;
+                progressBar.Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#18B4E9"));
+                progressBar.BorderBrush = System.Windows.Application.Current.Resources["DarkBorderBrush"] as System.Windows.Media.Brush;
             }
 
             // Update Buttons in dark mode
-            foreach (Button button in UIHelper.FindVisualChildren<Button>(_window))
+            foreach (System.Windows.Controls.Button button in UIHelper.FindVisualChildren<System.Windows.Controls.Button>(_window))
             {
-                button.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#064557"));
-                button.Foreground = Brushes.White;
-                button.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9"));
+                button.Background = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#064557"));
+                button.Foreground = System.Windows.Media.Brushes.White;
+                button.BorderBrush = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#18B4E9"));
             }
 
             // Update RadioButtons in dark mode
-            foreach (RadioButton radioButton in UIHelper.FindVisualChildren<RadioButton>(_window))
+            foreach (System.Windows.Controls.RadioButton radioButton in UIHelper.FindVisualChildren<System.Windows.Controls.RadioButton>(_window))
             {
-                radioButton.Foreground = Application.Current.Resources["DarkForegroundBrush"] as Brush;
-                radioButton.Background = Application.Current.Resources["DarkBackgroundBrush"] as Brush;
+                radioButton.Foreground = System.Windows.Application.Current.Resources["DarkForegroundBrush"] as System.Windows.Media.Brush;
+                radioButton.Background = System.Windows.Application.Current.Resources["DarkBackgroundBrush"] as System.Windows.Media.Brush;
             }
 
             // Update CheckBoxes in dark mode
-            foreach (CheckBox checkBox in UIHelper.FindVisualChildren<CheckBox>(_window))
+            foreach (System.Windows.Controls.CheckBox checkBox in UIHelper.FindVisualChildren<System.Windows.Controls.CheckBox>(_window))
             {
-                checkBox.Foreground = Application.Current.Resources["DarkForegroundBrush"] as Brush;
-                checkBox.Background = Application.Current.Resources["DarkBackgroundBrush"] as Brush;
+                checkBox.Foreground = System.Windows.Application.Current.Resources["DarkForegroundBrush"] as System.Windows.Media.Brush;
+                checkBox.Background = System.Windows.Application.Current.Resources["DarkBackgroundBrush"] as System.Windows.Media.Brush;
             }
 
             // Force visual refresh - we can't call InvalidateVisual directly since we're not a UIElement
@@ -245,40 +246,40 @@ namespace InvoiceBalanceRefresher
         private void UpdateControlsForLightMode()
         {
             // First update all TextBlocks to ensure they use the correct foreground color
-            foreach (TextBlock textBlock in UIHelper.FindVisualChildren<TextBlock>(_window))
+            foreach (System.Windows.Controls.TextBlock textBlock in UIHelper.FindVisualChildren<System.Windows.Controls.TextBlock>(_window))
             {
                 // Only update if not part of a style that should keep its color
-                if (!(textBlock.Parent is GroupBox) &&
-                    !(textBlock.Parent is MenuItem) &&
+                if (!(textBlock.Parent is System.Windows.Controls.GroupBox) &&
+                    !(textBlock.Parent is System.Windows.Controls.MenuItem) &&
                     !textBlock.Text.StartsWith("CONSOLE LOG") &&
                     !textBlock.Text.StartsWith("SYSTEM INFORMATION:") &&
                     !textBlock.Text.StartsWith("FEATURES:") &&
                     !textBlock.Text.StartsWith("TECHNICAL INFORMATION:"))
                 {
-                    textBlock.Foreground = Application.Current.Resources["LightForegroundBrush"] as Brush;
+                    textBlock.Foreground = System.Windows.Application.Current.Resources["LightForegroundBrush"] as System.Windows.Media.Brush;
                 }
             }
 
             // Apply light mode to TextBox backgrounds
-            foreach (TextBox textBox in UIHelper.FindVisualChildren<TextBox>(_window))
+            foreach (System.Windows.Controls.TextBox textBox in UIHelper.FindVisualChildren<System.Windows.Controls.TextBox>(_window))
             {
                 textBox.Background = new SolidColorBrush(Colors.White);
-                textBox.Foreground = Application.Current.Resources["LightForegroundBrush"] as Brush;
-                textBox.CaretBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#085368"));
-                textBox.SelectionBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E8F4F7"));
-                textBox.BorderBrush = Application.Current.Resources["LightBorderBrush"] as Brush;
+                textBox.Foreground = System.Windows.Application.Current.Resources["LightForegroundBrush"] as System.Windows.Media.Brush;
+                textBox.CaretBrush = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#085368"));
+                textBox.SelectionBrush = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#E8F4F7"));
+                textBox.BorderBrush = System.Windows.Application.Current.Resources["LightBorderBrush"] as System.Windows.Media.Brush;
             }
 
             // Apply light mode to any RichTextBox
-            foreach (RichTextBox richTextBox in UIHelper.FindVisualChildren<RichTextBox>(_window))
+            foreach (System.Windows.Controls.RichTextBox richTextBox in UIHelper.FindVisualChildren<System.Windows.Controls.RichTextBox>(_window))
             {
                 richTextBox.Background = new SolidColorBrush(Colors.Transparent);
-                richTextBox.Foreground = Application.Current.Resources["LightForegroundBrush"] as Brush;
-                richTextBox.BorderBrush = Application.Current.Resources["LightBorderBrush"] as Brush;
+                richTextBox.Foreground = System.Windows.Application.Current.Resources["LightForegroundBrush"] as System.Windows.Media.Brush;
+                richTextBox.BorderBrush = System.Windows.Application.Current.Resources["LightBorderBrush"] as System.Windows.Media.Brush;
 
                 // Update selection colors
-                richTextBox.SelectionBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E8F4F7"));
-                richTextBox.SelectionTextBrush = Brushes.Black;
+                richTextBox.SelectionBrush = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#E8F4F7"));
+                richTextBox.SelectionTextBrush = System.Windows.Media.Brushes.Black;
             }
 
             // Apply light mode to Borders
@@ -293,83 +294,83 @@ namespace InvoiceBalanceRefresher
                          brush.Color.ToString() == "#FF2D2D2D" ||
                          brush.Color.ToString() == "#FF1E1E1E"))
                     {
-                        border.Background = Application.Current.Resources["LightGroupBackgroundBrush"] as Brush;
+                        border.Background = System.Windows.Application.Current.Resources["LightGroupBackgroundBrush"] as System.Windows.Media.Brush;
                     }
                 }
 
-                border.BorderBrush = Application.Current.Resources["LightBorderBrush"] as Brush;
+                border.BorderBrush = System.Windows.Application.Current.Resources["LightBorderBrush"] as System.Windows.Media.Brush;
             }
 
             // Apply light mode to BatchResults TextBox
             if (_batchResults != null)
             {
                 _batchResults.Background = new SolidColorBrush(Colors.Transparent);
-                _batchResults.Foreground = Application.Current.Resources["LightForegroundBrush"] as Brush;
+                _batchResults.Foreground = System.Windows.Application.Current.Resources["LightForegroundBrush"] as System.Windows.Media.Brush;
             }
 
             // Update SingleResult and CustomerResult TextBlocks
             if (_singleResult != null)
-                _singleResult.Foreground = Application.Current.Resources["LightForegroundBrush"] as Brush;
+                _singleResult.Foreground = System.Windows.Application.Current.Resources["LightForegroundBrush"] as System.Windows.Media.Brush;
 
             if (_customerResult != null)
-                _customerResult.Foreground = Application.Current.Resources["LightForegroundBrush"] as Brush;
+                _customerResult.Foreground = System.Windows.Application.Current.Resources["LightForegroundBrush"] as System.Windows.Media.Brush;
 
             // Update GroupBox headers and backgrounds
-            foreach (GroupBox groupBox in UIHelper.FindVisualChildren<GroupBox>(_window))
+            foreach (System.Windows.Controls.GroupBox groupBox in UIHelper.FindVisualChildren<System.Windows.Controls.GroupBox>(_window))
             {
-                groupBox.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#085368"));
-                groupBox.Background = Application.Current.Resources["LightGroupBackgroundBrush"] as Brush;
+                groupBox.Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#085368"));
+                groupBox.Background = System.Windows.Application.Current.Resources["LightGroupBackgroundBrush"] as System.Windows.Media.Brush;
             }
 
             // Update Menu and MenuItem styles
-            foreach (Menu menu in UIHelper.FindVisualChildren<Menu>(_window))
+            foreach (System.Windows.Controls.Menu menu in UIHelper.FindVisualChildren<System.Windows.Controls.Menu>(_window))
             {
-                menu.Background = Application.Current.Resources["LightBackgroundBrush"] as Brush;
-                menu.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#085368"));
-                menu.BorderBrush = Application.Current.Resources["LightBorderBrush"] as Brush;
+                menu.Background = System.Windows.Application.Current.Resources["LightBackgroundBrush"] as System.Windows.Media.Brush;
+                menu.Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#085368"));
+                menu.BorderBrush = System.Windows.Application.Current.Resources["LightBorderBrush"] as System.Windows.Media.Brush;
             }
 
-            foreach (MenuItem menuItem in UIHelper.FindVisualChildren<MenuItem>(_window))
+            foreach (System.Windows.Controls.MenuItem menuItem in UIHelper.FindVisualChildren<System.Windows.Controls.MenuItem>(_window))
             {
-                menuItem.Background = Application.Current.Resources["LightBackgroundBrush"] as Brush;
-                menuItem.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#085368"));
-                menuItem.BorderBrush = Application.Current.Resources["LightBorderBrush"] as Brush;
+                menuItem.Background = System.Windows.Application.Current.Resources["LightBackgroundBrush"] as System.Windows.Media.Brush;
+                menuItem.Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#085368"));
+                menuItem.BorderBrush = System.Windows.Application.Current.Resources["LightBorderBrush"] as System.Windows.Media.Brush;
             }
 
             // Update any ScrollViewer backgrounds
-            foreach (ScrollViewer scrollViewer in UIHelper.FindVisualChildren<ScrollViewer>(_window))
+            foreach (System.Windows.Controls.ScrollViewer scrollViewer in UIHelper.FindVisualChildren<System.Windows.Controls.ScrollViewer>(_window))
             {
                 scrollViewer.Background = new SolidColorBrush(Colors.Transparent);
             }
 
             // Update ProgressBar colors
-            foreach (ProgressBar progressBar in UIHelper.FindVisualChildren<ProgressBar>(_window))
+            foreach (System.Windows.Controls.ProgressBar progressBar in UIHelper.FindVisualChildren<System.Windows.Controls.ProgressBar>(_window))
             {
-                progressBar.Background = Application.Current.Resources["LightConsoleBackgroundBrush"] as Brush;
-                progressBar.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9"));
-                progressBar.BorderBrush = Application.Current.Resources["LightBorderBrush"] as Brush;
+                progressBar.Background = System.Windows.Application.Current.Resources["LightConsoleBackgroundBrush"] as System.Windows.Media.Brush;
+                progressBar.Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#18B4E9"));
+                progressBar.BorderBrush = System.Windows.Application.Current.Resources["LightBorderBrush"] as System.Windows.Media.Brush;
             }
 
             // Update Buttons in light mode - Use MintGreenBrush for the new style
-            foreach (Button button in UIHelper.FindVisualChildren<Button>(_window))
+            foreach (System.Windows.Controls.Button button in UIHelper.FindVisualChildren<System.Windows.Controls.Button>(_window))
             {
-                button.Background = (SolidColorBrush)Application.Current.Resources["MintGreenBrush"];
-                button.Foreground = (SolidColorBrush)Application.Current.Resources["CharcoalBrush"];
-                button.BorderBrush = (SolidColorBrush)Application.Current.Resources["MintGreenBrush"];
+                button.Background = (SolidColorBrush)System.Windows.Application.Current.Resources["MintGreenBrush"];
+                button.Foreground = (SolidColorBrush)System.Windows.Application.Current.Resources["CharcoalBrush"];
+                button.BorderBrush = (SolidColorBrush)System.Windows.Application.Current.Resources["MintGreenBrush"];
             }
 
             // Update RadioButtons in light mode
-            foreach (RadioButton radioButton in UIHelper.FindVisualChildren<RadioButton>(_window))
+            foreach (System.Windows.Controls.RadioButton radioButton in UIHelper.FindVisualChildren<System.Windows.Controls.RadioButton>(_window))
             {
-                radioButton.Foreground = Application.Current.Resources["LightForegroundBrush"] as Brush;
-                radioButton.Background = Application.Current.Resources["LightBackgroundBrush"] as Brush;
+                radioButton.Foreground = System.Windows.Application.Current.Resources["LightForegroundBrush"] as System.Windows.Media.Brush;
+                radioButton.Background = System.Windows.Application.Current.Resources["LightBackgroundBrush"] as System.Windows.Media.Brush;
             }
 
             // Update CheckBoxes in light mode
-            foreach (CheckBox checkBox in UIHelper.FindVisualChildren<CheckBox>(_window))
+            foreach (System.Windows.Controls.CheckBox checkBox in UIHelper.FindVisualChildren<System.Windows.Controls.CheckBox>(_window))
             {
-                checkBox.Foreground = Application.Current.Resources["LightForegroundBrush"] as Brush;
-                checkBox.Background = Application.Current.Resources["LightBackgroundBrush"] as Brush;
+                checkBox.Foreground = System.Windows.Application.Current.Resources["LightForegroundBrush"] as System.Windows.Media.Brush;
+                checkBox.Background = System.Windows.Application.Current.Resources["LightBackgroundBrush"] as System.Windows.Media.Brush;
             }
 
             // Force visual refresh - we can't call InvalidateVisual directly since we're not a UIElement

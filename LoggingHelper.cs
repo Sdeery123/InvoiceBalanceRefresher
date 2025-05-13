@@ -14,10 +14,10 @@ namespace InvoiceBalanceRefresher
         private readonly List<LogEntry> _logEntries = new List<LogEntry>();
         private string _sessionLogPath = string.Empty;
         private FlowDocument _originalDocument;
-        private RichTextBox _consoleLog;
+        private System.Windows.Controls.RichTextBox _consoleLog;
         private Action<Paragraph> _addToConsoleAction;
 
-        public LoggingHelper(RichTextBox consoleLog, Action<Paragraph> addToConsoleAction)
+        public LoggingHelper(System.Windows.Controls.RichTextBox consoleLog, Action<Paragraph> addToConsoleAction)
         {
             _consoleLog = consoleLog;
             _addToConsoleAction = addToConsoleAction;
@@ -104,7 +104,7 @@ namespace InvoiceBalanceRefresher
                 catch (Exception ex)
                 {
                     Log(MainWindow.LogLevel.Error, $"Failed to save logs: {ex.Message}");
-                    MessageBox.Show($"Failed to save logs: {ex.Message}");
+                    System.Windows.MessageBox.Show($"Failed to save logs: {ex.Message}");
                     return false;
                 }
             }

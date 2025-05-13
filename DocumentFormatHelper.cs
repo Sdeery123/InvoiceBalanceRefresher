@@ -21,7 +21,7 @@ namespace InvoiceBalanceRefresher
             var paragraph = new TextBlock
             {
                 Text = text,
-                Foreground = (SolidColorBrush)Application.Current.Resources["ForegroundBrush"],
+                Foreground = (SolidColorBrush)System.Windows.Application.Current.Resources["ForegroundBrush"],
                 TextWrapping = TextWrapping.Wrap,
                 Margin = new Thickness(0, 0, 0, 10)
             };
@@ -42,12 +42,12 @@ namespace InvoiceBalanceRefresher
         /// </summary>
         public static void AddBulletPoint(StackPanel panel, string text)
         {
-            var bulletPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(10, 0, 0, 5) };
+            var bulletPanel = new StackPanel { Orientation = System.Windows.Controls.Orientation.Horizontal, Margin = new Thickness(10, 0, 0, 5) };
 
             var bullet = new TextBlock
             {
                 Text = "•",
-                Foreground = (SolidColorBrush)Application.Current.Resources["ForegroundBrush"],
+                Foreground = (SolidColorBrush)System.Windows.Application.Current.Resources["ForegroundBrush"],
                 Margin = new Thickness(0, 0, 5, 0),
                 FontWeight = FontWeights.Bold
             };
@@ -55,7 +55,7 @@ namespace InvoiceBalanceRefresher
             var content = new TextBlock
             {
                 Text = text,
-                Foreground = (SolidColorBrush)Application.Current.Resources["ForegroundBrush"],
+                Foreground = (SolidColorBrush)System.Windows.Application.Current.Resources["ForegroundBrush"],
                 TextWrapping = TextWrapping.Wrap
             };
 
@@ -76,9 +76,9 @@ namespace InvoiceBalanceRefresher
             var subheading = new TextBlock
             {
                 Text = text,
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9")),
+                Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#18B4E9")),
                 FontWeight = FontWeights.Bold,
-                FontFamily = new FontFamily("Consolas"),
+                FontFamily = new System.Windows.Media.FontFamily("Consolas"),
                 Margin = new Thickness(0, 10, 0, 5)
             };
 
@@ -95,8 +95,8 @@ namespace InvoiceBalanceRefresher
             var codeBorder = new Border
             {
                 BorderThickness = new Thickness(1),
-                BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#124050")),
-                Background = new SolidColorBrush(Color.FromArgb(30, 18, 83, 106)),
+                BorderBrush = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#124050")),
+                Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(30, 18, 83, 106)),
                 Padding = new Thickness(10),
                 Margin = new Thickness(10, 5, 10, 15),
                 CornerRadius = new CornerRadius(4)
@@ -105,8 +105,8 @@ namespace InvoiceBalanceRefresher
             var codeText = new TextBlock
             {
                 Text = code,
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E55555")),
-                FontFamily = new FontFamily("Consolas"),
+                Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#E55555")),
+                FontFamily = new System.Windows.Media.FontFamily("Consolas"),
                 TextWrapping = TextWrapping.Wrap
             };
 
@@ -125,8 +125,8 @@ namespace InvoiceBalanceRefresher
             var faqBorder = new Border
             {
                 BorderThickness = new Thickness(1),
-                BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#124050")),
-                Background = new SolidColorBrush(Color.FromArgb(20, 24, 180, 233)),
+                BorderBrush = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#124050")),
+                Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(20, 24, 180, 233)),
                 Padding = new Thickness(15, 10, 15, 15),
                 Margin = new Thickness(0, 5, 0, 15),
                 CornerRadius = new CornerRadius(4)
@@ -137,7 +137,7 @@ namespace InvoiceBalanceRefresher
             var questionText = new TextBlock
             {
                 Text = "Q: " + question,
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9")),
+                Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#18B4E9")),
                 FontWeight = FontWeights.Bold,
                 TextWrapping = TextWrapping.Wrap,
                 Margin = new Thickness(0, 0, 0, 10)
@@ -146,7 +146,7 @@ namespace InvoiceBalanceRefresher
             var answerText = new TextBlock
             {
                 Text = "A: " + answer,
-                Foreground = owner != null ? (SolidColorBrush)owner.FindResource("ForegroundBrush") : Brushes.White,
+                Foreground = owner != null ? (SolidColorBrush)owner.FindResource("ForegroundBrush") : System.Windows.Media.Brushes.White,
                 TextWrapping = TextWrapping.Wrap
             };
 
@@ -168,14 +168,14 @@ namespace InvoiceBalanceRefresher
             var noteBorder = new Border
             {
                 BorderThickness = new Thickness(1),
-                BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F0A030")),
-                Background = new SolidColorBrush(Color.FromArgb(20, 240, 160, 48)),
+                BorderBrush = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#F0A030")),
+                Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(20, 240, 160, 48)),
                 Padding = new Thickness(10),
                 Margin = new Thickness(0, 5, 0, 15),
                 CornerRadius = new CornerRadius(4)
             };
 
-            var notePanel = new StackPanel { Orientation = Orientation.Horizontal };
+            var notePanel = new StackPanel { Orientation = System.Windows.Controls.Orientation.Horizontal };
 
             var noteIcon = new TextBlock
             {
@@ -188,7 +188,7 @@ namespace InvoiceBalanceRefresher
             var noteText = new TextBlock
             {
                 Text = "Note: " + text,
-                Foreground = (SolidColorBrush)Application.Current.Resources["ForegroundBrush"],
+                Foreground = (SolidColorBrush)System.Windows.Application.Current.Resources["ForegroundBrush"],
                 TextWrapping = TextWrapping.Wrap
             };
 
@@ -207,7 +207,7 @@ namespace InvoiceBalanceRefresher
             var intro = new TextBlock
             {
                 Text = introText,
-                Foreground = (SolidColorBrush)Application.Current.Resources["ForegroundBrush"],
+                Foreground = (SolidColorBrush)System.Windows.Application.Current.Resources["ForegroundBrush"],
                 FontWeight = FontWeights.SemiBold,
                 Margin = new Thickness(0, 5, 0, 5)
             };
@@ -218,14 +218,14 @@ namespace InvoiceBalanceRefresher
             {
                 var stepPanel = new StackPanel
                 {
-                    Orientation = Orientation.Horizontal,
+                    Orientation = System.Windows.Controls.Orientation.Horizontal,
                     Margin = new Thickness(15, 2, 0, 2)
                 };
 
                 var stepNumber = new TextBlock
                 {
                     Text = $"{i + 1}.",
-                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F0A030")),
+                    Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#F0A030")),
                     FontWeight = FontWeights.Bold,
                     Margin = new Thickness(0, 0, 8, 0),
                     VerticalAlignment = VerticalAlignment.Top
@@ -234,7 +234,7 @@ namespace InvoiceBalanceRefresher
                 var stepContent = new TextBlock
                 {
                     Text = steps[i],
-                    Foreground = (SolidColorBrush)Application.Current.Resources["ForegroundBrush"],
+                    Foreground = (SolidColorBrush)System.Windows.Application.Current.Resources["ForegroundBrush"],
                     TextWrapping = TextWrapping.Wrap
                 };
 
@@ -244,7 +244,7 @@ namespace InvoiceBalanceRefresher
             }
 
             // Add a little space after the steps
-            panel.Children.Add(new Rectangle { Height = 5 });
+            panel.Children.Add(new System.Windows.Shapes.Rectangle { Height = 5 });
         }
 
         /// <summary>
@@ -260,23 +260,23 @@ namespace InvoiceBalanceRefresher
                     newParagraph.Inlines.Add(new Run(runText.Substring(0, pos)));
 
                 // Choose highlight color based on theme
-                Color highlightColor;
-                if (Application.Current.Resources["BackgroundBrush"] == Application.Current.Resources["LightBackgroundBrush"])
+                System.Windows.Media.Color highlightColor;
+                if (System.Windows.Application.Current.Resources["BackgroundBrush"] == System.Windows.Application.Current.Resources["LightBackgroundBrush"])
                 {
                     // Light mode highlight
-                    highlightColor = (Color)ColorConverter.ConvertFromString("#085368"); // Deep Teal
+                    highlightColor = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#085368"); // Deep Teal
                 }
                 else
                 {
                     // Dark mode highlight
-                    highlightColor = (Color)ColorConverter.ConvertFromString("#18B4E9"); // Sky Blue
+                    highlightColor = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#18B4E9"); // Sky Blue
                 }
 
                 // Add the match with highlight
                 var highlightRun = new Run(runText.Substring(pos, searchText.Length))
                 {
                     Background = new SolidColorBrush(highlightColor),
-                    Foreground = Brushes.White
+                    Foreground = System.Windows.Media.Brushes.White
                 };
                 newParagraph.Inlines.Add(highlightRun);
 

@@ -81,7 +81,7 @@ namespace InvoiceBalanceRefresher.Converters
         /// <summary>
         /// Tries to parse a string to a Color
         /// </summary>
-        public static bool TryParseColor(string colorString, out Color color)
+        public static bool TryParseColor(string colorString, out System.Windows.Media.Color color)
         {
             color = Colors.Transparent;
             try
@@ -92,11 +92,11 @@ namespace InvoiceBalanceRefresher.Converters
                 // Handle hex color format
                 if (colorString.StartsWith("#"))
                 {
-                    var converter = new ColorConverter();
+                    var converter = new System.Windows.Media.ColorConverter();
                     var convertedColor = converter.ConvertFrom(colorString);
                     if (convertedColor != null)
                     {
-                        color = (Color)convertedColor;
+                        color = (System.Windows.Media.Color)convertedColor;
                         return true;
                     }
                     return false;
@@ -105,7 +105,7 @@ namespace InvoiceBalanceRefresher.Converters
                 // Handle named colors
                 // Handle named colors
                 var colorProperty = typeof(Colors).GetProperty(colorString);
-                if (colorProperty != null && colorProperty.GetValue(null) is Color validColor)
+                if (colorProperty != null && colorProperty.GetValue(null) is System.Windows.Media.Color validColor)
                 {
                     color = validColor;
                     return true;
@@ -119,6 +119,8 @@ namespace InvoiceBalanceRefresher.Converters
                 return false;
             }
         }
+
+
 
         #endregion
 
@@ -187,6 +189,37 @@ namespace InvoiceBalanceRefresher.Converters
 
         #endregion
     }
+
+    // Move this outside of the static Converters class
+    /// <summary>
+    /// Converts a color brush to a new brush with the specified opacity
+    /// </summary>
+    public class OpacityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is SolidColorBrush brush && parameter is string opacityStr)
+            {
+                if (double.TryParse(opacityStr, NumberStyles.Any, CultureInfo.InvariantCulture, out double opacity))
+                {
+                    Color color = brush.Color;
+                    return new SolidColorBrush(Color.FromArgb(
+                        (byte)(opacity * 255),
+                        color.R,
+                        color.G,
+                        color.B));
+                }
+            }
+            return value;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+
 
     #region IValueConverter Implementations for XAML
 

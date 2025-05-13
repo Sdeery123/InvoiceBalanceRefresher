@@ -4,10 +4,11 @@ using System.IO;
 using System.Linq;
 using System.Xml.Serialization;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Threading;
 using System.Diagnostics;
-using Microsoft.Win32.TaskScheduler;
-using System.Security;
+using System.Collections.ObjectModel;
+
 
 namespace InvoiceBalanceRefresher
 {
@@ -16,21 +17,21 @@ namespace InvoiceBalanceRefresher
         private static ScheduleManager _instance = null!;
         private static readonly object _lock = new object();
 
-        public List<ScheduledTask> ScheduledTasks { get; private set; }
+        public ObservableCollection<ScheduledTask> ScheduledTasks { get; private set; }
         private string _schedulesFilePath;
         private DispatcherTimer _checkTimer;
         private readonly Action<string> _logAction = _ => { }; // Default to a no-op action
-        private readonly Func<string, string, string, bool, System.Threading.Tasks.Task<bool>> _processBatchAction =
-            (_, _, _, _) => System.Threading.Tasks.Task.FromResult(false); // Default to a no-op function
+        private readonly Func<string, string, string, bool, string, System.Threading.Tasks.Task<bool>> _processBatchAction =
+            (_, _, _, _, _) => System.Threading.Tasks.Task.FromResult(false); // Default to a no-op function
 
-        // The name of the folder to create in Windows Task Scheduler
-        private const string TASK_FOLDER_NAME = "InvoiceBalanceRefresher";
+        // Event for notifying subscribers when tasks change
+        public event EventHandler? TasksChanged;
 
-        private ScheduleManager(Action<string> logAction, Func<string, string, string, bool, Task<bool>> processBatchAction)
+        private ScheduleManager(Action<string> logAction, Func<string, string, string, bool, string, Task<bool>> processBatchAction)
         {
             _logAction = logAction ?? throw new ArgumentNullException(nameof(logAction));
             _processBatchAction = processBatchAction ?? throw new ArgumentNullException(nameof(processBatchAction));
-            ScheduledTasks = new List<ScheduledTask>();
+            ScheduledTasks = new ObservableCollection<ScheduledTask>();
             _schedulesFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Schedules.xml");
 
             // Create a timer to check for scheduled tasks
@@ -44,32 +45,9 @@ namespace InvoiceBalanceRefresher
             _logAction?.Invoke($"Schedule manager initialized. Checking schedules every {_checkTimer.Interval.TotalMinutes} minutes.");
 
             LoadSchedules();
-
-            // Ensure our task folder exists in Windows Task Scheduler
-            EnsureTaskFolderExists();
         }
 
-        private void EnsureTaskFolderExists()
-        {
-            try
-            {
-                using (TaskService ts = new TaskService())
-                {
-                    // Create the folder if it doesn't exist
-                    if (!ts.RootFolder.SubFolders.Exists(TASK_FOLDER_NAME))
-                    {
-                        ts.RootFolder.CreateFolder(TASK_FOLDER_NAME);
-                        _logAction?.Invoke($"Created Windows Task Scheduler folder: {TASK_FOLDER_NAME}");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                _logAction?.Invoke($"Warning: Could not create Task Scheduler folder: {ex.Message}");
-            }
-        }
-
-        public static ScheduleManager GetInstance(Action<string> logAction, Func<string, string, string, bool, Task<bool>> processBatchAction)
+        public static ScheduleManager GetInstance(Action<string> logAction, Func<string, string, string, bool, string, Task<bool>> processBatchAction)
         {
             if (_instance == null)
             {
@@ -85,6 +63,20 @@ namespace InvoiceBalanceRefresher
             return _instance;
         }
 
+        public static void ResetInstance()
+        {
+            lock (_lock)
+            {
+                _instance = null!;
+            }
+        }
+
+        // Helper method to notify subscribers that tasks have changed
+        protected virtual void OnTasksChanged()
+        {
+            TasksChanged?.Invoke(this, EventArgs.Empty);
+        }
+
         private void CheckScheduledTasks(object? sender, EventArgs e)
         {
             var now = DateTime.Now;
@@ -93,6 +85,7 @@ namespace InvoiceBalanceRefresher
             if (tasksToRun.Any())
             {
                 _logAction?.Invoke($"Found {tasksToRun.Count} scheduled tasks to run.");
+                bool anyTasksRun = false;
 
                 foreach (var task in tasksToRun)
                 {
@@ -108,40 +101,173 @@ namespace InvoiceBalanceRefresher
                     {
                         task.IsEnabled = false;
                     }
+
+                    anyTasksRun = true;
                 }
 
                 // Save the updated schedules
                 SaveSchedules();
+
+                // Notify subscribers of changes
+                if (anyTasksRun)
+                {
+                    OnTasksChanged();
+                }
             }
         }
 
         private async void ExecuteTask(ScheduledTask task)
         {
+            var originalDirectory = Environment.CurrentDirectory;
             try
             {
-                bool success = false;
+                _logAction?.Invoke($"[Scheduled Task] Executing task: {task.Name}");
+                _logAction?.Invoke($"[Scheduled Task] Original working directory: {originalDirectory}");
+                _logAction?.Invoke($"[Scheduled Task] Task parameters: BillerGUID={task.BillerGUID}, HasAccountNumbers={task.HasAccountNumbers}");
 
-                if (_processBatchAction != null)
+                // Always use absolute file paths
+                string csvFullPath = Path.IsPathRooted(task.CsvFilePath)
+                    ? task.CsvFilePath
+                    : Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, task.CsvFilePath));
+
+                _logAction?.Invoke($"[Scheduled Task] Using absolute CSV path: {csvFullPath}");
+
+                // Set working directory
+                Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
+                _logAction?.Invoke($"[Scheduled Task] Set working directory to: {AppDomain.CurrentDomain.BaseDirectory}");
+
+                if (!File.Exists(csvFullPath))
                 {
-                    success = await _processBatchAction.Invoke(
-                        task.BillerGUID,
-                        task.WebServiceKey,
-                        task.CsvFilePath,
-                        task.HasAccountNumbers);
+                    task.LastRunSuccessful = false;
+                    task.LastRunResult = $"Error: CSV file not found at {csvFullPath}";
+                    _logAction?.Invoke($"[Scheduled Task] {task.LastRunResult}");
+                    return;
                 }
 
-                task.LastRunSuccessful = success;
-                task.LastRunResult = success ? "Success" : "Failed to process batch";
+                try
+                {
+                    // Check file content
+                    string fileContent = "";
+                    try
+                    {
+                        fileContent = File.ReadAllText(csvFullPath);
+                        _logAction?.Invoke($"[Scheduled Task] CSV file content (first 100 chars): {fileContent.Substring(0, Math.Min(fileContent.Length, 100))}");
+                        _logAction?.Invoke($"[Scheduled Task] CSV file size: {new FileInfo(csvFullPath).Length} bytes");
 
-                _logAction?.Invoke($"Task {task.Name} completed with result: {task.LastRunResult}");
+                        if (string.IsNullOrWhiteSpace(fileContent))
+                        {
+                            task.LastRunSuccessful = false;
+                            task.LastRunResult = "Error: CSV file is empty";
+                            _logAction?.Invoke($"[Scheduled Task] {task.LastRunResult}");
+                            return;
+                        }
+                    }
+                    catch (Exception readEx)
+                    {
+                        _logAction?.Invoke($"[Scheduled Task] Warning: Could not read CSV content: {readEx.Message}");
+                        task.LastRunSuccessful = false;
+                        task.LastRunResult = $"Error: Failed to read CSV file: {readEx.Message}";
+                        return;
+                    }
+
+                    // Use the task's CustomOption field as default account number if specified
+                    string defaultAccountNumber = string.IsNullOrEmpty(task.CustomOption) ? "" : task.CustomOption;
+                    _logAction?.Invoke($"[Scheduled Task] Using default account number: {(string.IsNullOrEmpty(defaultAccountNumber) ? "(none)" : defaultAccountNumber)}");
+
+                    // Log detailed information for the API call
+                    _logAction?.Invoke($"[Scheduled Task] Detailed parameters for batch processing:");
+                    _logAction?.Invoke($"[Scheduled Task] - BillerGUID: {task.BillerGUID}");
+                    _logAction?.Invoke($"[Scheduled Task] - WebServiceKey: {task.WebServiceKey.Substring(0, Math.Min(5, task.WebServiceKey.Length))}... (truncated)");
+                    _logAction?.Invoke($"[Scheduled Task] - CSV File: {csvFullPath}");
+                    _logAction?.Invoke($"[Scheduled Task] - Has Account Numbers: {task.HasAccountNumbers}");
+                    _logAction?.Invoke($"[Scheduled Task] - Default Account Number: {defaultAccountNumber}");
+
+                    // Create a special, direct task processor that avoids UI dependencies
+                    _logAction?.Invoke($"[Scheduled Task] Creating direct task processor...");
+
+                    // Create a standalone batch processor for this specific task
+                    var tempProcessor = new BatchProcessingHelper(
+                        new InvoiceCloudApiService((level, message) =>
+                            _logAction?.Invoke($"[API] {message}")),
+                        (level, message) => _logAction?.Invoke($"[Batch] {message}")
+                    );
+
+                    _logAction?.Invoke($"[Scheduled Task] About to process batch via direct processor...");
+                    bool success = await tempProcessor.ProcessBatchFile(
+                        task.BillerGUID,
+                        task.WebServiceKey,
+                        csvFullPath,
+                        task.HasAccountNumbers,
+                        defaultAccountNumber);
+
+                    _logAction?.Invoke($"[Scheduled Task] Direct processor returned: {success}");
+
+                    // Update task with results
+                    task.LastRunTime = DateTime.Now;
+                    task.LastRunSuccessful = success;
+
+                    // Provide more detailed information about success/failure
+                    if (success)
+                    {
+                        task.LastRunResult = "Success: Batch processing completed";
+                    }
+                    else
+                    {
+                        task.LastRunResult =
+                            "Failed to process batch - Check API credentials, CSV format, and network connectivity";
+                    }
+
+                    _logAction?.Invoke($"[Scheduled Task] Task {task.Name} completed with result: {task.LastRunResult}");
+                }
+                catch (Exception ex)
+                {
+                    task.LastRunSuccessful = false;
+                    task.LastRunResult = $"Error: {ex.Message}";
+                    _logAction?.Invoke($"[Scheduled Task] Error executing task {task.Name}: {ex.Message}");
+                    _logAction?.Invoke($"[Scheduled Task] Exception details: {ex}");
+
+                    if (ex.InnerException != null)
+                    {
+                        _logAction?.Invoke($"[Scheduled Task] Inner exception: {ex.InnerException.Message}");
+                    }
+                }
             }
             catch (Exception ex)
             {
                 task.LastRunSuccessful = false;
                 task.LastRunResult = $"Error: {ex.Message}";
-                _logAction?.Invoke($"Error executing task {task.Name}: {ex.Message}");
+                _logAction?.Invoke($"[Scheduled Task] Critical error executing task {task.Name}: {ex.Message}");
+                _logAction?.Invoke($"[Scheduled Task] Exception details: {ex}");
+
+                if (ex.InnerException != null)
+                {
+                    _logAction?.Invoke($"[Scheduled Task] Inner exception: {ex.InnerException.Message}");
+                }
+            }
+            finally
+            {
+                // Restore original directory
+                try
+                {
+                    Directory.SetCurrentDirectory(originalDirectory);
+                    _logAction?.Invoke($"[Scheduled Task] Restored working directory to: {originalDirectory}");
+                }
+                catch (Exception ex)
+                {
+                    _logAction?.Invoke($"[Scheduled Task] Warning: Could not restore working directory: {ex.Message}");
+                }
+
+                // Update the next run time and save the schedule
+                task.UpdateNextRunTime();
+                SaveSchedules();
+
+                // Notify subscribers that task data has changed
+                OnTasksChanged();
             }
         }
+
+
+
 
         public async Task<bool> RunTaskNow(Guid taskId)
         {
@@ -153,27 +279,107 @@ namespace InvoiceBalanceRefresher
             }
 
             _logAction?.Invoke($"Manually executing task: {task.Name}");
+            var originalDirectory = Environment.CurrentDirectory;
 
             try
             {
+                // Validate parameters before processing
+                if (string.IsNullOrWhiteSpace(task.BillerGUID) || string.IsNullOrWhiteSpace(task.WebServiceKey))
+                {
+                    _logAction?.Invoke("[Manual Run] Error: Invalid BillerGUID or WebServiceKey (empty)");
+                    task.LastRunSuccessful = false;
+                    task.LastRunResult = "Error: Invalid BillerGUID or WebServiceKey (empty)";
+                    SaveSchedules();
+                    OnTasksChanged();
+                    return false;
+                }
+
+                // Always use absolute file paths
+                string csvFullPath = Path.IsPathRooted(task.CsvFilePath)
+                    ? task.CsvFilePath
+                    : Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, task.CsvFilePath));
+
+                _logAction?.Invoke($"[Manual Run] Using absolute CSV path: {csvFullPath}");
+
+                // Set working directory
+                Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
+                _logAction?.Invoke($"[Manual Run] Set working directory to: {AppDomain.CurrentDomain.BaseDirectory}");
+
+                if (!File.Exists(csvFullPath))
+                {
+                    _logAction?.Invoke($"[Manual Run] Error: CSV file not found at {csvFullPath}");
+                    task.LastRunSuccessful = false;
+                    task.LastRunResult = $"Error: CSV file not found at {csvFullPath}";
+                    SaveSchedules();
+                    OnTasksChanged();
+                    return false;
+                }
+
+                // Check file content
+                try
+                {
+                    var fileContent = File.ReadAllText(csvFullPath);
+                    _logAction?.Invoke($"[Manual Run] CSV file content (first 100 chars): {fileContent.Substring(0, Math.Min(fileContent.Length, 100))}");
+                    _logAction?.Invoke($"[Manual Run] CSV file size: {new FileInfo(csvFullPath).Length} bytes");
+
+                    if (string.IsNullOrWhiteSpace(fileContent))
+                    {
+                        _logAction?.Invoke("[Manual Run] Error: CSV file is empty");
+                        task.LastRunSuccessful = false;
+                        task.LastRunResult = "Error: CSV file is empty";
+                        SaveSchedules();
+                        OnTasksChanged();
+                        return false;
+                    }
+                }
+                catch (Exception readEx)
+                {
+                    _logAction?.Invoke($"[Manual Run] Warning: Could not read CSV content: {readEx.Message}");
+                }
+
+                // Use the task's CustomOption field as default account number if specified
+                string defaultAccountNumber = string.IsNullOrEmpty(task.CustomOption) ? "" : task.CustomOption;
+                _logAction?.Invoke($"[Manual Run] Using default account number: {(string.IsNullOrEmpty(defaultAccountNumber) ? "(none)" : defaultAccountNumber)}");
+
+                // Log detailed information for the API call
+                _logAction?.Invoke($"[Manual Run] Detailed parameters for batch processing:");
+                _logAction?.Invoke($"[Manual Run] - BillerGUID: {task.BillerGUID}");
+                _logAction?.Invoke($"[Manual Run] - WebServiceKey: {task.WebServiceKey.Substring(0, Math.Min(5, task.WebServiceKey.Length))}... (truncated)");
+                _logAction?.Invoke($"[Manual Run] - CSV File: {csvFullPath}");
+                _logAction?.Invoke($"[Manual Run] - Has Account Numbers: {task.HasAccountNumbers}");
+                _logAction?.Invoke($"[Manual Run] - Default Account Number: {defaultAccountNumber}");
+
+                // Process the batch
+                _logAction?.Invoke("[Manual Run] About to invoke _processBatchAction...");
                 bool success = await _processBatchAction.Invoke(
                     task.BillerGUID,
                     task.WebServiceKey,
-                    task.CsvFilePath,
-                    task.HasAccountNumbers);
+                    csvFullPath, // Use absolute path
+                    task.HasAccountNumbers,
+                    defaultAccountNumber); // Pass default account number
 
-                // Update task stats but don't change schedule
-                DateTime previousRunTime = task.LastRunTime;
-                bool previousSuccess = task.LastRunSuccessful;
-                string previousResult = task.LastRunResult;
+                _logAction?.Invoke($"[Manual Run] _processBatchAction returned: {success}");
 
                 // Update with new results
                 task.LastRunTime = DateTime.Now;
                 task.LastRunSuccessful = success;
-                task.LastRunResult = success ? "Success (Manual Run)" : "Failed (Manual Run)";
+
+                // Provide more detailed information about success/failure
+                if (success)
+                {
+                    task.LastRunResult = "Success (Manual Run): Batch processing completed";
+                }
+                else
+                {
+                    task.LastRunResult =
+                        "Failed (Manual Run): Check API credentials, CSV format, and network connectivity";
+                }
 
                 // Save changes
                 SaveSchedules();
+
+                // Notify subscribers that task data has changed
+                OnTasksChanged();
 
                 _logAction?.Invoke($"Manual execution of task {task.Name} completed with result: {task.LastRunResult}");
                 return success;
@@ -182,9 +388,33 @@ namespace InvoiceBalanceRefresher
             {
                 task.LastRunSuccessful = false;
                 task.LastRunResult = $"Error (Manual Run): {ex.Message}";
-                SaveSchedules();
                 _logAction?.Invoke($"Error executing task {task.Name} manually: {ex.Message}");
+                _logAction?.Invoke($"Exception details: {ex}");
+
+                if (ex.InnerException != null)
+                {
+                    _logAction?.Invoke($"Inner exception: {ex.InnerException.Message}");
+                }
+
+                SaveSchedules();
+
+                // Notify subscribers even on failure
+                OnTasksChanged();
+
                 return false;
+            }
+            finally
+            {
+                // Restore original directory
+                try
+                {
+                    Directory.SetCurrentDirectory(originalDirectory);
+                    _logAction?.Invoke($"[Manual Run] Restored working directory to: {originalDirectory}");
+                }
+                catch (Exception ex)
+                {
+                    _logAction?.Invoke($"[Manual Run] Warning: Could not restore working directory: {ex.Message}");
+                }
             }
         }
 
@@ -192,17 +422,10 @@ namespace InvoiceBalanceRefresher
         {
             ScheduledTasks.Add(task);
             SaveSchedules();
+            _logAction?.Invoke($"Added new schedule: {task.Name}, next run at {task.NextRunTime}");
 
-            // Only set up Windows Task if enabled
-            if (task.AddToWindowsTaskScheduler)
-            {
-                SetupWindowsTask(task);
-                _logAction?.Invoke($"Added new schedule: {task.Name} to Windows Task Scheduler, next run at {task.NextRunTime}");
-            }
-            else
-            {
-                _logAction?.Invoke($"Added new schedule: {task.Name}, next run at {task.NextRunTime} (Windows Task Scheduler integration disabled)");
-            }
+            // Notify subscribers about the new task
+            OnTasksChanged();
         }
 
         public void UpdateSchedule(ScheduledTask task)
@@ -210,31 +433,14 @@ namespace InvoiceBalanceRefresher
             var existingTask = ScheduledTasks.FirstOrDefault(t => t.Id == task.Id);
             if (existingTask != null)
             {
-                // Check if Windows Task Scheduler setting changed
-                bool previousSetting = existingTask.AddToWindowsTaskScheduler;
-
                 // Update task in list
                 int index = ScheduledTasks.IndexOf(existingTask);
                 ScheduledTasks[index] = task;
                 SaveSchedules();
+                _logAction?.Invoke($"Updated schedule: {task.Name}, next run at {task.NextRunTime}");
 
-                // Handle Windows Task Scheduler changes
-                if (task.AddToWindowsTaskScheduler)
-                {
-                    // If setting was turned on or was already on, update the task
-                    UpdateWindowsTask(task);
-                    _logAction?.Invoke($"Updated schedule: {task.Name}, next run at {task.NextRunTime}");
-                }
-                else if (previousSetting && !task.AddToWindowsTaskScheduler)
-                {
-                    // If setting was turned off, remove from Windows Task Scheduler
-                    RemoveWindowsTask(task);
-                    _logAction?.Invoke($"Updated schedule: {task.Name}, removed from Windows Task Scheduler");
-                }
-                else
-                {
-                    _logAction?.Invoke($"Updated schedule: {task.Name}, next run at {task.NextRunTime}");
-                }
+                // Notify subscribers about the update
+                OnTasksChanged();
             }
         }
 
@@ -245,8 +451,10 @@ namespace InvoiceBalanceRefresher
             {
                 ScheduledTasks.Remove(task);
                 SaveSchedules();
-                RemoveWindowsTask(task);
                 _logAction?.Invoke($"Removed schedule: {task.Name}");
+
+                // Notify subscribers about the removal
+                OnTasksChanged();
             }
         }
 
@@ -257,110 +465,10 @@ namespace InvoiceBalanceRefresher
             {
                 task.IsEnabled = enable;
                 SaveSchedules();
+                _logAction?.Invoke($"{(enable ? "Enabled" : "Disabled")} schedule: {task.Name}");
 
-                if (enable && task.AddToWindowsTaskScheduler)
-                {
-                    SetupWindowsTask(task);
-                    _logAction?.Invoke($"Enabled schedule: {task.Name}");
-                }
-                else if (!enable && task.AddToWindowsTaskScheduler)
-                {
-                    DisableWindowsTask(task);
-                    _logAction?.Invoke($"Disabled schedule: {task.Name}");
-                }
-                else
-                {
-                    _logAction?.Invoke($"Updated schedule state: {task.Name} (in-app only)");
-                }
-            }
-        }
-
-        public List<string> GetRegisteredWindowsTasks()
-        {
-            List<string> registeredTasks = new List<string>();
-
-            try
-            {
-                using (TaskService ts = new TaskService())
-                {
-                    TaskFolder taskFolder;
-                    if (ts.RootFolder.SubFolders.Exists(TASK_FOLDER_NAME))
-                    {
-                        taskFolder = ts.RootFolder.SubFolders[TASK_FOLDER_NAME];
-                    }
-                    else
-                    {
-                        taskFolder = ts.RootFolder;
-                    }
-
-                    foreach (var registeredTask in taskFolder.Tasks)
-                    {
-                        if (registeredTask.Name.StartsWith("InvoiceBalanceRefresher_"))
-                        {
-                            registeredTasks.Add(registeredTask.Name);
-                        }
-                    }
-                }
-
-                _logAction?.Invoke($"Found {registeredTasks.Count} registered Windows tasks for this application");
-            }
-            catch (Exception ex)
-            {
-                _logAction?.Invoke($"Error retrieving Windows tasks: {ex.Message}");
-            }
-
-            return registeredTasks;
-        }
-
-        public void CleanupOrphanedTasks()
-        {
-            try
-            {
-                using (TaskService ts = new TaskService())
-                {
-                    TaskFolder taskFolder;
-                    if (ts.RootFolder.SubFolders.Exists(TASK_FOLDER_NAME))
-                    {
-                        taskFolder = ts.RootFolder.SubFolders[TASK_FOLDER_NAME];
-                    }
-                    else
-                    {
-                        taskFolder = ts.RootFolder;
-                    }
-
-                    var windowsTasks = taskFolder.Tasks
-                        .Where(t => t.Name.StartsWith("InvoiceBalanceRefresher_"))
-                        .ToList();
-
-                    int removedCount = 0;
-
-                    foreach (var windowsTask in windowsTasks)
-                    {
-                        // Extract the GUID from the task name
-                        string taskIdStr = windowsTask.Name.Substring(windowsTask.Name.LastIndexOf('_') + 1);
-                        if (Guid.TryParse(taskIdStr, out Guid taskId))
-                        {
-                            // Check if this task exists in our application
-                            bool taskExists = ScheduledTasks.Any(t => t.Id == taskId);
-
-                            if (!taskExists)
-                            {
-                                // This is an orphaned task, remove it
-                                taskFolder.DeleteTask(windowsTask.Name);
-                                removedCount++;
-                            }
-                        }
-                    }
-
-                    if (removedCount > 0)
-                    {
-                        _logAction?.Invoke($"Cleaned up {removedCount} orphaned Windows tasks");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                _logAction?.Invoke($"Error cleaning up orphaned tasks: {ex.Message}");
+                // Notify subscribers about the change
+                OnTasksChanged();
             }
         }
 
@@ -374,19 +482,22 @@ namespace InvoiceBalanceRefresher
                     {
                         XmlSerializer serializer = new XmlSerializer(typeof(List<ScheduledTask>));
                         var deserializedTasks = serializer.Deserialize(reader) as List<ScheduledTask>;
-                        ScheduledTasks = deserializedTasks ?? new List<ScheduledTask>();
+                        ScheduledTasks = new ObservableCollection<ScheduledTask>(deserializedTasks ?? new List<ScheduledTask>());
                         _logAction?.Invoke($"Loaded {ScheduledTasks.Count} scheduled tasks from {_schedulesFilePath}");
                     }
                 }
                 else
                 {
-                    ScheduledTasks = new List<ScheduledTask>();
+                    ScheduledTasks = new ObservableCollection<ScheduledTask>();
                     _logAction?.Invoke("No saved schedules found. Starting with empty schedule list.");
                 }
+
+                // Notify subscribers that tasks have been loaded
+                OnTasksChanged();
             }
             catch (Exception ex)
             {
-                ScheduledTasks = new List<ScheduledTask>();
+                ScheduledTasks = new ObservableCollection<ScheduledTask>();
                 _logAction?.Invoke($"Error loading schedules: {ex.Message}");
             }
         }
@@ -405,7 +516,8 @@ namespace InvoiceBalanceRefresher
                 using (var writer = new StreamWriter(_schedulesFilePath))
                 {
                     XmlSerializer serializer = new XmlSerializer(typeof(List<ScheduledTask>));
-                    serializer.Serialize(writer, ScheduledTasks);
+                    // Convert ObservableCollection to List before serializing
+                    serializer.Serialize(writer, ScheduledTasks.ToList());
                 }
                 _logAction?.Invoke($"Saved {ScheduledTasks.Count} scheduled tasks to {_schedulesFilePath}");
             }
@@ -429,7 +541,8 @@ namespace InvoiceBalanceRefresher
                 using (var writer = new StreamWriter(filePath))
                 {
                     XmlSerializer serializer = new XmlSerializer(typeof(List<ScheduledTask>));
-                    serializer.Serialize(writer, ScheduledTasks);
+                    // Convert ObservableCollection to List before serializing
+                    serializer.Serialize(writer, ScheduledTasks.ToList());
                 }
                 _logAction?.Invoke($"Exported {ScheduledTasks.Count} scheduled tasks to {filePath}");
             }
@@ -459,287 +572,28 @@ namespace InvoiceBalanceRefresher
 
                 if (replaceExisting)
                 {
-                    // Remove all existing Windows tasks first
-                    foreach (var task in ScheduledTasks)
-                    {
-                        RemoveWindowsTask(task);
-                    }
-
-                    // Replace task list and recreate Windows tasks
-                    ScheduledTasks = importedTasks;
-
-                    foreach (var task in ScheduledTasks.Where(t => t.IsEnabled && t.AddToWindowsTaskScheduler))
-                    {
-                        SetupWindowsTask(task);
-                    }
+                    ScheduledTasks = new ObservableCollection<ScheduledTask>(importedTasks);
                 }
                 else
                 {
-                    // Merge imported tasks with existing ones
                     foreach (var importedTask in importedTasks)
                     {
-                        // Generate a new ID to avoid conflicts
                         importedTask.Id = Guid.NewGuid();
                         importedTask.Name = $"{importedTask.Name} (Imported)";
-
                         ScheduledTasks.Add(importedTask);
-
-                        if (importedTask.IsEnabled && importedTask.AddToWindowsTaskScheduler)
-                        {
-                            SetupWindowsTask(importedTask);
-                        }
                     }
                 }
 
                 SaveSchedules();
                 _logAction?.Invoke($"Imported {importedTasks.Count} scheduled tasks from {filePath}");
+
+                // Notify subscribers about the imported tasks
+                OnTasksChanged();
             }
             catch (Exception ex)
             {
                 _logAction?.Invoke($"Error importing schedules: {ex.Message}");
             }
-        }
-
-        // Methods for Windows Task Scheduler integration
-        private void SetupWindowsTask(ScheduledTask task)
-        {
-            try
-            {
-                // Skip if task is not enabled or Windows Task Scheduler integration is disabled
-                if (!task.IsEnabled || !task.AddToWindowsTaskScheduler)
-                    return;
-
-                // Get the path to the current executable
-                string exePath = Process.GetCurrentProcess()?.MainModule?.FileName
-                    ?? throw new InvalidOperationException("Unable to retrieve the executable path.");
-
-                // Create a new TaskDefinition
-                using (TaskService ts = new TaskService())
-                {
-                    // Get or create our task folder
-                    TaskFolder taskFolder;
-                    if (ts.RootFolder.SubFolders.Exists(TASK_FOLDER_NAME))
-                    {
-                        taskFolder = ts.RootFolder.SubFolders[TASK_FOLDER_NAME];
-                    }
-                    else
-                    {
-                        taskFolder = ts.RootFolder.CreateFolder(TASK_FOLDER_NAME);
-                    }
-
-                    // Create a new task definition
-                    TaskDefinition td = ts.NewTask();
-                    td.RegistrationInfo.Description = task.Description;
-
-                    // Set security options
-                    td.Principal.RunLevel = task.RunWithHighestPrivileges ? TaskRunLevel.Highest : TaskRunLevel.LUA;
-
-                    // Configure triggers based on frequency
-                    switch (task.Frequency)
-                    {
-                        case ScheduleFrequency.Once:
-                            // One-time task
-                            TimeTrigger timeTrigger = new TimeTrigger(task.NextRunTime);
-                            td.Triggers.Add(timeTrigger);
-                            break;
-
-                        case ScheduleFrequency.Daily:
-                            // Daily task with configurable interval
-                            DailyTrigger dailyTrigger = new DailyTrigger();
-                            dailyTrigger.StartBoundary = DateTime.Today.Add(task.RunTime);
-                            dailyTrigger.DaysInterval = task.DaysInterval; // Run every X days
-                            td.Triggers.Add(dailyTrigger);
-                            break;
-
-                        case ScheduleFrequency.Weekly:
-                            // Weekly task with configurable days
-                            WeeklyTrigger weeklyTrigger = new WeeklyTrigger();
-                            weeklyTrigger.StartBoundary = DateTime.Today.Add(task.RunTime);
-                            weeklyTrigger.DaysOfWeek = task.SelectedDaysOfWeek; // Run on selected days
-                            td.Triggers.Add(weeklyTrigger);
-                            break;
-
-                        case ScheduleFrequency.Monthly:
-                            // Monthly task with configurable days and months
-                            MonthlyTrigger monthlyTrigger = new MonthlyTrigger();
-                            monthlyTrigger.StartBoundary = DateTime.Today.Add(task.RunTime);
-                            monthlyTrigger.DaysOfMonth = task.SelectedDaysOfMonth; // Run on selected days
-                            monthlyTrigger.MonthsOfYear = task.SelectedMonths; // Run in selected months
-                            td.Triggers.Add(monthlyTrigger);
-                            break;
-                    }
-
-                    // Create command line with parameters
-                    string parameters = $"--schedule {task.Id}";
-
-                    // Add custom option if specified
-                    if (!string.IsNullOrEmpty(task.CustomOption))
-                    {
-                        parameters += $" --option \"{task.CustomOption}\"";
-                    }
-
-                    // Create the action
-                    td.Actions.Add(new ExecAction(exePath, parameters, null));
-
-                    // Set advanced settings
-                    td.Settings.DisallowStartIfOnBatteries = !task.AllowRunOnBattery;
-                    td.Settings.StopIfGoingOnBatteries = !task.AllowRunOnBattery;
-                    td.Settings.WakeToRun = task.WakeToRun;
-                    td.Settings.RunOnlyIfNetworkAvailable = task.RunOnlyIfNetworkAvailable;
-
-                    // Set execution time limit
-                    if (task.ExecutionTimeLimitMinutes > 0)
-                    {
-                        td.Settings.ExecutionTimeLimit = TimeSpan.FromMinutes(task.ExecutionTimeLimitMinutes);
-                    }
-                    else
-                    {
-                        td.Settings.ExecutionTimeLimit = TimeSpan.Zero; // No time limit
-                    }
-
-                    // Set retry settings
-                    if (task.MaxRetryCount > 0)
-                    {
-                        td.Settings.RestartCount = task.MaxRetryCount;
-                        td.Settings.RestartInterval = TimeSpan.FromMinutes(task.RetryIntervalMinutes);
-                    }
-
-                    // Task name includes both name and ID for uniqueness and readability
-                    string safeTaskName = MakeSafeTaskName(task.Name);
-                    string taskName = $"InvoiceBalanceRefresher_{safeTaskName}_{task.Id}";
-
-                    // Register the task in our folder
-                    if (!string.IsNullOrEmpty(task.WindowsTaskUsername))
-                    {
-                        // Convert SecureString to string for use with the TaskFolder.RegisterTaskDefinition method
-                        // This is necessary because the method signature requires string, not SecureString
-                        string passwordStr = string.Empty;
-                        if (!string.IsNullOrEmpty(task.WindowsTaskPassword))
-                        {
-                            passwordStr = task.WindowsTaskPassword;
-                        }
-
-                        // Register with specific credentials
-                        taskFolder.RegisterTaskDefinition(
-                            taskName,
-                            td,
-                            TaskCreation.CreateOrUpdate,
-                            task.WindowsTaskUsername,
-                            passwordStr,  // Use string instead of SecureString
-                            TaskLogonType.Password);
-                    }
-                    else
-                    {
-                        // Register with current user
-                        taskFolder.RegisterTaskDefinition(
-                            taskName,
-                            td,
-                            TaskCreation.CreateOrUpdate,
-                            null,
-                            null,
-                            TaskLogonType.InteractiveToken);
-                    }
-
-
-                    _logAction?.Invoke($"Created/updated Windows scheduled task '{taskName}' for: {task.Name}");
-                }
-            }
-            catch (Exception ex)
-            {
-                _logAction?.Invoke($"Error setting up Windows Task for {task.Name}: {ex.Message}");
-                if (ex.InnerException != null)
-                {
-                    _logAction?.Invoke($"  Inner exception: {ex.InnerException.Message}");
-                }
-            }
-        }
-
-        private string MakeSafeTaskName(string name)
-        {
-            // Replace invalid characters with underscores
-            char[] invalidChars = Path.GetInvalidFileNameChars();
-            string safeName = new string(name.Select(c => invalidChars.Contains(c) ? '_' : c).ToArray());
-
-            // Limit length
-            if (safeName.Length > 50)
-            {
-                safeName = safeName.Substring(0, 50);
-            }
-
-            return safeName;
-        }
-
-        private void UpdateWindowsTask(ScheduledTask task)
-        {
-            // First remove the existing task
-            RemoveWindowsTask(task);
-
-            // Then create a new one if the task is enabled
-            if (task.IsEnabled)
-            {
-                SetupWindowsTask(task);
-            }
-        }
-
-        private void RemoveWindowsTask(ScheduledTask task)
-        {
-            try
-            {
-                using (TaskService ts = new TaskService())
-                {
-                    TaskFolder taskFolder;
-
-                    // Try to use our custom folder first
-                    if (ts.RootFolder.SubFolders.Exists(TASK_FOLDER_NAME))
-                    {
-                        taskFolder = ts.RootFolder.SubFolders[TASK_FOLDER_NAME];
-                    }
-                    else
-                    {
-                        taskFolder = ts.RootFolder;
-                    }
-
-                    // Try to remove by ID-based name
-                    string taskIdName = $"InvoiceBalanceRefresher_{task.Id}";
-                    bool removed = false;
-
-                    // Look for any task containing our task ID
-                    foreach (var registeredTask in taskFolder.Tasks)
-                    {
-                        if (registeredTask.Name.Contains(task.Id.ToString()))
-                        {
-                            taskFolder.DeleteTask(registeredTask.Name);
-                            removed = true;
-                            _logAction?.Invoke($"Removed Windows scheduled task '{registeredTask.Name}' for: {task.Name}");
-                            break;
-                        }
-                    }
-
-                    // Also try with safe name (backward compatibility)
-                    if (!removed)
-                    {
-                        string safeTaskName = MakeSafeTaskName(task.Name);
-                        string nameBasedTaskName = $"InvoiceBalanceRefresher_{safeTaskName}_{task.Id}";
-
-                        if (taskFolder.Tasks.Exists(nameBasedTaskName))
-                        {
-                            taskFolder.DeleteTask(nameBasedTaskName);
-                            _logAction?.Invoke($"Removed Windows scheduled task '{nameBasedTaskName}' for: {task.Name}");
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                _logAction?.Invoke($"Error removing Windows Task for {task.Name}: {ex.Message}");
-            }
-        }
-
-        private void DisableWindowsTask(ScheduledTask task)
-        {
-            // Simply remove the task as Windows Task Scheduler doesn't have a simple "disable" option
-            RemoveWindowsTask(task);
-            _logAction?.Invoke($"Disabled Windows scheduled task for: {task.Name}");
         }
     }
 }

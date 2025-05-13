@@ -8,33 +8,33 @@ namespace InvoiceBalanceRefresher
 {
     public class SearchHelper
     {
-        private readonly RichTextBox _consoleLog;
+        private readonly System.Windows.Controls.RichTextBox _consoleLog;
         private readonly TextBlock _searchResultsCount;
         private FlowDocument _originalDocument;
         private int _searchResultCount = 0;
-        
+
         // For batch search
-        private readonly TextBox _batchResults;
+        private readonly System.Windows.Controls.TextBox _batchResults;
         private readonly TextBlock _batchSearchResultsCount;
         private string _originalBatchResults = string.Empty;
         private int _batchSearchResultCount = 0;
-        
-        public SearchHelper(RichTextBox consoleLog, TextBlock searchResultsCount, TextBox batchResults, TextBlock batchSearchResultsCount)
+
+        public SearchHelper(System.Windows.Controls.RichTextBox consoleLog, TextBlock searchResultsCount, System.Windows.Controls.TextBox batchResults, TextBlock batchSearchResultsCount)
         {
             _consoleLog = consoleLog ?? throw new ArgumentNullException(nameof(consoleLog));
             _searchResultsCount = searchResultsCount ?? throw new ArgumentNullException(nameof(searchResultsCount));
             _batchResults = batchResults ?? throw new ArgumentNullException(nameof(batchResults));
             _batchSearchResultsCount = batchSearchResultsCount ?? throw new ArgumentNullException(nameof(batchSearchResultsCount));
-            
+
             // Initialize original document
             _originalDocument = new FlowDocument();
         }
-        
+
         public void SetOriginalDocument(FlowDocument document)
         {
             _originalDocument = document ?? new FlowDocument();
         }
-        
+
         public void PerformSearch(string searchText)
         {
             // Reset search results count
@@ -118,7 +118,7 @@ namespace InvoiceBalanceRefresher
             // Update search results count
             _searchResultsCount.Text = $"Found: {_searchResultCount}";
         }
-        
+
         public void PerformBatchSearch(string searchText)
         {
             // If we don't have the original text stored yet, store it

@@ -32,7 +32,7 @@ namespace InvoiceBalanceRefresher
 
             // Add scanlines overlay
             var scanlinesGrid = new Grid();
-            scanlinesGrid.SetValue(Panel.ZIndexProperty, -1);
+            scanlinesGrid.SetValue(System.Windows.Controls.Panel.ZIndexProperty, -1);
             scanlinesGrid.Background = new DrawingBrush
             {
                 TileMode = TileMode.Tile,
@@ -45,12 +45,12 @@ namespace InvoiceBalanceRefresher
                     {
                         new GeometryDrawing
                         {
-                            Brush = Brushes.Transparent,
+                            Brush = System.Windows.Media.Brushes.Transparent,
                             Geometry = new RectangleGeometry(new Rect(0, 0, 2, 2))
                         },
                         new GeometryDrawing
                         {
-                            Brush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#00FF00")),
+                            Brush = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#00FF00")),
                             Geometry = new RectangleGeometry(new Rect(0, 0, 2, 1))
                         }
                     }
@@ -62,20 +62,20 @@ namespace InvoiceBalanceRefresher
             var headerBar = new Border
             {
                 Height = 40,
-                Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18536A")),
+                Background = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#18536A")),
                 VerticalAlignment = VerticalAlignment.Top,
                 BorderThickness = new Thickness(0, 0, 0, 1),
-                BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#124050"))
+                BorderBrush = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#124050"))
             };
 
-            var headerPanel = new StackPanel { Orientation = Orientation.Horizontal };
+            var headerPanel = new StackPanel { Orientation = System.Windows.Controls.Orientation.Horizontal };
             headerBar.Child = headerPanel;
 
             var docHeaderIcon = new TextBlock
             {
                 Text = "📚",
                 FontSize = 20,
-                Foreground = Brushes.White,
+                Foreground = System.Windows.Media.Brushes.White,
                 Margin = new Thickness(10, 0, 10, 0),
                 VerticalAlignment = VerticalAlignment.Center
             };
@@ -84,7 +84,7 @@ namespace InvoiceBalanceRefresher
             var docHeaderText = new TextBlock
             {
                 Text = "INVOICE BALANCE REFRESHER DOCUMENTATION - V2.0.0",
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#B2F0FF")),
+                Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#B2F0FF")),
                 FontWeight = FontWeights.Bold,
                 FontSize = 16,
                 Margin = new Thickness(0, 0, 0, 0),
@@ -108,8 +108,8 @@ namespace InvoiceBalanceRefresher
             var tocBorder = new Border
             {
                 BorderThickness = new Thickness(0, 0, 1, 0),
-                BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#124050")),
-                Background = new SolidColorBrush(Color.FromArgb(40, 18, 83, 106))
+                BorderBrush = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#124050")),
+                Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(40, 18, 83, 106))
             };
             Grid.SetColumn(tocBorder, 0);
             contentGrid.Children.Add(tocBorder);
@@ -121,9 +121,9 @@ namespace InvoiceBalanceRefresher
             var tocHeader = new TextBlock
             {
                 Text = "TABLE OF CONTENTS",
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9")),
+                Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#18B4E9")),
                 FontWeight = FontWeights.Bold,
-                FontFamily = new FontFamily("Consolas"),
+                FontFamily = new System.Windows.Media.FontFamily("Consolas"),
                 Margin = new Thickness(5, 0, 0, 15),
                 TextAlignment = TextAlignment.Left
             };
@@ -132,7 +132,7 @@ namespace InvoiceBalanceRefresher
             // Main content area
             var contentBorder = new Border
             {
-                Background = new SolidColorBrush(Color.FromArgb(20, 24, 180, 233))
+                Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(20, 24, 180, 233))
             };
             Grid.SetColumn(contentBorder, 1);
             contentGrid.Children.Add(contentBorder);
@@ -183,16 +183,16 @@ namespace InvoiceBalanceRefresher
                     Margin = new Thickness(0, 3, 0, 3),
                     Padding = new Thickness(8, 5, 8, 5),
                     CornerRadius = new CornerRadius(4),
-                    Cursor = Cursors.Hand
+                    Cursor = System.Windows.Input.Cursors.Hand
                 };
 
-                var tocEntryPanel = new StackPanel { Orientation = Orientation.Horizontal };
+                var tocEntryPanel = new StackPanel { Orientation = System.Windows.Controls.Orientation.Horizontal };
                 tocEntry.Child = tocEntryPanel;
 
                 var tocEntryIcon = new TextBlock
                 {
                     Text = sectionIcon,
-                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(sectionColor)),
+                    Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(sectionColor)),
                     FontSize = 14,
                     Margin = new Thickness(0, 0, 5, 0),
                     VerticalAlignment = VerticalAlignment.Center
@@ -202,7 +202,7 @@ namespace InvoiceBalanceRefresher
                 {
                     Text = $"{sectionId}. {sectionName}",
                     Foreground = (SolidColorBrush)owner.FindResource("ForegroundBrush"),
-                    FontFamily = new FontFamily("Consolas"),
+                    FontFamily = new System.Windows.Media.FontFamily("Consolas"),
                     TextWrapping = TextWrapping.Wrap
                 };
 
@@ -219,21 +219,21 @@ namespace InvoiceBalanceRefresher
                 var sectionHeading = new TextBlock
                 {
                     Text = $"{sectionId}. {sectionName.ToUpper()}",
-                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(sectionColor)),
+                    Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(sectionColor)),
                     FontWeight = FontWeights.Bold,
-                    FontFamily = new FontFamily("Consolas"),
+                    FontFamily = new System.Windows.Media.FontFamily("Consolas"),
                     FontSize = 18,
                     Margin = new Thickness(0, 0, 0, 10)
                 };
                 sectionPanel.Children.Add(sectionHeading);
 
                 // Divider
-                var sectionDivider = new Rectangle
+                var sectionDivider = new System.Windows.Shapes.Rectangle
                 {
                     Height = 2,
-                    Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString(sectionColor)),
+                    Fill = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(sectionColor)),
                     Margin = new Thickness(0, 0, 0, 15),
-                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch,
                     Opacity = 0.7
                 };
                 sectionPanel.Children.Add(sectionDivider);
@@ -249,7 +249,7 @@ namespace InvoiceBalanceRefresher
             // Add current timestamp to the documentation window
             var timestampBorder = new Border
             {
-                Background = new SolidColorBrush(Color.FromArgb(60, 24, 80, 100)),
+                Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(60, 24, 80, 100)),
                 Padding = new Thickness(5),
                 Margin = new Thickness(10, 5, 10, 10)
             };
@@ -257,8 +257,8 @@ namespace InvoiceBalanceRefresher
             var timestampText = new TextBlock
             {
                 Text = $"Documentation generated: 2025-05-11 03:58:28 UTC | User: Sdeery123",
-                Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#B2F0FF")),
-                FontFamily = new FontFamily("Consolas"),
+                Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#B2F0FF")),
+                FontFamily = new System.Windows.Media.FontFamily("Consolas"),
                 FontSize = 10,
                 TextAlignment = TextAlignment.Center
             };
@@ -296,7 +296,7 @@ namespace InvoiceBalanceRefresher
                 "The application includes a credential management system that allows you to securely save and reuse " +
                 "multiple sets of API credentials for different environments or billers.");
 
-            // SECTION 2: CREDENTIAL MANAGEMENT (NEW SECTION)
+            // SECTION 2: CREDENTIAL MANAGEMENT
             var section2 = sections["2"];
 
             DocumentFormatHelper.AddSubheading(section2, "Credential Management");
@@ -333,7 +333,7 @@ namespace InvoiceBalanceRefresher
                 "   • Select a credential set to view or edit its details",
                 "   • Click [New] to create a new credential set",
                 "   • Click [Delete] to remove a selected credential set",
-                "   �� Edit the details and click [Save] to update a credential set",
+                "   • Edit the details and click [Save] to update a credential set",
                 "   • Click [Close] when finished to return to the main window"
             });
 
@@ -341,7 +341,7 @@ namespace InvoiceBalanceRefresher
                 "The credential set selected in the dropdown will be used for all operations, including single invoice processing, " +
                 "batch processing, and customer record lookups.");
 
-            // SECTION 3: SINGLE INVOICE PROCESSING (UPDATED)
+            // SECTION 3: SINGLE INVOICE PROCESSING
             var section3 = sections["3"];
 
             DocumentFormatHelper.AddParagraph(section3,
@@ -398,56 +398,103 @@ namespace InvoiceBalanceRefresher
                 "Results will be saved to a file named 'InvoiceResults.csv' in the same directory as your input file. " +
                 "This file will contain the processing status and updated balance information for each invoice.");
 
-            // SECTION 4.1: SCHEDULING (NEW)
+            // SECTION 4.1: SCHEDULING (UPDATED)
             DocumentFormatHelper.AddSubheading(section4, "Automated Scheduling");
 
             DocumentFormatHelper.AddParagraph(section4,
-                "The application includes a built-in scheduling system that allows you to automate batch invoice processing at specific times. " +
-                "You can schedule tasks to run once, daily, weekly, or monthly, and optionally have them run even when the application is closed by integrating with Windows Task Scheduler.");
+                "The application includes a comprehensive built-in scheduling system that allows you to automate batch invoice processing. " +
+                "This powerful feature offers multiple frequency options to fit your specific needs, from minute-by-minute execution to " +
+                "quarterly scheduling.");
 
             DocumentFormatHelper.AddSteps(section4, "To schedule a batch process:", new[]
             {
                 "Open the [File] menu and select [Scheduler]",
                 "In the Schedule Manager window, click [ADD NEW] to create a new scheduled task",
-                "Fill in the task details, including name, frequency (Once, Daily, Weekly, Monthly), and run time",
+                "Fill in the task details, including name, description, and select a frequency option",
+                "Configure the schedule options specific to your chosen frequency",
                 "Select a saved credential set or enter credentials manually",
                 "Specify the CSV file path and whether the CSV includes account numbers",
-                "Check 'Add to Windows Task Scheduler' if you want the task to run even when the app is closed",
                 "Click [SAVE] to add the schedule"
             });
 
+            DocumentFormatHelper.AddSubheading(section4, "Available Scheduling Frequencies");
+
+            DocumentFormatHelper.AddParagraph(section4,
+                "The scheduler offers the following frequency options:");
+
+            // Create a grid to display frequency options
+            var frequencyGrid = new Grid();
+            frequencyGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            frequencyGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            // Frequency descriptions
+            string[][] frequencies = new string[][]
+            {
+                new string[] { "Once", "Run a single time at the specified date and time" },
+                new string[] { "Custom (Minutes)", "Run every X minutes (e.g., every 15, 30, or 45 minutes)" },
+                new string[] { "Hourly", "Run every X hours (e.g., every 1, 2, or 4 hours)" },
+                new string[] { "Daily", "Run every X days at a specific time" },
+                new string[] { "WorkDays", "Run every weekday (Monday through Friday) at a specific time" },
+                new string[] { "Weekly", "Run on specific days of the week at a specific time" },
+                new string[] { "BiWeekly", "Run on specific days of the week, alternating between even and odd weeks" },
+                new string[] { "Monthly", "Run on specific days of selected months" },
+                new string[] { "Quarterly", "Run on specific days in selected months of each quarter" },
+                new string[] { "Multiple Times Daily", "Run multiple times per day at specified times" }
+            };
+
+            // Add rows for each frequency
+            for (int i = 0; i < frequencies.Length; i++)
+            {
+                frequencyGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+                var freqLabel = new TextBlock
+                {
+                    Text = frequencies[i][0],
+                    Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#5BFF64")),
+                    FontFamily = new System.Windows.Media.FontFamily("Consolas"),
+                    FontWeight = FontWeights.Bold,
+                    Margin = new Thickness(15, 5, 15, 5)
+                };
+
+                var freqDesc = new TextBlock
+                {
+                    Text = frequencies[i][1],
+                    Foreground = (SolidColorBrush)owner.FindResource("ForegroundBrush"),
+                    TextWrapping = TextWrapping.Wrap,
+                    Margin = new Thickness(0, 5, 0, 5)
+                };
+
+                Grid.SetRow(freqLabel, i);
+                Grid.SetColumn(freqLabel, 0);
+                Grid.SetRow(freqDesc, i);
+                Grid.SetColumn(freqDesc, 1);
+
+                frequencyGrid.Children.Add(freqLabel);
+                frequencyGrid.Children.Add(freqDesc);
+            }
+
+            section4.Children.Add(frequencyGrid);
+
+            DocumentFormatHelper.AddSubheading(section4, "Advanced Scheduling Options");
+
+            DocumentFormatHelper.AddParagraph(section4,
+                "Each scheduling frequency offers specific configuration options:");
+
+            DocumentFormatHelper.AddBulletPoint(section4, "Daily scheduling: Set an interval in days (e.g., every 2 days)");
+            DocumentFormatHelper.AddBulletPoint(section4, "Weekly scheduling: Select specific days of the week (e.g., Monday, Wednesday, Friday)");
+            DocumentFormatHelper.AddBulletPoint(section4, "Monthly scheduling: Select specific days of the month (1-31) and specific months");
+            DocumentFormatHelper.AddBulletPoint(section4, "Quarterly scheduling: Select which months in each quarter and which day of the month");
+            DocumentFormatHelper.AddBulletPoint(section4, "BiWeekly scheduling: Alternate between even and odd weeks with specific days selected");
+            DocumentFormatHelper.AddBulletPoint(section4, "Multiple Times Daily: Configure multiple specific times throughout the day");
+
             DocumentFormatHelper.AddParagraph(section4,
                 "Scheduled tasks will appear in the Schedule Manager window, where you can edit, delete, or run them manually using the [RUN NOW] button. " +
-                "The application will automatically execute enabled tasks at their scheduled times. If 'Add to Windows Task Scheduler' is checked, the task will be registered with Windows and can run even when the application is closed.");
-
-            // New: Windows Task Scheduler Options
-            DocumentFormatHelper.AddSubheading(section4, "Windows Task Scheduler Options");
-
-            DocumentFormatHelper.AddParagraph(section4,
-                "When scheduling tasks to run via Windows Task Scheduler, you have several additional configuration options:");
-
-            DocumentFormatHelper.AddBulletPoint(section4, "Run with elevated privileges: Task will request administrator rights when needed");
-            DocumentFormatHelper.AddBulletPoint(section4, "Run only when user is logged in: Task will only execute when the user who created it is logged in");
-            DocumentFormatHelper.AddBulletPoint(section4, "Wake computer to run task: System will wake from sleep/hibernation to execute the task");
-            DocumentFormatHelper.AddBulletPoint(section4, "Start task only if idle for: Task will wait for system idle time before starting");
-            DocumentFormatHelper.AddBulletPoint(section4, "Stop if running longer than: Set a maximum runtime to prevent hung tasks");
-            DocumentFormatHelper.AddBulletPoint(section4, "Restart on failure: Automatically retry if the task fails to complete successfully");
-
-            DocumentFormatHelper.AddSteps(section4, "To configure Windows Task Scheduler options:", new[]
-            {
-                "When creating or editing a scheduled task, click the [Advanced] button",
-                "In the Advanced Task Options dialog, select the desired Windows Task Scheduler settings",
-                "Configure security options, power management, and failure handling settings",
-                "Click [OK] to save the advanced options",
-                "Continue with saving the scheduled task as normal"
-            });
+                "The application will automatically execute enabled tasks at their scheduled times. The application automatically calculates the next run time " +
+                "based on your configuration and the current date/time.");
 
             DocumentFormatHelper.AddNote(section4,
-                "Windows Task Scheduler integration requires appropriate permissions on your system. Some options may require administrator privileges to configure.");
-
-            DocumentFormatHelper.AddNote(section4,
-                "You can manage all scheduled tasks from the Schedule Manager, including enabling/disabling, editing, or removing them. " +
-                "Task results, last run time, and status are displayed in the manager for easy tracking.");
+                "The application must be running for scheduled tasks to execute. For tasks that need to run when the application is not open, " +
+                "consider creating a system-level scheduled task to launch the application at specific times.");
 
             // SECTION 5: LOGGING
             var section5 = sections["5"];
@@ -525,193 +572,189 @@ namespace InvoiceBalanceRefresher
                 "The application handles all the API communication details for you, including authentication, " +
                 "error handling, and retry logic for intermittent failures.");
 
-            // SECTION 8: RATE LIMITING (NEW SECTION)
             // SECTION 8: RATE LIMITING (UPDATED)
-            // SECTION 8: RATE LIMITING (UPDATED)
-var section8 = sections["8"];
+            var section8 = sections["8"];
 
-DocumentFormatHelper.AddParagraph(section8,
-    "The Invoice Balance Refresher includes built-in rate limiting functionality to prevent API throttling and ensure " +
-    "reliable operation when processing large batches of invoices. Rate limiting controls how quickly the application " +
-    "sends requests to the Invoice Cloud API service.",
-    isIntro: true);
+            DocumentFormatHelper.AddParagraph(section8,
+                "The Invoice Balance Refresher includes built-in rate limiting functionality to prevent API throttling and ensure " +
+                "reliable operation when processing large batches of invoices. Rate limiting controls how quickly the application " +
+                "sends requests to the Invoice Cloud API service.",
+                isIntro: true);
 
-DocumentFormatHelper.AddSubheading(section8, "Rate Limiting Configuration");
+            DocumentFormatHelper.AddSubheading(section8, "Rate Limiting Configuration");
 
-DocumentFormatHelper.AddParagraph(section8,
-    "The application's rate limiting system has several configurable settings that determine how API requests are managed:");
+            DocumentFormatHelper.AddParagraph(section8,
+                "The application's rate limiting system has several configurable settings that determine how API requests are managed:");
 
-// Create a grid for rate limiting settings
-var rateLimitGrid = new Grid();
-rateLimitGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-rateLimitGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            // Create a grid for rate limiting settings
+            var rateLimitGrid = new Grid();
+            rateLimitGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            rateLimitGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
-rateLimitGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-rateLimitGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-rateLimitGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-rateLimitGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-rateLimitGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            rateLimitGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            rateLimitGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            rateLimitGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            rateLimitGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            rateLimitGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
-// Setting labels and descriptions
-string[][] rateSettings = new string[][]
-{
-    new string[] { "Request Interval:", "500ms (Default)" },
-    new string[] { "Request Count Threshold:", "50 requests (Default)" },
-    new string[] { "Threshold Cooldown:", "5000ms (Default)" },
-    new string[] { "Rate Limit Retry Delay:", "5000ms (Default)" },
-    new string[] { "Rate Limiting Enabled:", "Yes (Default)" }
-};
+            // Setting labels and descriptions
+            string[][] rateSettings = new string[][]
+            {
+                new string[] { "Request Interval:", "500ms (Default)" },
+                new string[] { "Request Count Threshold:", "50 requests (Default)" },
+                new string[] { "Threshold Cooldown:", "5000ms (Default)" },
+                new string[] { "Rate Limit Retry Delay:", "5000ms (Default)" },
+                new string[] { "Rate Limiting Enabled:", "Yes (Default)" }
+            };
 
-for (int i = 0; i < rateSettings.Length; i++)
-{
-    var settingLabel = new TextBlock
-    {
-        Text = rateSettings[i][0],
-        Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E55555")),
-        FontFamily = new FontFamily("Consolas"),
-        FontWeight = FontWeights.Bold,
-        Margin = new Thickness(15, 5, 15, 5)
-    };
+            for (int i = 0; i < rateSettings.Length; i++)
+            {
+                var settingLabel = new TextBlock
+                {
+                    Text = rateSettings[i][0],
+                    Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#E55555")),
+                    FontFamily = new System.Windows.Media.FontFamily("Consolas"),
+                    FontWeight = FontWeights.Bold,
+                    Margin = new Thickness(15, 5, 15, 5)
+                };
 
-    var settingValue = new TextBlock
-    {
-        Text = rateSettings[i][1],
-        Foreground = (SolidColorBrush)owner.FindResource("ForegroundBrush"),
-        TextWrapping = TextWrapping.Wrap,
-        Margin = new Thickness(0, 5, 0, 5)
-    };
+                var settingValue = new TextBlock
+                {
+                    Text = rateSettings[i][1],
+                    Foreground = (SolidColorBrush)owner.FindResource("ForegroundBrush"),
+                    TextWrapping = TextWrapping.Wrap,
+                    Margin = new Thickness(0, 5, 0, 5)
+                };
 
-    Grid.SetRow(settingLabel, i);
-    Grid.SetColumn(settingLabel, 0);
-    Grid.SetRow(settingValue, i);
-    Grid.SetColumn(settingValue, 1);
+                Grid.SetRow(settingLabel, i);
+                Grid.SetColumn(settingLabel, 0);
+                Grid.SetRow(settingValue, i);
+                Grid.SetColumn(settingValue, 1);
 
-    rateLimitGrid.Children.Add(settingLabel);
-    rateLimitGrid.Children.Add(settingValue);
-}
+                rateLimitGrid.Children.Add(settingLabel);
+                rateLimitGrid.Children.Add(settingValue);
+            }
 
-section8.Children.Add(rateLimitGrid);
+            section8.Children.Add(rateLimitGrid);
 
-DocumentFormatHelper.AddSubheading(section8, "Understanding Rate Limiting Settings");
+            DocumentFormatHelper.AddSubheading(section8, "Understanding Rate Limiting Settings");
 
-DocumentFormatHelper.AddParagraph(section8,
-    "Each rate limiting setting controls a specific aspect of the application's API request behavior:");
+            DocumentFormatHelper.AddParagraph(section8,
+                "Each rate limiting setting controls a specific aspect of the application's API request behavior:");
 
-DocumentFormatHelper.AddBulletPoint(section8,
-    "Request Interval: The minimum time in milliseconds between consecutive API requests. " +
-    "This setting spreads out requests to avoid overwhelming the API service with sudden bursts of traffic.");
+            DocumentFormatHelper.AddBulletPoint(section8,
+                "Request Interval: The minimum time in milliseconds between consecutive API requests. " +
+                "This setting spreads out requests to avoid overwhelming the API service with sudden bursts of traffic.");
 
-DocumentFormatHelper.AddBulletPoint(section8,
-    "Request Count Threshold: The maximum number of requests that will be sent before enforcing a cooldown period. " +
-    "This prevents the application from sending too many requests in a short timeframe.");
+            DocumentFormatHelper.AddBulletPoint(section8,
+                "Request Count Threshold: The maximum number of requests that will be sent before enforcing a cooldown period. " +
+                "This prevents the application from sending too many requests in a short timeframe.");
 
-DocumentFormatHelper.AddBulletPoint(section8,
-    "Threshold Cooldown: The duration in milliseconds that the application will pause after reaching the request count threshold. " +
-    "This gives the API service time to process existing requests before sending more.");
+            DocumentFormatHelper.AddBulletPoint(section8,
+                "Threshold Cooldown: The duration in milliseconds that the application will pause after reaching the request count threshold. " +
+                "This gives the API service time to process existing requests before sending more.");
 
-DocumentFormatHelper.AddBulletPoint(section8,
-    "Rate Limit Retry Delay: The time in milliseconds the application will wait before retrying a request that received a " +
-    "rate limit response (HTTP 429) from the API server.");
+            DocumentFormatHelper.AddBulletPoint(section8,
+                "Rate Limit Retry Delay: The time in milliseconds the application will wait before retrying a request that received a " +
+                "rate limit response (HTTP 429) from the API server.");
 
-DocumentFormatHelper.AddBulletPoint(section8,
-    "Rate Limiting Enabled: Master toggle that enables or disables all rate limiting functionality. It's recommended to " +
-    "keep this enabled to ensure reliable API communication.");
+            DocumentFormatHelper.AddBulletPoint(section8,
+                "Rate Limiting Enabled: Master toggle that enables or disables all rate limiting functionality. It's recommended to " +
+                "keep this enabled to ensure reliable API communication.");
 
-DocumentFormatHelper.AddSubheading(section8, "Configuring Rate Limiting");
+            DocumentFormatHelper.AddSubheading(section8, "Configuring Rate Limiting");
 
-DocumentFormatHelper.AddSteps(section8, "To adjust rate limiting settings:", new[]
-{
-    "Open the application menu and select [Settings] > [Rate Limiting]",
-    "The Rate Limiting Settings dialog will appear",
-    "Enable or disable rate limiting using the checkbox at the top",
-    "Adjust each setting according to your needs",
-    "Click [Save] to apply your changes, or [Reset] to restore default values",
-    "Click [Cancel] to close without saving changes"
-});
+            DocumentFormatHelper.AddSteps(section8, "To adjust rate limiting settings:", new[]
+            {
+                "Open the application menu and select [Settings] > [Rate Limiting]",
+                "The Rate Limiting Settings dialog will appear",
+                "Enable or disable rate limiting using the checkbox at the top",
+                "Adjust each setting according to your needs",
+                "Click [Save] to apply your changes, or [Reset] to restore default values",
+                "Click [Cancel] to close without saving changes"
+            });
 
-DocumentFormatHelper.AddParagraph(section8,
-    "For large batch processing operations, the application displays rate limiting status in the progress information. " +
-    "If requests are being limited, the application will automatically adjust its behavior according to these settings.");
+            DocumentFormatHelper.AddParagraph(section8,
+                "For large batch processing operations, the application displays rate limiting status in the progress information. " +
+                "If requests are being limited, the application will automatically adjust its behavior according to these settings.");
 
-DocumentFormatHelper.AddNote(section8,
-    "If you experience frequent 'Rate Limit Exceeded' or '429 Too Many Requests' errors, try increasing the Request Interval " +
-    "or reducing the Request Count Threshold. The default settings work well for most accounts, but some may require adjustment " +
-    "based on specific API limits assigned to your Invoice Cloud account.");
+            DocumentFormatHelper.AddNote(section8,
+                "If you experience frequent 'Rate Limit Exceeded' or '429 Too Many Requests' errors, try increasing the Request Interval " +
+                "or reducing the Request Count Threshold. The default settings work well for most accounts, but some may require adjustment " +
+                "based on specific API limits assigned to your Invoice Cloud account.");
 
-// RTDR Special Options Section
-DocumentFormatHelper.AddSubheading(section8, "RTDR Special Options");
+            // RTDR Special Options Section
+            DocumentFormatHelper.AddSubheading(section8, "RTDR Special Options");
 
-DocumentFormatHelper.AddParagraph(section8,
-    "For billers using RTDR (Real-Time Data Refresh), the application provides special options to control how invoice " +
-    "balances are refreshed under specific conditions:");
+            DocumentFormatHelper.AddParagraph(section8,
+                "For billers using RTDR (Real-Time Data Refresh), the application provides special options to control how invoice " +
+                "balances are refreshed under specific conditions:");
 
-// Option 1: RTDR - Override 6 Hour Previous RTDR Check
-DocumentFormatHelper.AddSubheading(section8, "RTDR - Override 6 Hour Previous RTDR Check");
+            // Option 1: RTDR - Override 6 Hour Previous RTDR Check
+            DocumentFormatHelper.AddSubheading(section8, "RTDR - Override 6 Hour Previous RTDR Check");
 
-DocumentFormatHelper.AddParagraph(section8,
-    "For billers with RTDR, the system normally does not pull an RTDR balance if a successful balance refresh occurred within the past 6 hours. " +
-    "Enabling this option forces a refresh regardless of the 6-hour restriction.");
+            DocumentFormatHelper.AddParagraph(section8,
+                "For billers with RTDR, the system normally does not pull an RTDR balance if a successful balance refresh occurred within the past 6 hours. " +
+                "Enabling this option forces a refresh regardless of the 6-hour restriction.");
 
-DocumentFormatHelper.AddNote(section8,
-    "This option is OFF by default. If you attempt to force a refresh while this option is disabled, the system will not refresh the balance " +
-    "if a successful refresh occurred in the last 6 hours.");
+            DocumentFormatHelper.AddNote(section8,
+                "This option is OFF by default. If you attempt to force a refresh while this option is disabled, the system will not refresh the balance " +
+                "if a successful refresh occurred in the last 6 hours.");
 
-// Option 2: Disable 24-hour payment check on RTDR for AutoPay Payments
-DocumentFormatHelper.AddSubheading(section8, "Disable 24-hour payment check on RTDR for AutoPay Payments");
+            // Option 2: Disable 24-hour payment check on RTDR for AutoPay Payments
+            DocumentFormatHelper.AddSubheading(section8, "Disable 24-hour payment check on RTDR for AutoPay Payments");
 
-DocumentFormatHelper.AddParagraph(section8,
-    "When enabled, this option will override the 24-hour hold period for RTDR on invoices with recent AutoPay payment activity. " +
-    "This allows balance refreshes to occur on invoices that have had AutoPay payments within the last 24 hours.");
+            DocumentFormatHelper.AddParagraph(section8,
+                "When enabled, this option will override the 24-hour hold period for RTDR on invoices with recent AutoPay payment activity. " +
+                "This allows balance refreshes to occur on invoices that have had AutoPay payments within the last 24 hours.");
 
-DocumentFormatHelper.AddNote(section8,
-    "This option is OFF by default. To enable or disable this setting, you must contact Invoice Cloud support.");
+            DocumentFormatHelper.AddNote(section8,
+                "This option is OFF by default. To enable or disable this setting, you must contact Invoice Cloud support.");
 
-// Option 3: Disable 24-hour payment check for RTDR
-DocumentFormatHelper.AddSubheading(section8, "Disable 24-hour payment check for RTDR");
+            // Option 3: Disable 24-hour payment check for RTDR
+            DocumentFormatHelper.AddSubheading(section8, "Disable 24-hour payment check for RTDR");
 
-DocumentFormatHelper.AddParagraph(section8,
-    "RTDR will not refresh balances on invoices with any payment within the previous 24 hours. When enabled, " +
-    "this option will bypass that check, allowing balance refreshes to occur regardless of recent payment activity.");
+            DocumentFormatHelper.AddParagraph(section8,
+                "RTDR will not refresh balances on invoices with any payment within the previous 24 hours. When enabled, " +
+                "this option will bypass that check, allowing balance refreshes to occur regardless of recent payment activity.");
 
-DocumentFormatHelper.AddNote(section8,
-    "This option is OFF by default. To enable or disable this setting, you must contact Invoice Cloud support.");
+            DocumentFormatHelper.AddNote(section8,
+                "This option is OFF by default. To enable or disable this setting, you must contact Invoice Cloud support.");
 
-// Add warning about RTDR options
-var warningBorder = new Border
-{
-    BorderThickness = new Thickness(1),
-    BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E55555")),
-    Background = new SolidColorBrush(Color.FromArgb(20, 229, 85, 85)),
-    Padding = new Thickness(10),
-    Margin = new Thickness(0, 5, 0, 15),
-    CornerRadius = new CornerRadius(4)
-};
+            // Add warning about RTDR options
+            var warningBorder = new Border
+            {
+                BorderThickness = new Thickness(1),
+                BorderBrush = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#E55555")),
+                Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(20, 229, 85, 85)),
+                Padding = new Thickness(10),
+                Margin = new Thickness(0, 5, 0, 15),
+                CornerRadius = new CornerRadius(4)
+            };
 
-var warningPanel = new StackPanel { Orientation = Orientation.Horizontal };
+            var warningPanel = new StackPanel { Orientation = System.Windows.Controls.Orientation.Horizontal };
 
-var warningIcon = new TextBlock
-{
-    Text = "⚠️",
-    FontSize = 14,
-    Margin = new Thickness(0, 0, 8, 0),
-    VerticalAlignment = VerticalAlignment.Top
-};
+            var warningIcon = new TextBlock
+            {
+                Text = "⚠️",
+                FontSize = 14,
+                Margin = new Thickness(0, 0, 8, 0),
+                VerticalAlignment = VerticalAlignment.Top
+            };
 
-var warningText = new TextBlock
-{
-    Text = "Warning: Use these RTDR override options with caution. They are designed for specific business use cases where immediate " +
-           "balance refreshes are required even after recent payments. Enabling these options may cause balance discrepancies " +
-           "if payment posting is still in progress.",
-    Foreground = (SolidColorBrush)Application.Current.Resources["ForegroundBrush"],
-    TextWrapping = TextWrapping.Wrap
-};
+            var warningText = new TextBlock
+            {
+                Text = "Warning: Use these RTDR override options with caution. They are designed for specific business use cases where immediate " +
+                       "balance refreshes are required even after recent payments. Enabling these options may cause balance discrepancies " +
+                       "if payment posting is still in progress.",
+                Foreground = (SolidColorBrush)System.Windows.Application.Current.Resources["ForegroundBrush"],
+                TextWrapping = TextWrapping.Wrap
+            };
 
-warningPanel.Children.Add(warningIcon);
-warningPanel.Children.Add(warningText);
-warningBorder.Child = warningPanel;
-section8.Children.Add(warningBorder);
-
-
+            warningPanel.Children.Add(warningIcon);
+            warningPanel.Children.Add(warningText);
+            warningBorder.Child = warningPanel;
+            section8.Children.Add(warningBorder);
 
             // SECTION 9: FAQ
             var section9 = sections["9"];
@@ -845,20 +888,22 @@ section8.Children.Add(warningBorder);
                 "may take significant time. Consider breaking very large batches into smaller files.",
                 owner);
 
+            // Updated FAQ item for scheduling
             DocumentFormatHelper.AddFAQItem(section9,
                 "How does scheduling work?",
-                "You can automate batch invoice processing by creating scheduled tasks in the Schedule Manager. " +
-                "Tasks can be set to run at specific times and frequencies, and can be integrated with Windows Task Scheduler " +
-                "to run even when the application is not open. Scheduled tasks can use any of your saved credential sets. " +
-                "The Schedule Manager allows you to add, edit, delete, enable/disable, and manually run scheduled tasks.",
+                "The application includes a built-in scheduler that can run batch processes at predetermined times. " +
+                "You can create schedules with various frequencies including once, hourly, daily, weekly, monthly, and more. " +
+                "For each schedule, you define the frequency, run time, and batch processing settings. The application checks " +
+                "for due scheduled tasks every minute while it's running. For each task that's due to run, it will automatically " +
+                "execute the specified batch process and calculate the next run time.",
                 owner);
 
             // FAQ items for maintenance
             DocumentFormatHelper.AddFAQItem(section9,
                 "What happens during maintenance?",
                 "During maintenance, the application performs several cleanup tasks: it removes log files older than the configured retention period, " +
-                "limits the number of session files per day to prevent disk space issues, and removes orphaned scheduled tasks that may no longer be valid. " +
-                "These operations help keep the application running efficiently without manual intervention.",
+                "limits the number of session files per day to prevent disk space issues, and performs other housekeeping tasks to keep " +
+                "the application running efficiently without manual intervention.",
                 owner);
 
             DocumentFormatHelper.AddFAQItem(section9,
@@ -904,8 +949,8 @@ section8.Children.Add(warningBorder);
                 var keyText = new TextBlock
                 {
                     Text = shortcut.Key,
-                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9")),
-                    FontFamily = new FontFamily("Consolas"),
+                    Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#18B4E9")),
+                    FontFamily = new System.Windows.Media.FontFamily("Consolas"),
                     FontWeight = FontWeights.Bold,
                     Margin = new Thickness(0, 3, 20, 3)
                 };
@@ -930,7 +975,7 @@ section8.Children.Add(warningBorder);
             section10.Children.Add(shortcutGrid);
 
             DocumentFormatHelper.AddNote(section10,
-                "Keyboard shortcuts can be customized in the application settings.(Future Update)");
+                "Keyboard shortcuts can be customized in the application settings. (Future Update)");
 
             // SECTION 11: TROUBLESHOOTING
             var section11 = sections["11"];
@@ -973,7 +1018,7 @@ section8.Children.Add(warningBorder);
 
             DocumentFormatHelper.AddFAQItem(section11,
                 "Scheduled tasks not running",
-                "Check that Windows Task Scheduler is running on your system. Verify that the task is enabled in both the application's Schedule Manager and Windows Task Scheduler. Ensure the credentials used have not expired and the CSV file path is still valid. Check the Windows Task Scheduler logs for any error messages.",
+                "Check that the application is running at the scheduled time, as tasks only execute when the application is active. Verify that the task is enabled in the Schedule Manager. Ensure the credentials used have not expired and the CSV file path is still valid.",
                 owner);
 
             DocumentFormatHelper.AddSubheading(section11, "Error Logs and Diagnostics:");
@@ -1021,7 +1066,7 @@ section8.Children.Add(warningBorder);
 
             DocumentFormatHelper.AddParagraph(section12,
                 "For batch processing of large CSV files (over 1000 invoices), additional RAM is recommended for improved performance. " +
-                "Scheduled tasks require Windows Task Scheduler to be enabled and running properly.");
+                "If you need to run scheduled tasks when the computer is unattended, consider setting up an auto-start option for the application.");
 
             DocumentFormatHelper.AddNote(section12,
                 "Microsoft Excel or compatible spreadsheet software is recommended for editing CSV files, " +
@@ -1032,14 +1077,14 @@ section8.Children.Add(warningBorder);
 
             DocumentFormatHelper.AddParagraph(section13,
                 "The Invoice Balance Refresher includes built-in maintenance features to help keep the application running smoothly. " +
-                "These features handle cleanup of old log files, management of session files, and removal of orphaned scheduled tasks.",
+                "These features handle cleanup of old log files, management of session files, and other housekeeping tasks.",
                 isIntro: true);
 
             DocumentFormatHelper.AddSubheading(section13, "Maintenance Features");
 
             DocumentFormatHelper.AddBulletPoint(section13, "Log Cleanup: Automatically removes log files older than the configured retention period");
             DocumentFormatHelper.AddBulletPoint(section13, "Session File Management: Limits the number of session files created per day");
-            DocumentFormatHelper.AddBulletPoint(section13, "Orphaned Task Cleanup: Identifies and removes scheduled tasks that are no longer valid");
+            DocumentFormatHelper.AddBulletPoint(section13, "Data Optimization: Performs various optimizations to ensure smooth application performance");
 
             DocumentFormatHelper.AddSubheading(section13, "Maintenance Frequency Options");
 
@@ -1067,8 +1112,8 @@ section8.Children.Add(warningBorder);
                 var freqLabel = new TextBlock
                 {
                     Text = freqSettings[i][0],
-                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#18B4E9")),
-                    FontFamily = new FontFamily("Consolas"),
+                    Foreground = new SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#18B4E9")),
+                    FontFamily = new System.Windows.Media.FontFamily("Consolas"),
                     FontWeight = FontWeights.Bold,
                     Margin = new Thickness(15, 5, 15, 5)
                 };
@@ -1100,7 +1145,6 @@ section8.Children.Add(warningBorder);
             DocumentFormatHelper.AddBulletPoint(section13, "Log Retention Days: Number of days to keep log files before deletion (default: 30 days)");
             DocumentFormatHelper.AddBulletPoint(section13, "Max Session Files Per Day: Maximum number of session log files to keep per day (default: 10 files)");
             DocumentFormatHelper.AddBulletPoint(section13, "Enable Log Cleanup: Toggle log file cleanup feature (default: enabled)");
-            DocumentFormatHelper.AddBulletPoint(section13, "Enable Orphaned Task Cleanup: Toggle scheduled task cleanup feature (default: enabled)");
             DocumentFormatHelper.AddBulletPoint(section13, "Enable Periodic Maintenance: Automatically run maintenance according to schedule (default: disabled)");
             DocumentFormatHelper.AddBulletPoint(section13, "Maintenance Frequency: How often maintenance should run (default: Every Startup)");
 
