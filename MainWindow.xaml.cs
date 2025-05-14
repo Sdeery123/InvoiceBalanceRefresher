@@ -16,6 +16,8 @@ using System.Linq;
 using System.Globalization;
 using System.Windows.Input;
 using Microsoft.Win32.TaskScheduler;
+using System.Diagnostics;
+using System.Windows.Media.Animation;
 
 namespace InvoiceBalanceRefresher
 {
@@ -44,6 +46,7 @@ namespace InvoiceBalanceRefresher
         public ICommand SwitchLightModeCommand => new RelayCommand(param => LightMode_Click(this, new RoutedEventArgs()));
         public ICommand SwitchDarkModeCommand => new RelayCommand(param => DarkMode_Click(this, new RoutedEventArgs()));
         public ICommand CycleCredentialSetsCommand => new RelayCommand(param => CycleCredentialSets());
+        public ICommand ToggleConsoleCommand => new RelayCommand(param => ToggleConsole());
 
 
         // Application version
@@ -53,11 +56,16 @@ namespace InvoiceBalanceRefresher
         {
             InitializeComponent();
 
+            
+
             // Initialize helpers and services
             _loggingHelper = new LoggingHelper(ConsoleLog, paragraph => {
                 ConsoleLog.Document.Blocks.Add(paragraph);
                 ConsoleLog.ScrollToEnd();
             });
+
+            // Check for command line arguments immediately after initialization
+            ProcessCommandLineArguments();
 
             // Load maintenance settings
             _maintenanceConfig = MaintenanceConfig.Load() ?? new MaintenanceConfig
@@ -177,10 +185,262 @@ namespace InvoiceBalanceRefresher
             // Add this call at the end of your MainWindow constructor
             RefreshSchedulerTab();
 
+            // In the MainWindow constructor, after initializing other components
+            InitializeTaskSchedulerTab();
+
+
 
             // Log startup
             Log(LogLevel.Info, $"Invoice Balance Refresher v{APP_VERSION} started");
             Log(LogLevel.Info, "Keyboard shortcuts initialized");
+        }
+
+
+
+        private void ProcessCommandLineArguments()
+        {
+            try
+            {
+                string[] args = Environment.GetCommandLineArgs();
+                Log(LogLevel.Debug, $"Application started with {args.Length} arguments");
+
+                for (int i = 0; i < args.Length; i++)
+                {
+                    Log(LogLevel.Debug, $"Arg[{i}]: {args[i]}");
+                }
+
+                // Check for --schedule parameter
+                int scheduleIndex = Array.IndexOf(args, "--schedule");
+                if (scheduleIndex >= 0 && scheduleIndex < args.Length - 1)
+                {
+                    string taskIdStr = args[scheduleIndex + 1];
+                    Log(LogLevel.Info, $"Application started with --schedule {taskIdStr}");
+
+                    if (Guid.TryParse(taskIdStr, out Guid taskId))
+                    {
+                        // We need to ensure the ScheduleManager is initialized before using it
+                        // We can't use the same initialization code as in the constructor
+                        // because it references UI elements which might not be ready yet
+
+                        // Create a simple initialization that doesn't depend on UI
+                        InitializeMinimalForScheduledTask();
+
+                        // Execute the task in a delayed manner to ensure all components are initialized
+                        Dispatcher.BeginInvoke(new System.Action(async () =>
+                        {
+                            try
+                            {
+                                Log(LogLevel.Info, $"Attempting to run scheduled task: {taskId}");
+
+                                // Find the task by ID
+                                var task = _scheduleManager.ScheduledTasks.FirstOrDefault(t => t.Id == taskId);
+                                if (task != null)
+                                {
+                                    Log(LogLevel.Info, $"Found task: {task.Name}, running it now...");
+
+                                    // Run the task
+                                    bool success = await ProcessBatchInternal(
+                                        task.BillerGUID,
+                                        task.WebServiceKey,
+                                        task.CsvFilePath,
+                                        task.HasAccountNumbers);
+
+                                    // Update task details
+                                    task.LastRunTime = DateTime.Now;
+                                    task.LastRunSuccessful = success;
+                                    task.LastRunResult = success ? "Success" : "Failed";
+                                    _scheduleManager.UpdateSchedule(task);
+
+                                    Log(LogLevel.Info, $"Scheduled task {task.Name} completed with result: {(success ? "Success" : "Failed")}");
+                                }
+                                else
+                                {
+                                    Log(LogLevel.Error, $"Task with ID {taskId} not found");
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Log(LogLevel.Error, $"Error running task from command line: {ex.Message}");
+                            }
+                            finally
+                            {
+                                // Always exit after processing a scheduled task from command line
+                                Log(LogLevel.Info, "Exiting application after scheduled task execution");
+                                Application.Current.Shutdown();
+                            }
+                        }), DispatcherPriority.ApplicationIdle);
+                    }
+                    else
+                    {
+                        Log(LogLevel.Error, $"Invalid task ID format: {taskIdStr}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Can't use Log here if not initialized yet
+                Console.WriteLine($"Error processing command line arguments: {ex.Message}");
+            }
+        }
+
+        private void InitializeMinimalForScheduledTask()
+        {
+            try
+            {
+                // Create a local minimal context instead of reassigning readonly fields
+                var minimalLoggingHelper = new LoggingHelper(null!, null!);
+
+                var minimalApiService = new InvoiceCloudApiService((level, message) =>
+                    minimalLoggingHelper.Log((LogLevel)(int)level, message));
+
+                var minimalBatchProcessingHelper = new BatchProcessingHelper(
+                    minimalApiService,
+                    (level, message) => minimalLoggingHelper.Log(level, message));
+
+                // Get a new instance instead of reassigning the readonly field
+                var minimalScheduleManager = ScheduleManager.GetInstance(
+                    (message) => minimalLoggingHelper.Log(LogLevel.Info, message),
+                    async (billerGUID, webServiceKey, csvFilePath, hasAccountNumbers, defaultAccountNumber) =>
+                    {
+                        // Changed ProcessBatchInternal to ProcessBatchFile which actually exists
+                        return await minimalBatchProcessingHelper.ProcessBatchFile(
+                            billerGUID, webServiceKey, csvFilePath, hasAccountNumbers, defaultAccountNumber);
+                    });
+
+                // Process the command line task using the minimal context
+                ProcessCommandLineTask(minimalScheduleManager, minimalBatchProcessingHelper);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error initializing minimal components: {ex.Message}");
+            }
+        }
+
+
+        // Method to toggle the console programmatically
+        // Method to toggle the console programmatically
+        private void ToggleConsole()
+        {
+            if (ConsoleToggleButton != null)
+            {
+                ConsoleToggleButton.IsChecked = !ConsoleToggleButton.IsChecked;
+            }
+        }
+
+        // Handler for the checked event
+        private void ConsoleToggle_Checked(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // Begin the expand animation
+                var storyboard = (Storyboard)FindResource("ExpandConsole");
+                if (ConsoleLog != null)
+                {
+                    storyboard.Begin(ConsoleLog);
+                }
+                else
+                {
+                    Log(LogLevel.Warning, "Console log control not initialized when trying to expand");
+                }
+
+                // Rotate icon to point down
+                if (ConsoleToggleIcon != null)
+                {
+                    ConsoleToggleIcon.Data = Geometry.Parse("M7,10L12,15L17,10H7Z");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log(LogLevel.Error, $"Error expanding console: {ex.Message}");
+            }
+        }
+
+        // Handler for the unchecked event
+        private void ConsoleToggle_Unchecked(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // Begin the collapse animation
+                var storyboard = (Storyboard)FindResource("CollapseConsole");
+                if (ConsoleLog != null)
+                {
+                    storyboard.Begin(ConsoleLog);
+                }
+                else
+                {
+                    Log(LogLevel.Warning, "Console log control not initialized when trying to collapse");
+                }
+
+                // Rotate icon to point up
+                if (ConsoleToggleIcon != null)
+                {
+                    ConsoleToggleIcon.Data = Geometry.Parse("M7,15L12,10L17,15H7Z");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log(LogLevel.Error, $"Error collapsing console: {ex.Message}");
+            }
+        }
+
+
+        private void ProcessCommandLineTask(ScheduleManager scheduleManager, BatchProcessingHelper batchProcessingHelper)
+        {
+            string[] args = Environment.GetCommandLineArgs();
+            int scheduleIndex = Array.IndexOf(args, "--schedule");
+
+            if (scheduleIndex >= 0 && scheduleIndex < args.Length - 1)
+            {
+                string taskIdStr = args[scheduleIndex + 1];
+                Console.WriteLine($"Processing command line task with ID: {taskIdStr}");
+
+                if (Guid.TryParse(taskIdStr, out Guid taskId))
+                {
+                    // Find and execute the task
+                    // Find and execute the task
+                    Dispatcher.BeginInvoke(new System.Action(async () =>
+                    {
+                        try
+                        {
+                            // Find the task by ID
+                            var task = scheduleManager.ScheduledTasks.FirstOrDefault(t => t.Id == taskId);
+                            if (task != null)
+                            {
+                                Console.WriteLine($"Found task: {task.Name}, running it now...");
+
+                                // Changed ProcessBatchInternal to ProcessBatchFile
+                                bool success = await batchProcessingHelper.ProcessBatchFile(
+                                    task.BillerGUID,
+                                    task.WebServiceKey,
+                                    task.CsvFilePath,
+                                    task.HasAccountNumbers);
+
+                                // Update task details
+                                task.LastRunTime = DateTime.Now;
+                                task.LastRunSuccessful = success;
+                                task.LastRunResult = success ? "Success" : "Failed";
+                                scheduleManager.UpdateSchedule(task);
+
+                                Console.WriteLine($"Task completed with result: {(success ? "Success" : "Failed")}");
+                            }
+                            else
+                            {
+                                Console.WriteLine($"Task with ID {taskId} not found");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Error running task from command line: {ex.Message}");
+                        }
+                        finally
+                        {
+                            // Always exit after processing a scheduled task from command line
+                            Console.WriteLine("Exiting application after task execution");
+                            Application.Current.Shutdown();
+                        }
+                    }), DispatcherPriority.ApplicationIdle);
+                }
+            }
         }
 
 
@@ -2706,6 +2966,207 @@ namespace InvoiceBalanceRefresher
             }
         }
 
+        #region Windows Task Scheduler
+
+        private void InitializeTaskSchedulerTab()
+        {
+            // Refresh the task list when tab is initialized
+            RefreshTaskSchedulerList();
+
+            // Ensure the ComboBox has a selected item
+            if (WindowsTaskScheduleComboBox.Items.Count > 0 && WindowsTaskScheduleComboBox.SelectedIndex == -1)
+            {
+                WindowsTaskScheduleComboBox.SelectedIndex = 0;
+            }
+        }
+
+        private void RefreshTaskSchedulerList()
+        {
+            try
+            {
+                // Save current selection
+                object currentSelection = WindowsTaskScheduleComboBox.SelectedItem;
+
+                TaskSchedulerTaskList.ItemsSource = _scheduleManager.ScheduledTasks;
+                Log(LogLevel.Info, "Refreshed task scheduler task list");
+
+                // Ensure the ComboBox has a selected item
+                if (WindowsTaskScheduleComboBox.Items.Count > 0)
+                {
+                    if (currentSelection != null)
+                    {
+                        // Try to restore previous selection
+                        WindowsTaskScheduleComboBox.SelectedItem = currentSelection;
+                    }
+
+                    // If nothing is selected, select the first item
+                    if (WindowsTaskScheduleComboBox.SelectedIndex == -1)
+                    {
+                        WindowsTaskScheduleComboBox.SelectedIndex = 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log(LogLevel.Error, $"Error refreshing task list: {ex.Message}");
+            }
+        }
+
+
+
+        private void TaskSchedulerTaskList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            try
+            {
+                var selectedTask = TaskSchedulerTaskList.SelectedItem as ScheduledTask;
+                if (selectedTask != null)
+                {
+                    // Generate suggested Windows task name
+                    WindowsTaskNameTextBox.Text = $"InvoiceBalanceRefresher - {selectedTask.Name}";
+
+                    // Generate the command line that would be used
+                    var exePath = Process.GetCurrentProcess().MainModule?.FileName
+                        ?? System.Reflection.Assembly.GetExecutingAssembly().Location;
+                    CommandLineTextBox.Text = $"\"{exePath}\" --schedule {selectedTask.Id}";
+
+                    Log(LogLevel.Debug, $"Selected task for Windows Task Scheduler: {selectedTask.Name}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log(LogLevel.Error, $"Error selecting task: {ex.Message}");
+            }
+        }
+
+        private void RefreshTaskList_Click(object sender, RoutedEventArgs e)
+        {
+            RefreshTaskSchedulerList();
+        }
+
+        private void TestWindowsTask_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var selectedTask = TaskSchedulerTaskList.SelectedItem as ScheduledTask;
+                if (selectedTask == null)
+                {
+                    MessageBox.Show("Please select a task to test.", "No Task Selected",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                TaskSchedulerStatusText.Text = "Running task...";
+                Log(LogLevel.Info, $"Starting to run task: {selectedTask.Name}");
+
+                // Run the task directly through the RunScheduledTask method
+                RunScheduledTask(selectedTask);
+            }
+            catch (Exception ex)
+            {
+                Log(LogLevel.Error, $"Error in test task button click: {ex.Message}");
+                TaskSchedulerStatusText.Text = $"Error: {ex.Message}";
+                TaskSchedulerStatusText.Foreground = (SolidColorBrush)FindResource("ErrorBrush");
+            }
+        }
+
+        private void CreateWindowsTask_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var selectedTask = TaskSchedulerTaskList.SelectedItem as ScheduledTask;
+                if (selectedTask == null)
+                {
+                    MessageBox.Show("Please select a task to schedule.", "No Task Selected",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                string taskName = WindowsTaskNameTextBox.Text.Trim();
+                if (string.IsNullOrWhiteSpace(taskName))
+                {
+                    MessageBox.Show("Please enter a name for the Windows scheduled task.",
+                        "Task Name Required", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                // Get selected schedule type
+                var scheduleComboItem = WindowsTaskScheduleComboBox.SelectedItem as ComboBoxItem;
+                if (scheduleComboItem == null)
+                {
+                    MessageBox.Show("Please select a schedule type.", "Schedule Required",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                string scheduleType = scheduleComboItem.Content?.ToString() ?? "Daily";
+
+                // Get application path
+                string exePath = Process.GetCurrentProcess().MainModule?.FileName
+                    ?? System.Reflection.Assembly.GetExecutingAssembly().Location;
+                string arguments = $"--schedule {selectedTask.Id}";
+
+                // Create the task using Windows Task Scheduler API
+                using (TaskService ts = new TaskService())
+                {
+                    TaskDefinition td = ts.NewTask();
+                    td.RegistrationInfo.Description = $"Runs Invoice Balance Refresher with task: {selectedTask.Name}";
+
+                    // Set the action (run the program)
+                    td.Actions.Add(new ExecAction(exePath, arguments, AppDomain.CurrentDomain.BaseDirectory));
+
+                    // Configure the trigger based on selected schedule
+                    switch (scheduleType)
+                    {
+                        case "Daily":
+                            td.Triggers.Add(new DailyTrigger { DaysInterval = 1 });
+                            break;
+                        case "Weekly":
+                            td.Triggers.Add(new WeeklyTrigger { DaysOfWeek = DaysOfTheWeek.Monday });
+                            break;
+                        case "Monthly":
+                            td.Triggers.Add(new MonthlyTrigger { DaysOfMonth = new int[] { 1 } });
+                            break;
+                        case "At startup":
+                            td.Triggers.Add(new BootTrigger());
+                            break;
+                        case "On idle":
+                            td.Triggers.Add(new IdleTrigger());
+                            break;
+                        default:
+                            td.Triggers.Add(new DailyTrigger { DaysInterval = 1 });
+                            break;
+                    }
+
+                    // Set additional settings
+                    td.Settings.Hidden = false;
+                    td.Settings.StartWhenAvailable = true;
+                    td.Settings.RunOnlyIfNetworkAvailable = true;
+                    td.Principal.LogonType = TaskLogonType.InteractiveToken;
+
+                    // Register the task
+                    ts.RootFolder.RegisterTaskDefinition(taskName, td);
+
+                    Log(LogLevel.Info, $"Created Windows scheduled task '{taskName}' for task '{selectedTask.Name}'");
+
+                    TaskSchedulerStatusText.Text = $"Task '{taskName}' created successfully in Windows Task Scheduler.";
+                    TaskSchedulerStatusText.Foreground = (SolidColorBrush)FindResource("SuccessBrush");
+
+                    MessageBox.Show($"Windows scheduled task '{taskName}' created successfully!",
+                        "Task Created", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log(LogLevel.Error, $"Error creating Windows scheduled task: {ex.Message}");
+                TaskSchedulerStatusText.Text = $"Error creating task: {ex.Message}";
+                TaskSchedulerStatusText.Foreground = (SolidColorBrush)FindResource("ErrorBrush");
+
+                MessageBox.Show($"Error creating Windows scheduled task: {ex.Message}",
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        #endregion Windows Task Scheduler
 
 
         /// <summary>
@@ -2888,8 +3349,17 @@ namespace InvoiceBalanceRefresher
 
         private void Log(LogLevel level, string message)
         {
-            _loggingHelper.Log(level, message);
+            if (_loggingHelper != null)
+            {
+                _loggingHelper.Log(level, message);
+            }
+            else
+            {
+                // Fallback for logging before _loggingHelper is initialized
+                Console.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] [{level}] {message}");
+            }
         }
+
 
         #endregion
 

@@ -1,149 +1,600 @@
 <Window x:Class="InvoiceBalanceRefresher.RateLimitingSettingsDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="API Rate Limiting Settings" Height="450" Width="550" 
-        WindowStartupLocation="CenterOwner" ResizeMode="NoResize">
-    
+        Title="API Rate Limiting Settings" Height="560" Width="620"
+        WindowStartupLocation="CenterOwner"
+        Background="Transparent"
+        AllowsTransparency="True"
+        WindowStyle="None"
+        BorderThickness="0"
+        FontFamily="Segoe UI">
+
     <Window.Resources>
-        <!-- Reuse existing style resources from MainWindow -->
+        <!-- Enhanced Animation Resources -->
+        <Storyboard x:Key="FadeIn">
+            <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.4">
+                <DoubleAnimation.EasingFunction>
+                    <QuinticEase EasingMode="EaseOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+        </Storyboard>
+
+        <Storyboard x:Key="SlideIn">
+            <ThicknessAnimation Storyboard.TargetProperty="Margin" From="0,20,0,0" To="0,0,0,0" Duration="0:0:0.4">
+                <ThicknessAnimation.EasingFunction>
+                    <QuinticEase EasingMode="EaseOut"/>
+                </ThicknessAnimation.EasingFunction>
+            </ThicknessAnimation>
+        </Storyboard>
+
+        <!-- Enhanced color scheme -->
+        <LinearGradientBrush x:Key="WindowBackgroundBrush" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#F0F4F8" Offset="0"/>
+            <GradientStop Color="#E9F2FF" Offset="1"/>
+        </LinearGradientBrush>
+
+        <LinearGradientBrush x:Key="CardBackgroundBrush" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#FFFFFF" Offset="0"/>
+            <GradientStop Color="#F8FAFF" Offset="1"/>
+        </LinearGradientBrush>
+
+        <SolidColorBrush x:Key="ForegroundBrush" Color="#2C3E50"/>
+        <SolidColorBrush x:Key="BorderBrush" Color="#D0E1F9"/>
+        <SolidColorBrush x:Key="HighlightBrush" Color="#E6F2FF"/>
+
+        <LinearGradientBrush x:Key="GroupBackgroundBrush" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#F7FAFF" Offset="0"/>
+            <GradientStop Color="#F0F7FF" Offset="1"/>
+        </LinearGradientBrush>
+
+        <LinearGradientBrush x:Key="ConsoleBackgroundBrush" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#EEF5FF" Offset="0"/>
+            <GradientStop Color="#E5F0FF" Offset="1"/>
+        </LinearGradientBrush>
+
+        <SolidColorBrush x:Key="SeparatorBrush" Color="#CFE2FF"/>
+
+        <!-- Enhanced Colors -->
+        <SolidColorBrush x:Key="PrimaryBrush" Color="#2563EB"/>
+        <SolidColorBrush x:Key="PrimaryLightBrush" Color="#4B83F0"/>
+        <SolidColorBrush x:Key="SecondaryBrush" Color="#10B981"/>
+        <SolidColorBrush x:Key="AccentBrush" Color="#16A34A"/>
+        <SolidColorBrush x:Key="AccentAltBrush" Color="#8B5CF6"/>
+        <SolidColorBrush x:Key="CharcoalBrush" Color="#1E293B"/>
+        <SolidColorBrush x:Key="WarningBrush" Color="#F59E0B"/>
+        <SolidColorBrush x:Key="ErrorBrush" Color="#EF4444"/>
+        <SolidColorBrush x:Key="SuccessBrush" Color="#22C55E"/>
+        <SolidColorBrush x:Key="InfoBrush" Color="#3B82F6"/>
+        <SolidColorBrush x:Key="MintGreenBrush" Color="#10B981"/>
+        <SolidColorBrush x:Key="MintGreenLightBrush" Color="#34D399"/>
+
+        <LinearGradientBrush x:Key="ButtonBackgroundBrush" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#10B981" Offset="0"/>
+            <GradientStop Color="#0EA271" Offset="1"/>
+        </LinearGradientBrush>
+
+        <SolidColorBrush x:Key="ButtonForegroundBrush" Color="#FFFFFF"/>
+
+        <!-- Typography Styles -->
+        <Style x:Key="HeaderTextBlockStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="22"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+            <Setter Property="Margin" Value="0,0,0,16"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect ShadowDepth="1" Direction="320" Opacity="0.2" BlurRadius="2" Color="#2563EB"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Section Header Style -->
         <Style x:Key="SectionHeader" TargetType="TextBlock">
             <Setter Property="FontSize" Value="16"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="Margin" Value="0,10,0,5"/>
-        </Style>
-        
-        <Style x:Key="DescriptionText" TargetType="TextBlock">
-            <Setter Property="TextWrapping" Value="Wrap"/>
-            <Setter Property="Margin" Value="0,0,0,10"/>
-        </Style>
-        
-        <Style x:Key="SettingLabel" TargetType="TextBlock">
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Margin" Value="0,5,0,5"/>
+            <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+            <Setter Property="Margin" Value="0,20,0,10"/>
         </Style>
-        
+
+        <!-- Enhanced Description Text Style -->
+        <Style x:Key="DescriptionText" TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,0,0,16"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Foreground" Value="{StaticResource ForegroundBrush}"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="LineHeight" Value="20"/>
+            <Setter Property="Opacity" Value="0.85"/>
+        </Style>
+
+        <!-- Enhanced Setting Label Style -->
+        <Style x:Key="SettingLabel" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,8,10,8"/>
+            <Setter Property="Foreground" Value="{StaticResource CharcoalBrush}"/>
+            <Setter Property="FontSize" Value="13"/>
+        </Style>
+
+        <!-- Enhanced Setting Help Style -->
         <Style x:Key="SettingHelp" TargetType="TextBlock">
             <Setter Property="FontStyle" Value="Italic"/>
             <Setter Property="TextWrapping" Value="Wrap"/>
-            <Setter Property="Margin" Value="0,0,0,10"/>
-            <Setter Property="Opacity" Value="0.8"/>
+            <Setter Property="Margin" Value="0,4,0,16"/>
+            <Setter Property="Opacity" Value="0.7"/>
             <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{StaticResource ForegroundBrush}"/>
+            <Setter Property="LineHeight" Value="16"/>
+        </Style>
+
+        <!-- Enhanced TextBox Style -->
+        <Style x:Key="SettingsTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Margin" Value="0,8,0,8"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="Background" Value="{StaticResource GroupBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource ForegroundBrush}"/>
+            <Setter Property="CaretBrush" Value="{StaticResource PrimaryBrush}"/>
+            <Setter Property="SelectionBrush" Value="{StaticResource PrimaryLightBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type TextBox}">
+                        <Border x:Name="border" CornerRadius="8" Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
+                                SnapsToDevicePixels="True">
+                            <ScrollViewer x:Name="PART_ContentHost" Focusable="false" 
+                                         Padding="{TemplateBinding Padding}"
+                                         SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="true">
+                                <Setter Property="BorderBrush" TargetName="border" Value="{StaticResource PrimaryLightBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="true">
+                                <Setter Property="BorderBrush" TargetName="border" Value="{StaticResource PrimaryBrush}"/>
+                                <Setter Property="BorderThickness" TargetName="border" Value="2"/>
+                                <Setter Property="Effect" TargetName="border">
+                                    <Setter.Value>
+                                        <DropShadowEffect BlurRadius="6" Direction="315" ShadowDepth="1" Opacity="0.1" Color="#3B82F6"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Enhanced CheckBox Style -->
+        <Style x:Key="CheckBoxStyle" TargetType="CheckBox">
+            <Setter Property="Margin" Value="0,12,0,16"/>
+            <Setter Property="Foreground" Value="{StaticResource ForegroundBrush}"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <Grid x:Name="templateRoot" Background="Transparent">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border x:Name="checkBoxBorder" BorderBrush="{StaticResource BorderBrush}" BorderThickness="2" 
+                                   Background="{StaticResource GroupBackgroundBrush}" CornerRadius="6" 
+                                   Width="20" Height="20" VerticalAlignment="Center">
+                                <Path x:Name="checkMark" Data="M2,8 L6,12 L12,3" Stroke="{StaticResource MintGreenBrush}"
+                                     StrokeThickness="2" Stretch="Uniform" Margin="2" Visibility="Collapsed"/>
+                            </Border>
+                            <ContentPresenter x:Name="contentPresenter" Grid.Column="1" Margin="12,0,0,0" 
+                                            HorizontalAlignment="Left" VerticalAlignment="Center" 
+                                            RecognizesAccessKey="True"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter Property="Visibility" TargetName="checkMark" Value="Visible"/>
+                                <Setter Property="BorderBrush" TargetName="checkBoxBorder" Value="{StaticResource MintGreenBrush}"/>
+                                <Setter Property="Background" TargetName="checkBoxBorder" Value="#F0FDFA"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="BorderBrush" TargetName="checkBoxBorder" Value="{StaticResource PrimaryLightBrush}"/>
+                                <Setter Property="Effect" TargetName="checkBoxBorder">
+                                    <Setter.Value>
+                                        <DropShadowEffect BlurRadius="4" Direction="315" ShadowDepth="1" Opacity="0.1" Color="#3B82F6"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Action Button Style -->
+        <Style x:Key="ActionButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource ButtonBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource ButtonForegroundBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="20,12"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border x:Name="border" CornerRadius="10" Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
+                            <ContentPresenter x:Name="contentPresenter" ContentTemplate="{TemplateBinding ContentTemplate}" 
+                                             Content="{TemplateBinding Content}" HorizontalAlignment="Center" 
+                                             VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background">
+                                    <Setter.Value>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                            <GradientStop Color="#34D399" Offset="0"/>
+                                            <GradientStop Color="#10B981" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect BlurRadius="12" Direction="315" ShadowDepth="3" Opacity="0.25" Color="#10B981"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background">
+                                    <Setter.Value>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                            <GradientStop Color="#059669" Offset="0"/>
+                                            <GradientStop Color="#047857" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter Property="Opacity" Value="0.9"/>
+                                <Setter Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.98" ScaleY="0.98"/>
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect BlurRadius="6" Direction="315" ShadowDepth="1" Opacity="0.15" Color="#10B981"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Secondary Button Style -->
+        <Style x:Key="SecondaryButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource CharcoalBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1.5"/>
+            <Setter Property="Padding" Value="16,12"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border x:Name="border" CornerRadius="10" Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
+                            <ContentPresenter x:Name="contentPresenter" ContentTemplate="{TemplateBinding ContentTemplate}" 
+                                             Content="{TemplateBinding Content}" HorizontalAlignment="Center" 
+                                             VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="{StaticResource HighlightBrush}"/>
+                                <Setter Property="BorderBrush" Value="{StaticResource PrimaryLightBrush}"/>
+                                <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="{StaticResource HighlightBrush}"/>
+                                <Setter Property="Opacity" Value="0.8"/>
+                                <Setter Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.98" ScaleY="0.98"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Reset Button Style -->
+        <Style x:Key="ResetButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource AccentAltBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource AccentAltBrush}"/>
+            <Setter Property="BorderThickness" Value="1.5"/>
+            <Setter Property="Padding" Value="16,12"/>
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border x:Name="border" CornerRadius="10" Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
+                            <ContentPresenter x:Name="contentPresenter" ContentTemplate="{TemplateBinding ContentTemplate}" 
+                                             Content="{TemplateBinding Content}" HorizontalAlignment="Center" 
+                                             VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#F5F3FF"/>
+                                <Setter Property="BorderBrush" Value="#A78BFA"/>
+                                <Setter Property="Foreground" Value="#7C3AED"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#F5F3FF"/>
+                                <Setter Property="Opacity" Value="0.8"/>
+                                <Setter Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.98" ScaleY="0.98"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Section Card Style -->
+        <Style x:Key="SectionCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource GroupBackgroundBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="20"/>
+            <Setter Property="Margin" Value="0,0,0,16"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect BlurRadius="10" Direction="315" ShadowDepth="2" Opacity="0.08" Color="#3B82F6"/>
+                </Setter.Value>
+            </Setter>
         </Style>
     </Window.Resources>
-    
-    <Grid Margin="20">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
-        
-        <!-- Header -->
-        <TextBlock Grid.Row="0" Text="API Rate Limiting Configuration" 
-                   FontSize="20" FontWeight="Bold" Margin="0,0,0,10"/>
-        
-        <!-- Description -->
-        <TextBlock Grid.Row="1" Style="{StaticResource DescriptionText}">
-            Configure how the application manages API request rates to prevent overloading the server. 
-            Proper rate limiting helps avoid server-side throttling and ensures reliable operation.
-        </TextBlock>
-        
-        <!-- Enable/Disable Checkbox -->
-        <CheckBox Grid.Row="2" x:Name="EnableRateLimitingCheckBox" Content="Enable Rate Limiting" 
-                  Margin="0,10,0,10" FontWeight="SemiBold" Checked="EnableRateLimitingCheckBox_Changed" 
-                  Unchecked="EnableRateLimitingCheckBox_Changed"/>
-        
-        <!-- Settings Panel -->
-        <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto">
-            <StackPanel Margin="10,0,10,0">
-                <!-- Request Interval Settings -->
-                <TextBlock Text="Request Spacing" Style="{StaticResource SectionHeader}"/>
-                <TextBlock Style="{StaticResource DescriptionText}">
-                    Controls the minimum time between consecutive API requests
-                </TextBlock>
-                
-                <Grid Margin="0,5,0,5">
+
+    <!-- Main Window Content with Enhanced Layout -->
+    <Border Background="{StaticResource WindowBackgroundBrush}" CornerRadius="16">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="20" Direction="315" ShadowDepth="3" Opacity="0.15" Color="#3B82F6"/>
+        </Border.Effect>
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="60"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Title Bar with Close Button -->
+            <Border Grid.Row="0" Background="Transparent" BorderThickness="0" CornerRadius="16,16,0,0">
+                <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="220"/>
                         <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="Minimum time between requests (ms):" 
-                               Style="{StaticResource SettingLabel}"/>
-                    <TextBox Grid.Column="1" x:Name="RequestIntervalTextBox" Width="100" 
-                             HorizontalAlignment="Left"/>
+
+                    <!-- Title with icon -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="24,0,0,0" VerticalAlignment="Center">
+                        <Path Width="24" Height="24" Margin="0,0,12,0" Fill="{StaticResource PrimaryBrush}" Stretch="Uniform" 
+                              Data="M15,15H11V17H15V15M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M19,19H5V5H19V19M11,7H13V9H11V7M15,11H17V13H15V11M15,7H17V9H15V7M11,11H13V13H11V11M11,15H13V17H11V15M7,7H9V9H7V7M7,11H9V13H7V11M7,15H9V17H7V15Z"/>
+
+                        <TextBlock Text="API RATE LIMITING SETTINGS" Style="{StaticResource HeaderTextBlockStyle}" Margin="0"/>
+                    </StackPanel>
+
+                    <!-- Close Button -->
+                    <Button Grid.Column="1" Margin="0,0,16,0" Width="36" Height="36" 
+                            BorderThickness="0" Background="Transparent" Cursor="Hand"
+                            Click="CancelButton_Click">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="border" Background="Transparent" CornerRadius="10">
+                                    <Path x:Name="closePath" Width="14" Height="14" Stretch="Uniform"
+                                          Data="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"
+                                          Fill="{StaticResource ForegroundBrush}" Stroke="{StaticResource ForegroundBrush}"
+                                          StrokeThickness="0.5"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="{StaticResource HighlightBrush}" TargetName="border"/>
+                                        <Setter Property="RenderTransform" TargetName="closePath">
+                                            <Setter.Value>
+                                                <ScaleTransform ScaleX="1.1" ScaleY="1.1"/>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Setter Property="RenderTransformOrigin" TargetName="closePath" Value="0.5,0.5"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
                 </Grid>
-                <TextBlock Style="{StaticResource SettingHelp}">
-                    Higher values reduce server load but increase total processing time. 
-                    Recommended: 300-1000ms depending on server capacity.
-                </TextBlock>
-                
-                <!-- Threshold Settings -->
-                <TextBlock Text="Bulk Processing Protection" Style="{StaticResource SectionHeader}"/>
-                <TextBlock Style="{StaticResource DescriptionText}">
-                    Adds longer pauses after processing many consecutive requests
-                </TextBlock>
-                
-                <Grid Margin="0,5,0,5">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="220"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="Request threshold count:" 
-                               Style="{StaticResource SettingLabel}"/>
-                    <TextBox Grid.Column="1" x:Name="RequestThresholdTextBox" Width="100" 
-                             HorizontalAlignment="Left"/>
-                </Grid>
-                <TextBlock Style="{StaticResource SettingHelp}">
-                    How many requests to process before applying a longer cooldown period
-                </TextBlock>
-                
-                <Grid Margin="0,5,0,5">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="220"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="Cooldown period (ms):" 
-                               Style="{StaticResource SettingLabel}"/>
-                    <TextBox Grid.Column="1" x:Name="CooldownPeriodTextBox" Width="100" 
-                             HorizontalAlignment="Left"/>
-                </Grid>
-                <TextBlock Style="{StaticResource SettingHelp}">
-                    Length of the cooldown pause after hitting the request threshold
-                </TextBlock>
-                
-                <!-- Rate Limit Response Settings -->
-                <TextBlock Text="Rate Limit Response Handling" Style="{StaticResource SectionHeader}"/>
-                <TextBlock Style="{StaticResource DescriptionText}">
-                    Controls how to react when the server indicates we're sending too many requests
-                </TextBlock>
-                
-                <Grid Margin="0,5,0,5">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="220"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="429 Retry delay (ms):" 
-                               Style="{StaticResource SettingLabel}"/>
-                    <TextBox Grid.Column="1" x:Name="RateLimitRetryDelayTextBox" Width="100" 
-                             HorizontalAlignment="Left"/>
-                </Grid>
-                <TextBlock Style="{StaticResource SettingHelp}">
-                    How long to wait after receiving a 429 (Too Many Requests) response before retrying
-                </TextBlock>
-            </StackPanel>
-        </ScrollViewer>
-        
-        <!-- Buttons -->
-        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
-            <Button Content="Reset to Defaults" Width="130" Height="30" Margin="0,0,10,0" 
-                    Click="ResetButton_Click"/>
-            <Button Content="Cancel" Width="80" Height="30" Margin="0,0,10,0" 
-                    Click="CancelButton_Click"/>
-            <Button Content="Save Settings" Width="100" Height="30" 
-                    Click="SaveButton_Click"/>
-        </StackPanel>
-    </Grid>
+            </Border>
+
+            <!-- Main Content -->
+            <Border Grid.Row="1" Margin="24,0,24,0" Background="Transparent" BorderThickness="0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="0,0,6,0">
+                        <!-- Description Panel -->
+                        <Border Style="{StaticResource SectionCardStyle}">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource DescriptionText}">
+                                    Configure how the application manages API request rates to prevent overloading the server. 
+                                    Proper rate limiting helps avoid server-side throttling and ensures reliable operation.
+                                </TextBlock>
+
+                                <!-- Enable/Disable Checkbox -->
+                                <CheckBox x:Name="EnableRateLimitingCheckBox" Content="Enable Rate Limiting" 
+                                          Style="{StaticResource CheckBoxStyle}" Margin="0,8,0,0"
+                                          Checked="EnableRateLimitingCheckBox_Changed" 
+                                          Unchecked="EnableRateLimitingCheckBox_Changed"/>
+
+                                <!-- Info Panel -->
+                                <Border Background="{StaticResource InfoBrush}" Opacity="0.1" 
+                                        CornerRadius="8" Padding="16" Margin="0,8,0,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z" 
+                                             Fill="{StaticResource InfoBrush}" Width="18" Height="18" Margin="0,0,12,0" 
+                                             VerticalAlignment="Top"/>
+                                        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource InfoBrush}"
+                                                  LineHeight="20" FontSize="13">
+                                            Rate limiting is <Bold>strongly recommended</Bold> to prevent API service disruptions. 
+                                            Disabling it may lead to your API access being temporarily suspended by the service provider.
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Request Interval Settings -->
+                        <Border Style="{StaticResource SectionCardStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Request Spacing" Style="{StaticResource SectionHeader}" Margin="0,0,0,10"/>
+                                <TextBlock Style="{StaticResource DescriptionText}">
+                                    Controls the minimum time between consecutive API requests
+                                </TextBlock>
+
+                                <Grid Margin="0,8,0,5">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="220"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Minimum time between requests (ms):" 
+                                               Style="{StaticResource SettingLabel}"/>
+                                    <TextBox Grid.Column="1" x:Name="RequestIntervalTextBox" Width="120" 
+                                             Style="{StaticResource SettingsTextBoxStyle}" HorizontalAlignment="Left"/>
+                                </Grid>
+                                <TextBlock Style="{StaticResource SettingHelp}">
+                                    Higher values reduce server load but increase total processing time. 
+                                    Recommended: 300-1000ms depending on server capacity.
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Threshold Settings -->
+                        <Border Style="{StaticResource SectionCardStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Bulk Processing Protection" Style="{StaticResource SectionHeader}" Margin="0,0,0,10"/>
+                                <TextBlock Style="{StaticResource DescriptionText}">
+                                    Adds longer pauses after processing many consecutive requests
+                                </TextBlock>
+
+                                <Grid Margin="0,8,0,5">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="220"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Request threshold count:" 
+                                               Style="{StaticResource SettingLabel}"/>
+                                    <TextBox Grid.Column="1" x:Name="RequestThresholdTextBox" Width="120" 
+                                             Style="{StaticResource SettingsTextBoxStyle}" HorizontalAlignment="Left"/>
+                                </Grid>
+                                <TextBlock Style="{StaticResource SettingHelp}">
+                                    How many requests to process before applying a longer cooldown period
+                                </TextBlock>
+
+                                <Grid Margin="0,8,0,5">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="220"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Cooldown period (ms):" 
+                                               Style="{StaticResource SettingLabel}"/>
+                                    <TextBox Grid.Column="1" x:Name="CooldownPeriodTextBox" Width="120" 
+                                             Style="{StaticResource SettingsTextBoxStyle}" HorizontalAlignment="Left"/>
+                                </Grid>
+                                <TextBlock Style="{StaticResource SettingHelp}">
+                                    Length of the cooldown pause after hitting the request threshold
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Rate Limit Response Settings -->
+                        <Border Style="{StaticResource SectionCardStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Rate Limit Response Handling" Style="{StaticResource SectionHeader}" Margin="0,0,0,10"/>
+                                <TextBlock Style="{StaticResource DescriptionText}">
+                                    Controls how to react when the server indicates we're sending too many requests
+                                </TextBlock>
+
+                                <Grid Margin="0,8,0,5">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="220"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="429 Retry delay (ms):" 
+                                               Style="{StaticResource SettingLabel}"/>
+                                    <TextBox Grid.Column="1" x:Name="RateLimitRetryDelayTextBox" Width="120" 
+                                             Style="{StaticResource SettingsTextBoxStyle}" HorizontalAlignment="Left"/>
+                                </Grid>
+                                <TextBlock Style="{StaticResource SettingHelp}">
+                                    How long to wait after receiving a 429 (Too Many Requests) response before retrying
+                                </TextBlock>
+
+                                <!-- Warning Panel -->
+                                <Border Background="{StaticResource WarningBrush}" Opacity="0.1" 
+                                        CornerRadius="8" Padding="16" Margin="0,8,0,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Data="M12,2L1,21H23M12,6L19.53,19H4.47M11,10V14H13V10M11,16V18H13V16" 
+                                             Fill="{StaticResource WarningBrush}" Width="18" Height="18" Margin="0,0,12,0" 
+                                             VerticalAlignment="Top"/>
+                                        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource WarningBrush}"
+                                                  LineHeight="20" FontSize="13">
+                                            If you encounter repeated 429 responses, this indicates your rate limiting settings need adjustment. 
+                                            Consider increasing the values above to avoid potential API account restrictions.
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+
+            <!-- Action Buttons -->
+            <Border Grid.Row="2" Background="{StaticResource CardBackgroundBrush}" BorderThickness="0" 
+                    Padding="24,16" CornerRadius="0,0,16,16">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="10" Direction="90" ShadowDepth="2" Opacity="0.1" Color="#000000"/>
+                </Border.Effect>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="RESET DEFAULTS" Style="{StaticResource ResetButtonStyle}" 
+                            Width="150" Margin="0,0,12,0" Click="ResetButton_Click"/>
+
+                    <Button Content="CANCEL" Style="{StaticResource SecondaryButtonStyle}" 
+                            Width="120" Margin="0,0,12,0" Click="CancelButton_Click"/>
+
+                    <Button Content="SAVE SETTINGS" Style="{StaticResource ActionButtonStyle}" 
+                            Width="160" Click="SaveButton_Click">
+                        <Button.Effect>
+                            <DropShadowEffect BlurRadius="12" Direction="315" ShadowDepth="3" Opacity="0.2" Color="#10B981"/>
+                        </Button.Effect>
+                    </Button>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
 </Window>

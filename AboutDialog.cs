@@ -307,15 +307,17 @@ namespace InvoiceBalanceRefresher
             contentPanel.Children.Add(divider2);
 
             // Features border with enhanced terminal styling
+            // Features border with enhanced terminal styling
             var featuresBorder = new Border
             {
-                BorderBrush = (SolidColorBrush)_ownerWindow.FindResource("BorderBrush"),
+                BorderBrush = _ownerWindow.FindResource("BorderBrush") as Brush,
                 BorderThickness = new Thickness(1),
-                Background = (SolidColorBrush)_ownerWindow.FindResource("GroupBackgroundBrush"),
+                Background = _ownerWindow.FindResource("GroupBackgroundBrush") as Brush,
                 CornerRadius = new CornerRadius(4),
                 Padding = new Thickness(15),
                 Margin = new Thickness(10, 0, 10, 15)
             };
+
             contentPanel.Children.Add(featuresBorder);
 
             // Features stack panel
@@ -922,7 +924,7 @@ namespace InvoiceBalanceRefresher
             {
                 BorderBrush = (SolidColorBrush)_ownerWindow.FindResource("BorderBrush"),
                 BorderThickness = new Thickness(1),
-                Background = (SolidColorBrush)_ownerWindow.FindResource("ConsoleBackgroundBrush"),
+                Background = _ownerWindow.FindResource("ConsoleBackgroundBrush") as Brush,
                 CornerRadius = new CornerRadius(4),
                 Padding = new Thickness(15),
                 Margin = new Thickness(10, 0, 10, 15)
